@@ -44,10 +44,10 @@ enum Strings {
         "要启动 ddak-a 吗？"
     )
     static let confirmBody = L(
-        "Your screen will be covered in sky blue and every keystroke will be blocked for \(totalMinutes) minutes — or until you click “Done”. Your mouse and trackpad keep working.\n\nYou can quit at any time with ⌘⇧1.",
-        "실행하면 화면이 하늘색으로 덮이고, 키보드 입력이 \(totalMinutes)분간(또는 '다 닦았어요' 버튼을 누를 때까지) 완전히 차단돼요. 마우스·트랙패드는 그대로 움직여요.\n\n언제든 ⌘⇧1 을 누르면 바로 종료돼요.",
-        "画面が水色で覆われ、キーボード入力が\(totalMinutes)分間（または「完了」ボタンを押すまで）完全にブロックされます。マウス・トラックパッドはそのまま使えます。\n\n⌘⇧1 でいつでも終了できます。",
-        "屏幕将被天蓝色覆盖，键盘输入将被完全阻止 \(totalMinutes) 分钟（或直到您点击“完成”按钮）。鼠标和触控板仍可正常使用。\n\n随时按 ⌘⇧1 即可退出。"
+        "Your screen will be covered in sky blue and every keystroke will be blocked for \(totalMinutes) minutes — or until you click “Done”. Your mouse and trackpad keep working.\n\nYou can quit at any time with ⌘⇧9.",
+        "실행하면 화면이 하늘색으로 덮이고, 키보드 입력이 \(totalMinutes)분간(또는 '다 닦았어요' 버튼을 누를 때까지) 완전히 차단돼요. 마우스·트랙패드는 그대로 움직여요.\n\n언제든 ⌘⇧9 을 누르면 바로 종료돼요.",
+        "画面が水色で覆われ、キーボード入力が\(totalMinutes)分間（または「完了」ボタンを押すまで）完全にブロックされます。マウス・トラックパッドはそのまま使えます。\n\n⌘⇧9 でいつでも終了できます。",
+        "屏幕将被天蓝色覆盖，键盘输入将被完全阻止 \(totalMinutes) 分钟（或直到您点击“完成”按钮）。鼠标和触控板仍可正常使用。\n\n随时按 ⌘⇧9 即可退出。"
     )
     static let confirmStart = L("Start", "예", "開始", "开始")
     static let confirmCancel = L("Cancel", "아니오", "キャンセル", "取消")
@@ -124,10 +124,10 @@ enum Strings {
     static let done = L("Done", "다 닦았어요", "完了", "完成")
     // 🚨 2026-08-12: 갇혔을 때 화면에 탈출 방법이 보이지 않으면 안전장치로서 의미가 없다
     static let shortcutHint = L(
-        "Press ⌘⇧1 to quit right away",
-        "⌘⇧1 을 누르면 바로 종료돼요",
-        "⌘⇧1 でいつでも終了できます",
-        "按 ⌘⇧1 可立即退出"
+        "Press ⌘⇧9 to quit right away",
+        "⌘⇧9 을 누르면 바로 종료돼요",
+        "⌘⇧9 でいつでも終了できます",
+        "按 ⌘⇧9 可立即退出"
     )
 }
 
@@ -162,11 +162,14 @@ let buttonAttributedTitle = NSAttributedString(
 
 // 2026-08-12 최적화: 이벤트탭 콜백은 키 입력마다 실행되고, 느리면 macOS가 탭을 강제로 끊는다
 // (= 키보드가 순간 뚫림). 콜백 안에서는 힙 할당이 생기지 않도록 상수만 쓰고 switch로 비교한다.
-// 🚨 2026-08-12 변경: 탈출 단축키를 Cmd+Option+Esc → Cmd+Shift+1로 교체.
-// 전자는 macOS 강제 종료 창을 띄우는 시스템 단축키였는데, 우리 오버레이가 최상위 레벨이라
-// 그 창이 뒤에 가려 보이지 않았다 = 보이지 않는 탈출구. 이제는 통과시키지 않고
-// 앱이 직접 조합을 감지해 스스로 종료한다(다른 앱으로 새지도 않는다).
-private let kVKANSI1: Int64 = 18 // 숫자 1
+// 🚨 2026-08-12 변경: 탈출 단축키를 Cmd+Option+Esc → Cmd+Shift+9로 교체.
+// (1) Cmd+Option+Esc는 macOS 강제 종료 창을 띄우는 시스템 단축키였는데, 우리 오버레이가
+//     최상위 레벨이라 그 창이 뒤에 가려 보이지 않았다 = 보이지 않는 탈출구.
+//     이제는 통과시키지 않고 앱이 직접 조합을 감지해 스스로 종료한다(다른 앱으로 새지도 않는다).
+// (2) 처음엔 Cmd+Shift+1을 썼으나 Cmd·Shift·1이 전부 키보드 왼쪽에 몰려 있어, 걸레로 그 구역을
+//     문지르면 한 손에 동시에 눌릴 수 있다는 오너 지적으로 9로 변경.
+//     9는 오른쪽 위라 물리적으로 양손을 써야만 발동한다 = 우연 발동 확률이 크게 낮아진다.
+private let kVKANSI9: Int64 = 25 // 숫자 9
 private let kVKCapsLock: Int64 = 57
 private let nxSysDefinedEventType: UInt32 = 14 // NX_SYSDEFINED
 private let nxSubtypeAuxControlButtons: Int16 = 8 // 밝기·볼륨 등 미디어 키가 실려 오는 subtype
@@ -578,9 +581,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
                 switch type {
                 case .keyDown, .keyUp:
-                    // 🚨 탈출 단축키(2026-08-12): Cmd+Shift+1이면 앱이 스스로 종료한다.
-                    // 대부분의 키는 keycode 비교에서 바로 걸러지므로 flags는 '1'일 때만 읽는다.
-                    if event.getIntegerValueField(.keyboardEventKeycode) == kVKANSI1 {
+                    // 🚨 탈출 단축키(2026-08-12): Cmd+Shift+9이면 앱이 스스로 종료한다.
+                    // 대부분의 키는 keycode 비교에서 바로 걸러지므로 flags는 '9'일 때만 읽는다.
+                    if event.getIntegerValueField(.keyboardEventKeycode) == kVKANSI9 {
                         let flags = event.flags
                         if flags.contains(.maskCommand) && flags.contains(.maskShift) {
                             if type == .keyDown, let refcon = refcon {
