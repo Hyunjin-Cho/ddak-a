@@ -32,7 +32,10 @@ SIGN_IDENTITY="${DDAKA_SIGN_IDENTITY:-Developer ID Application: Hyunjin Cho (6RH
 echo "🔏 코드사이닝 중..."
 if security find-identity -v -p codesigning | grep -qF "$SIGN_IDENTITY"; then
     echo "   신원: $SIGN_IDENTITY"
-    codesign --force --sign "$SIGN_IDENTITY" "$APP_BUNDLE"
+    # 🚨 2026-08-12: 공증(notarization)에는 Hardened Runtime(--options runtime)과
+    # 신뢰할 수 있는 타임스탬프(--timestamp)가 필수다. 배포 전에 미리 켜서
+    # 이 보안 모드가 키보드 차단 기능을 깨뜨리지 않는지 먼저 확인한다.
+    codesign --force --options runtime --timestamp --sign "$SIGN_IDENTITY" "$APP_BUNDLE"
 else
     echo "   ⚠️ 인증서를 못 찾음 → ad-hoc 서명으로 대체 (재빌드마다 권한이 풀릴 수 있음)"
     codesign --force --sign - "$APP_BUNDLE"
