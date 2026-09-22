@@ -8,10 +8,14 @@
     <string>닦아</string>
     <key>CFBundleIdentifier</key>
     <string>com.vismotive.ddaka</string>
+    <!-- 🚨 2026-09-22: v1.0 -> v1.1. 고치는 작업(언어 선택 버그·임시 경로 안내)이라 첫 자리를
+         올리지 않았다. 첫 자리는 "쓰던 방식이 달라진다"는 신호로 남겨 둔다.
+         ⚠️ 이 파일을 PlistBuddy 로 고치지 말 것 — 주석을 전부 지우고 키를 재정렬한다(실측).
+         빌드 번호(CFBundleVersion)는 build.sh 가 번들 복사본에서 커밋 수로 덮어쓴다. -->
     <key>CFBundleVersion</key>
-    <string>1.0</string>
+    <string>1.1</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.0</string>
+    <string>1.1</string>
     <key>CFBundleExecutable</key>
     <string>ddak-a</string>
     <key>CFBundleIconFile</key>
