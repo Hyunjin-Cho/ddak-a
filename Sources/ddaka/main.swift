@@ -213,24 +213,34 @@ let cleaningTitles: [String] = {
 }()
 
 // 2026-08-12 최적화: 색·폰트·문구는 모니터 수만큼 다시 만들 이유가 없어 한 번만 만들어 공유한다
-let skyBlueColor = NSColor(calibratedRed: 0.53, green: 0.81, blue: 0.92, alpha: 1.0)
+//
+// 🚨 2026-09-23 (#9): 색은 전부 sRGB 로 적는다. 종전에는 NSColor(calibratedRed:)였는데, 이건
+// sRGB 가 아니라 **Generic RGB** 공간의 숫자다. 하늘색 0.53/0.81/0.92 는 #87CEEB 를 소수로 옮긴
+// 값이었지만 화면에는 sRGB #97D7EF 로 나갔다(더 밝고 옅음, ΔE2000 3.00 — 시스템 색 변환으로 측정).
+// - 하늘색은 의도했던 #87CEEB 로 정확히 맞춘다. 앱 아이콘도 이 값을 기준으로 만들었다.
+// - 나머지 색은 **지금 화면에 보이던 색을 그대로** sRGB 8bit 로 옮겼다(바꾸기 전과 ΔE2000 0.06 이하).
+// 🔒 hex·브랜드 색은 sRGB 값이다 — 새 색을 넣을 때도 공간이 이름에 드러나는 srgbRed: 를 쓴다.
+let skyBlueColor = NSColor(srgbRed: 135.0 / 255, green: 206.0 / 255, blue: 235.0 / 255, alpha: 1.0) // #87CEEB
 let buttonNormalColor = NSColor.white.cgColor
+// 버튼 글자와 테두리가 같이 쓰는 남색. 종전 calibrated (0.1, 0.35, 0.5) 가 실제로 보이던 색이다.
+let buttonTextColor = NSColor(srgbRed: 29.0 / 255, green: 109.0 / 255, blue: 146.0 / 255, alpha: 1.0) // #1D6D92
 // 2026-08-12: 눌림은 색이 아니라 "그림자가 줄며 가라앉는 것"으로 표현한다.
 // 배경색은 아주 살짝만 낮춰 거드는 정도 — 크게 어둡게 하면 눌린 게 아니라 색이 변한 것처럼 보인다.
-let buttonPressedColor = NSColor(calibratedWhite: 0.96, alpha: 1.0).cgColor
+// (2026-09-23 #9: 종전 calibratedWhite 0.96 이 실제로 보이던 색 = #F7F7F7)
+let buttonPressedColor = NSColor(srgbRed: 247.0 / 255, green: 247.0 / 255, blue: 247.0 / 255, alpha: 1.0).cgColor
 let buttonShadowOpacityResting: Float = 0.22
 let buttonShadowOpacityPressed: Float = 0.07
 // 🚨 2026-08-12: 테두리가 없으면 눌렸을 때 "면이 어두워진다"가 아니라 "덩어리 색이 변한다"로 보인다.
 // 경계선이 있어야 그 안쪽이 눌려 들어가는 것으로 읽힌다. 글자와 같은 계열의 옅은 남색.
-let buttonBorderColorResting = NSColor(calibratedRed: 0.1, green: 0.35, blue: 0.5, alpha: 0.22).cgColor
-let buttonBorderColorPressed = NSColor(calibratedRed: 0.1, green: 0.35, blue: 0.5, alpha: 0.48).cgColor
+let buttonBorderColorResting = buttonTextColor.withAlphaComponent(0.22).cgColor
+let buttonBorderColorPressed = buttonTextColor.withAlphaComponent(0.48).cgColor
 let titleFont = NSFont.systemFont(ofSize: 48, weight: .semibold)
 let subLabelFont = NSFont.systemFont(ofSize: 16, weight: .regular)
 let countdownFont = NSFont.monospacedDigitSystemFont(ofSize: 22, weight: .regular)
 let buttonAttributedTitle = NSAttributedString(
     string: Strings.done,
     attributes: [
-        .foregroundColor: NSColor(calibratedRed: 0.1, green: 0.35, blue: 0.5, alpha: 1.0),
+        .foregroundColor: buttonTextColor,
         .font: NSFont.systemFont(ofSize: 18, weight: .medium)
     ]
 )
@@ -624,7 +634,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         button.attributedTitle = s < 1 ? NSAttributedString(
             string: Strings.done,
             attributes: [
-                .foregroundColor: NSColor(calibratedRed: 0.1, green: 0.35, blue: 0.5, alpha: 1.0),
+                .foregroundColor: buttonTextColor,
                 .font: NSFont.systemFont(ofSize: 18 * s, weight: .medium)
             ]) : buttonAttributedTitle
         button.applyRestingStyle(scale: s) // frame 확정 후에 호출 (그림자 경로가 bounds 기준)
