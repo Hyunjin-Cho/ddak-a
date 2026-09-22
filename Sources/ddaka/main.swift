@@ -88,12 +88,20 @@ enum Strings {
         "请将 ddak-a 移到“应用程序”文件夹",
         "請將 ddak-a 移到「應用程式」檔案夾"
     )
+    // 🚨 2026-09-22 (PR #1 리뷰 F-5): 마지막 문단에 "확인 -> 종료 -> 옮기기" 순서를 명시한다.
+    // 종전 문구는 "옮긴 뒤 거기서 실행해 주세요"까지만 말했는데, 이 안내창은 모달이라
+    // 확인을 누르기 전까지 앱이 살아 있다. 그 상태에서 시키는 대로 앱을 옮겨 실행하면
+    // LSMultipleInstancesProhibited(=true) 때문에 새 인스턴스가 막히고 임시 사본이 앞으로
+    // 나와 같은 안내를 다시 보여 줄 수 있다 — 안내가 시킨 동작이 그대로 함정이 된다.
+    // ⚠️ 그 반복 자체는 아직 재현하지 못했다(리뷰 F-5 는 needs_check). 다만 "확인 -> 종료"가
+    //    실제 순서이므로, 재현 여부와 무관하게 이 문구가 더 정확하다.
+    // 🔒 "확인"은 Strings.ok 의 각 언어 표기와 같아야 한다(en OK / ko 확인 / ja OK / zh 好).
     static let translocatedBody = L(
-        "macOS is running ddak-a from a temporary copy. In this state, Accessibility and Input Monitoring stay off no matter how many times you turn them on.\n\nIn Finder, drag ddak-a into the Applications folder, then open it from there.",
-        "지금 닦아가 임시 복사본에서 실행되고 있어요. 이 상태에서는 손쉬운 사용·입력 모니터링을 아무리 켜도 계속 꺼진 채로 남아요.\n\nFinder 에서 닦아를 ‘응용 프로그램’ 폴더로 끌어다 놓은 뒤, 거기서 실행해 주세요.",
-        "macOS が ddak-a を一時的なコピーから実行しています。この状態では、アクセシビリティと入力監視を何度オンにしてもオフのままになります。\n\nFinder で ddak-a を「アプリケーション」フォルダにドラッグしてから、そこで起動してください。",
-        "macOS 正在从临时副本运行 ddak-a。在这种状态下，无论开启多少次辅助功能和输入监控，它们都会保持关闭。\n\n请在访达中将 ddak-a 拖到“应用程序”文件夹，然后从那里启动。",
-        "macOS 正從暫存副本執行 ddak-a。在這種狀態下，無論開啟多少次輔助使用和輸入監控，都會維持關閉。\n\n請在 Finder 中將 ddak-a 拖到「應用程式」檔案夾，然後從那裡啟動。"
+        "macOS is running ddak-a from a temporary copy. In this state, Accessibility and Input Monitoring stay off no matter how many times you turn them on.\n\nClick OK to quit ddak-a. Then drag ddak-a into the Applications folder in Finder and open it from there.",
+        "지금 닦아가 임시 복사본에서 실행되고 있어요. 이 상태에서는 손쉬운 사용·입력 모니터링을 아무리 켜도 계속 꺼진 채로 남아요.\n\n‘확인’을 누르면 닦아가 종료돼요. 그다음 Finder 에서 닦아를 ‘응용 프로그램’ 폴더로 끌어다 놓고, 거기서 실행해 주세요.",
+        "macOS が ddak-a を一時的なコピーから実行しています。この状態では、アクセシビリティと入力監視を何度オンにしてもオフのままになります。\n\n「OK」を押すと ddak-a が終了します。その後、Finder で ddak-a を「アプリケーション」フォルダにドラッグして、そこから起動してください。",
+        "macOS 正在从临时副本运行 ddak-a。在这种状态下，无论开启多少次辅助功能和输入监控，它们都会保持关闭。\n\n点击“好”后 ddak-a 会退出。然后请在访达中将 ddak-a 拖到“应用程序”文件夹，并从那里启动。",
+        "macOS 正從暫存副本執行 ddak-a。在這種狀態下，無論開啟多少次輔助使用和輸入監控，都會維持關閉。\n\n按「好」後 ddak-a 會結束。接著請在 Finder 中將 ddak-a 拖到「應用程式」檔案夾，並從那裡啟動。"
     )
 
     // 권한 안내
