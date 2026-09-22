@@ -109,7 +109,25 @@ xcrun notarytool store-credentials "ddaka-notary" \
   --team-id "6RH6FXY82P"
 ```
 
-### 2. 외부 배포본 만들기
+### 2. 설치 창을 만드는 도구 준비 (최초 한 번)
+
+DMG 를 열었을 때 나오는 설치 창(배경 그림·아이콘 위치·창 크기)은 `dmgbuild` 로 만든다.
+시스템 파이썬을 건드리지 않도록 프로젝트 전용 가상환경에 설치한다.
+
+```bash
+python3 -m venv .tools/venv
+.tools/venv/bin/python -m pip install dmgbuild
+```
+
+> macOS 는 원래 이 설정을 Finder 에게 시켜서 만들지만, **macOS 27 에서는 Finder 의
+> "배경 그림 지정"이 동작하지 않는다** — 설정하면 오류 없이 무시되고, 읽으면 `-10000`
+> 오류가 난다(2026-09-22 실측). `dmgbuild` 는 Finder 를 거치지 않고 `.DS_Store` 를 직접
+> 만들기 때문에 이 문제의 영향을 받지 않는다.
+>
+> 창 구성은 `assets/dmg-settings.py` 에 있다. 아이콘 좌표는 배경 그림
+> (`assets/dmg-background.swift`)의 화살표 위치와 같아야 한다 — 한쪽만 고치면 어긋난다.
+
+### 3. 외부 배포본 만들기
 
 ```bash
 bash release.sh
@@ -182,6 +200,8 @@ bash release.sh
 | `release.sh` | 공증 + DMG 생성 + DMG 공증 + 티켓 부착 |
 | `assets/icon/` | 아이콘 원본과 변환 스크립트 (`AppIcon.icns` 가 빌드에 쓰인다) |
 | `assets/screenshot.png` | README 용 실행 화면 |
+| `assets/dmg-settings.py` | DMG 설치 창 구성 (배경·아이콘 위치·창 크기) |
+| `assets/dmg-background.swift` | 설치 창 배경 그림을 그리는 스크립트 |
 
 ## 라이선스
 

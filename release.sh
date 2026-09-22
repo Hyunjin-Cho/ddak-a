@@ -9,11 +9,14 @@ BINARY_PATH="$APP_BUNDLE/Contents/MacOS/$APP_NAME"
 VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' Info.plist)"
 VOLUME_NAME="닦아 ddak-a"
 DIST_DIR="dist"
-STAGING_DIR=".build/${APP_NAME}-${VERSION}-dmg-staging"
 APP_NOTARY_ARCHIVE=".build/${APP_NAME}-${VERSION}-app-notarization.zip"
 FINAL_DMG="$DIST_DIR/${APP_NAME}-${VERSION}.dmg"
 # 2026-09-22 (F-1): 검증을 다 통과하기 전까지 DMG 가 머무는 자리. dist/ 밖이라 오인 배포를 막는다.
 WORK_DMG=".build/${APP_NAME}-${VERSION}.dmg"
+# 2026-09-22: 설치 창(배경·아이콘 위치·창 크기)을 만드는 도구. 프로젝트 전용 가상환경에 둔다.
+# 시스템 파이썬을 건드리지 않으려는 것이고, .tools 는 저장소에 올리지 않는다.
+DMGBUILD=".tools/venv/bin/dmgbuild"
+DMG_SETTINGS="assets/dmg-settings.py"
 
 # notarytool 인증 정보는 저장소가 아니라 macOS 키체인에 보관한다.
 # 다른 이름을 썼다면 DDAKA_NOTARY_PROFILE 환경변수로 바꿀 수 있다.
@@ -124,6 +127,21 @@ if ! xcrun notarytool history --keychain-profile "$NOTARY_PROFILE" >/dev/null 2>
     exit 1
 fi
 
+# 🚨 2026-09-22: 설치 창을 만드는 도구가 없으면 DMG 단계에서야 깨진다 — 빌드 전에 확인한다.
+if [ ! -x "$DMGBUILD" ]; then
+    echo "❌ dmgbuild 를 찾지 못했어: $DMGBUILD"
+    echo "   프로젝트 전용 가상환경에 한 번만 설치하면 된다:"
+    echo ""
+    echo "   python3 -m venv .tools/venv"
+    echo "   .tools/venv/bin/python -m pip install dmgbuild"
+    exit 1
+fi
+
+if [ ! -f "$DMG_SETTINGS" ]; then
+    echo "❌ DMG 설치 창 설정을 찾지 못했어: $DMG_SETTINGS"
+    exit 1
+fi
+
 # 🚨 2026-09-22 (F-2): 아이콘이 없으면 build.sh 는 경고만 하고 기본 아이콘으로 빌드한다.
 # 공증도 아이콘 유무를 보지 않으므로, 아무도 막지 않으면 기본 아이콘을 단 앱이 배포된다.
 # 배포 경로에서는 경고가 아니라 중단이 맞다 — 긴 빌드 전에 여기서 걸러낸다.
@@ -165,28 +183,14 @@ spctl --assess --type execute --verbose=2 "$APP_BUNDLE"
 # 권한은 경로를 함께 기억하므로 "권한을 켜도 계속 안 켜진 것처럼" 동작한다.
 # 사용자가 Finder로 응용 프로그램 폴더에 직접 옮기면 그 딱지가 풀린다 →
 # DMG 안에 /Applications 바로가기를 같이 넣어 그 드래그를 유도한다.
-echo "🗂  DMG 준비 중..."
-rm -rf "$STAGING_DIR"
-mkdir -p "$STAGING_DIR"
-ditto "$APP_BUNDLE" "$STAGING_DIR/$APP_BUNDLE"
-ln -s /Applications "$STAGING_DIR/Applications"
-
-# 🚨 2026-09-22 (F-1): DMG 를 dist/ 에 바로 만들지 않고 .build 안에서 완성한다.
-# 종전에는 최종 경로에 만든 뒤 서명·공증했는데, 공증이 실패하면 스크립트는 멈추지만
-# 서명만 된 DMG 가 dist/ 에 그대로 남았다(구조를 복제해 재현 확인).
-# 파일명·크기가 정상 배포본과 같아서, 그걸 공증된 결과물로 착각해 올리면
-# 받는 사람은 "확인되지 않은 개발자" 경고로 앱을 열지 못한다.
-# 이제 모든 검증을 통과한 뒤에야 dist/ 로 옮긴다 — 중간에 어디서 멈추든
-# dist/ 에는 검증을 통과한 파일만 존재한다.
+echo "🗂  DMG 만드는 중..."
+# 🚨 2026-09-22: 설치 창 모양(배경 그림·아이콘 위치·창 크기)은 .DS_Store 에 저장되는데,
+# 그걸 만드는 정상 경로인 Finder AppleScript 의 "배경 그림 지정"이 macOS 27 에서 깨져 있다
+# — 설정하면 오류 없이 조용히 무시되고, 읽으면 -10000 오류가 난다(실측).
+# dmgbuild 는 Finder 를 거치지 않고 .DS_Store 를 직접 만들기 때문에 그 버그의 영향을 받지 않는다.
+# 창 구성은 전부 $DMG_SETTINGS 에 있다.
 rm -f "$WORK_DMG"
-hdiutil create \
-    -volname "$VOLUME_NAME" \
-    -srcfolder "$STAGING_DIR" \
-    -fs HFS+ \
-    -format UDZO \
-    -ov \
-    "$WORK_DMG"
-rm -rf "$STAGING_DIR"
+"$DMGBUILD" -s "$DMG_SETTINGS" -D app="$APP_BUNDLE" "$VOLUME_NAME" "$WORK_DMG"
 
 # 3단계 — DMG도 서명·공증한다.
 # 앱에만 티켓을 붙이면 DMG 자체는 미검증 상태라, 내려받아 열 때 경고가 뜬다.
