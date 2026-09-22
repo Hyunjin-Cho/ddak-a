@@ -94,9 +94,12 @@ enum Strings {
     // 종전 문구는 "옮긴 뒤 거기서 실행해 주세요"까지만 말했는데, 이 안내창은 모달이라
     // 확인을 누르기 전까지 앱이 살아 있다. 그 상태에서 시키는 대로 앱을 옮겨 실행하면
     // LSMultipleInstancesProhibited(=true) 때문에 새 인스턴스가 막히고 임시 사본이 앞으로
-    // 나와 같은 안내를 다시 보여 줄 수 있다 — 안내가 시킨 동작이 그대로 함정이 된다.
-    // ⚠️ 그 반복 자체는 아직 재현하지 못했다(리뷰 F-5 는 needs_check). 다만 "확인 -> 종료"가
-    //    실제 순서이므로, 재현 여부와 무관하게 이 문구가 더 정확하다.
+    // 나온다 — 안내가 시킨 동작이 그대로 함정이 된다.
+    // 🚨 2026-09-23 정정: 이 자리에는 "그 반복 자체는 아직 재현하지 못했다(리뷰 F-5 는
+    //    needs_check)"고 적혀 있었다. 2026-09-22 실기(macOS 27.0)에서 함정은 실재로 확인됐고,
+    //    증상은 "같은 안내가 다시 뜬다"가 아니라 **"아무 반응이 없다"**였다 — 안내창이 이미 떠
+    //    있으니 임시 사본이 앞으로 나와도 화면이 바뀌지 않는다. 문구는 함정을 줄일 뿐 없애지는
+    //    못한다(README 「설치」 절의 실측 주석 ③과 같은 내용).
     // 🔒 "확인"은 Strings.ok 의 각 언어 표기와 같아야 한다(en OK / ko 확인 / ja OK / zh 好).
     static let translocatedBody = L(
         "macOS is running ddak-a from a temporary copy. In this state, Accessibility and Input Monitoring stay off no matter how many times you turn them on.\n\nClick OK to quit ddak-a. Then drag ddak-a into the Applications folder in Finder and open it from there.",
