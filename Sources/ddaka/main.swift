@@ -78,6 +78,24 @@ enum Strings {
     static let confirmStart = L("Start", "예", "開始", "开始", "開始")
     static let confirmCancel = L("Cancel", "아니오", "キャンセル", "取消", "取消")
 
+    // 임시 경로(App Translocation) 안내
+    // 🚨 2026-09-22 신설. 문구는 "무엇을 하면 되는지"만 말한다 — translocation 이 무엇인지
+    // 설명해 봐야 읽히지 않는다. 원인 설명은 개발자 몫이고, 사용자에게 필요한 건 다음 동작 하나다.
+    static let translocatedTitle = L(
+        "Move ddak-a to your Applications folder",
+        "‘응용 프로그램’ 폴더로 옮겨 주세요",
+        "「アプリケーション」フォルダに移動してください",
+        "请将 ddak-a 移到“应用程序”文件夹",
+        "請將 ddak-a 移到「應用程式」檔案夾"
+    )
+    static let translocatedBody = L(
+        "macOS is running ddak-a from a temporary copy. In this state, Accessibility and Input Monitoring stay off no matter how many times you turn them on.\n\nIn Finder, drag ddak-a into the Applications folder, then open it from there.",
+        "지금 닦아가 임시 복사본에서 실행되고 있어요. 이 상태에서는 손쉬운 사용·입력 모니터링을 아무리 켜도 계속 꺼진 채로 남아요.\n\nFinder 에서 닦아를 ‘응용 프로그램’ 폴더로 끌어다 놓은 뒤, 거기서 실행해 주세요.",
+        "macOS が ddak-a を一時的なコピーから実行しています。この状態では、アクセシビリティと入力監視を何度オンにしてもオフのままになります。\n\nFinder で ddak-a を「アプリケーション」フォルダにドラッグしてから、そこで起動してください。",
+        "macOS 正在从临时副本运行 ddak-a。在这种状态下，无论开启多少次辅助功能和输入监控，它们都会保持关闭。\n\n请在访达中将 ddak-a 拖到“应用程序”文件夹，然后从那里启动。",
+        "macOS 正從暫存副本執行 ddak-a。在這種狀態下，無論開啟多少次輔助使用和輸入監控，都會維持關閉。\n\n請在 Finder 中將 ddak-a 拖到「應用程式」檔案夾，然後從那裡啟動。"
+    )
+
     // 권한 안내
     static let permissionTitle = L(
         "Additional permissions needed",
@@ -278,6 +296,39 @@ final class OverlayButton: NSButton {
     }
 }
 
+// MARK: - 임시 경로(App Translocation) 감지
+//
+// 🚨 2026-09-22 신설. 브라우저로 받은 앱을 Finder 로 끌어다 옮기지 않고 그대로 실행하면,
+// macOS 가 원본 대신 /private/var/folders/.../AppTranslocation/<UUID>/d/ 의 읽기 전용 사본을
+// 띄운다(Gatekeeper 경로 무작위화). 이 상태에서는 손쉬운 사용·입력 모니터링 권한을 켜도
+// 다음 실행 때 다시 꺼져 있다 — 사용자에게는 "권한을 켰는데 앱이 계속 없다고 한다"로 보인다.
+// 실측(2026-09-22): 공증·티켓 부착까지 끝낸 v1.0 을 브라우저로 받아 설치했더니
+// com.apple.quarantine 이 번들 안팎 10곳에 남아 있었다. 공증은 quarantine 을 지우지 않는다.
+//
+// 판정을 두 갈래로 두는 이유: 애플의 정답은 SecTranslocateIsTranslocatedURL 인데 이 함수는
+// SDK 에 공개 헤더가 없어 Swift 에서 바로 부를 수 없다(실측 2026-09-22: Security 모듈에 없고
+// 런타임 심볼은 존재). 그래서 dlsym 으로 찾아 쓰되, 못 찾거나 호출이 실패하면 경로 성분으로
+// 떨어진다. 경로 규약도 문서화된 것이 아니라서 어느 한쪽만으로는 조용히 미탐이 될 수 있다.
+private func isRunningFromTemporaryCopy() -> Bool {
+    let bundleURL = Bundle.main.bundleURL
+
+    typealias IsTranslocatedFn = @convention(c) (
+        CFURL, UnsafeMutablePointer<DarwinBoolean>, UnsafeMutablePointer<Unmanaged<CFError>?>?
+    ) -> DarwinBoolean
+
+    // -2 = RTLD_DEFAULT. 이미 로드된 이미지 전체에서 심볼을 찾는다.
+    if let symbol = dlsym(UnsafeMutableRawPointer(bitPattern: -2), "SecTranslocateIsTranslocatedURL") {
+        let isTranslocated = unsafeBitCast(symbol, to: IsTranslocatedFn.self)
+        var flag: DarwinBoolean = false
+        var error: Unmanaged<CFError>?
+        let callSucceeded = isTranslocated(bundleURL as CFURL, &flag, &error).boolValue
+        error?.release() // 실패 시 +1 로 돌아오는 오류 객체를 흘리지 않는다
+        if callSucceeded { return flag.boolValue }
+    }
+
+    return bundleURL.pathComponents.contains("AppTranslocation")
+}
+
 final class AppDelegate: NSObject, NSApplicationDelegate {
     var overlayWindows: [NSWindow] = []
     var eventTap: CFMachPort?
@@ -297,6 +348,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.regular)
+
+        // 🔒 2026-09-22: 다른 어떤 것보다 먼저 검사한다. 특히 권한 요청창보다 앞이어야 한다 —
+        // 임시 사본에서 돌고 있는데 권한창부터 띄우면, 사용자가 시스템 설정까지 들어가 켠 권한이
+        // 다음 실행에 그대로 버려진다. 한 번 헛수고를 시키면 두 번째는 안 한다.
+        if isRunningFromTemporaryCopy() {
+            showTemporaryCopyGuideAndQuit()
+            return
+        }
+
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(screenParametersChanged),
@@ -341,6 +401,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         } else {
             NSApp.terminate(nil)
         }
+    }
+
+    // 🔒 2026-09-22: 안내만 하고 종료한다. 여기서 앱이 스스로 자신을 옮기는 선택지도 있었지만
+    // (사본이 원본을 옮기는 꼴이라) 원본 위치를 되찾는 SPI 가 또 필요하고, 사용자가 어디에
+    // 두고 싶은지도 알 수 없다. 옮기는 동작 자체가 translocation 을 푸는 유일한 사용자 동작이라
+    // 사람이 직접 하는 편이 확실하다.
+    func showTemporaryCopyGuideAndQuit() {
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = Strings.translocatedTitle
+        alert.informativeText = Strings.translocatedBody
+        alert.addButton(withTitle: Strings.ok)
+        NSApp.activate(ignoringOtherApps: true)
+        alert.runModal()
+        NSApp.terminate(nil)
     }
 
     func checkPermissionsAndStart() {
