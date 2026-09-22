@@ -180,7 +180,7 @@ bash release.sh
 | `Info.plist` | 번들 정보 |
 | `build.sh` | 유니버설 빌드 + `.app` 패키징 + 코드 서명 |
 | `release.sh` | 공증 + DMG 생성 + DMG 공증 + 티켓 부착 |
-| `assets/icon/` | 아이콘 원본·시안·생성 스크립트 (`AppIcon.icns` 가 빌드에 쓰인다) |
+| `assets/icon/` | 아이콘 원본과 변환 스크립트 (`AppIcon.icns` 가 빌드에 쓰인다) |
 | `assets/screenshot.png` | README 용 실행 화면 |
 
 ## 라이선스

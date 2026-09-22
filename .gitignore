@@ -8,3 +8,6 @@ dist/
 
 # macOS 잡파일
 .DS_Store
+
+# 아이콘을 만들 때 쓴 AI 프롬프트 메모 — 재작업용으로 로컬에만 둔다 (2026-09-22)
+assets/icon/AI-프롬프트.md
