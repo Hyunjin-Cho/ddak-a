@@ -259,7 +259,16 @@ bash release.sh
 | `assets/icon/` | 아이콘 원본과 변환 스크립트 (`AppIcon.icns` 가 빌드에 쓰인다) |
 | `assets/screenshot.png` | README 용 실행 화면 |
 | `assets/dmg-settings.py` | DMG 설치 창 구성 (배경·아이콘 위치·창 크기) |
-| `assets/dmg-background.swift` | 설치 창 배경 그림을 그리는 스크립트 |
+| `assets/dmg-background.swift` | 설치 창 배경 그림을 그리는 스크립트 (`swift ... <출력폴더>`) |
+| `assets/dmg-background.tiff` | 위 스크립트로 만든 실제 배경 (1x·2x 두 장. `tiffutil -cathidpicheck` 로 합친다) |
+
+> 🔒 **설치 창 관련 세 파일은 같이 움직인다.** 배경 그림의 `W x H` 와 `dmg-settings.py` 의
+> `window_rect` 가 같아야 하고(다르면 Finder 창에서 아래가 잘린다), 아이콘 좌표와 배경의
+> 화살표 위치도 같아야 한다(다르면 화살표가 엉뚱한 곳을 가리킨다).
+> 배경을 다시 그렸으면 `.tiff` 까지 새로 만들어야 반영된다.
+
+> `release-records/<버전>/` 에는 배포할 때마다 dSYM·공증 로그·체크섬이 쌓인다. 저장소에는
+> 올리지 않는다(로컬 보관용).
 
 ## 라이선스
 
