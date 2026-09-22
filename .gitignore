@@ -4,6 +4,7 @@
 
 # 빌드된 앱 번들 — 소스가 아니라 결과물. 배포는 Releases에 올리는 방식으로 한다
 *.app/
+dist/
 
 # macOS 잡파일
 .DS_Store
