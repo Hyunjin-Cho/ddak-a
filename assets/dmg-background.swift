@@ -1,8 +1,15 @@
 import Cocoa
 // 닦아 DMG 배경 v2 (2026-09-22) — 글자·화살표 대비를 크게 올리고 아이콘 자리를 128px 기준으로 넓혔다
-let W: CGFloat = 640, H: CGFloat = 400
-let appC  = CGPoint(x: 165, y: 215)   // Finder 좌표(좌상단 원점) — 아이콘 중심
-let applC = CGPoint(x: 475, y: 215)
+// 🚨 2026-09-22 v2.1: 높이를 400 -> 430 으로 올렸다.
+// Finder 창은 제목 표시줄만큼 안쪽이 줄어드는데, 배경과 window_rect 를 둘 다 400 으로 두고 있어서
+// 맨 아래 영문 안내("Move it to Applications first, then open")가 잘려 나갔다(오너 실물 확인).
+// 🚨 2026-09-22 v2.2 (오너 실물 확인): 430 으로도 아래 영문 줄이 여전히 씹혀서, 높이를 440 으로
+//    올리고 콘텐츠를 위로 20 올렸다 — 상단 여백을 줄여 하단에 여유를 준다.
+// 🔒 아래 좌표는 전부 "위에서부터"(yTop · Finder 좌표) 잰다. dmg-settings.py 의 window_rect 도
+//    같은 640x440 이어야 한다. 한쪽만 고치면 또 잘린다.
+let W: CGFloat = 640, H: CGFloat = 440
+let appC  = CGPoint(x: 165, y: 195)   // Finder 좌표(좌상단 원점) — 아이콘 중심
+let applC = CGPoint(x: 475, y: 195)
 func flip(_ p: CGPoint) -> CGPoint { CGPoint(x: p.x, y: H - p.y) }
 
 func render(scale: CGFloat) -> NSBitmapImageRep {
@@ -26,13 +33,13 @@ func render(scale: CGFloat) -> NSBitmapImageRep {
     // 위: 작고 옅은 안내 / 아래: 크고 진한 지시 — 시선이 두 번째 줄에 꽂히게 한다
     center("닦아를 설치하려면", [
         .font: NSFont.systemFont(ofSize: 15, weight: .regular),
-        .foregroundColor: NSColor(calibratedWhite: 0.42, alpha: 1)], yTop: 42)
+        .foregroundColor: NSColor(calibratedWhite: 0.42, alpha: 1)], yTop: 22)
     center("아이콘을 응용 프로그램 폴더로 드래그하세요", [
         .font: NSFont.systemFont(ofSize: 22, weight: .bold),
-        .foregroundColor: NSColor(calibratedRed: 0.07, green: 0.11, blue: 0.16, alpha: 1)], yTop: 68)
+        .foregroundColor: NSColor(calibratedRed: 0.07, green: 0.11, blue: 0.16, alpha: 1)], yTop: 48)
     center("Drag the icon into the Applications folder", [
         .font: NSFont.systemFont(ofSize: 14, weight: .medium),
-        .foregroundColor: NSColor(calibratedWhite: 0.38, alpha: 1)], yTop: 104)
+        .foregroundColor: NSColor(calibratedWhite: 0.38, alpha: 1)], yTop: 84)
 
     // 화살표 — 짧고 굵고 진하게. 아이콘 128px 기준이라 양옆 여백을 78 로 잡는다.
     let a = flip(appC), b = flip(applC)
@@ -55,10 +62,10 @@ func render(scale: CGFloat) -> NSBitmapImageRep {
 
     center("여기서 바로 실행하지 말고, 옮긴 뒤에 실행해 주세요", [
         .font: NSFont.systemFont(ofSize: 12, weight: .medium),
-        .foregroundColor: NSColor(calibratedRed: 0.55, green: 0.30, blue: 0.10, alpha: 1)], yTop: 340)
+        .foregroundColor: NSColor(calibratedRed: 0.55, green: 0.30, blue: 0.10, alpha: 1)], yTop: 320)
     center("Move it to Applications first, then open", [
         .font: NSFont.systemFont(ofSize: 11, weight: .regular),
-        .foregroundColor: NSColor(calibratedWhite: 0.48, alpha: 1)], yTop: 360)
+        .foregroundColor: NSColor(calibratedWhite: 0.48, alpha: 1)], yTop: 340)
 
     NSGraphicsContext.restoreGraphicsState()
     return rep

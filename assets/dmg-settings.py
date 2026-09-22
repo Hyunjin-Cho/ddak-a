@@ -22,7 +22,10 @@ symlinks = {"Applications": "/Applications"}
 
 background = defines.get("background", "assets/dmg-background.tiff")
 
-window_rect = ((200, 120), (640, 400))   # 배경 그림과 같은 640x400
+# 🔒 배경 그림(dmg-background.swift)의 W x H 와 같은 값이어야 한다.
+# 🚨 2026-09-22 v2.1: 400 -> 430. Finder 창은 제목 표시줄만큼 안쪽이 줄어들어서, 400 으로 두면
+#    배경 맨 아래 한 줄이 잘려 보이지 않는다(오너 실물 확인). 430 으로도 모자라 440 으로 재조정.
+window_rect = ((200, 120), (640, 440))
 default_view = "icon-view"
 icon_size = 128
 text_size = 13
@@ -30,8 +33,8 @@ label_pos = "bottom"
 arrange_by = None                         # 자동 정렬을 끄지 않으면 아이콘 좌표가 무시된다
 
 icon_locations = {
-    appname: (165, 215),
-    "Applications": (475, 215),
+    appname: (165, 195),
+    "Applications": (475, 195),
 }
 
 show_status_bar = False
