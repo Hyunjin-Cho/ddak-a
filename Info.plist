@@ -8,14 +8,35 @@
     <string>닦아</string>
     <key>CFBundleIdentifier</key>
     <string>com.vismotive.ddaka</string>
+    <!-- 🚨 2026-09-22: v1.0 -> v1.1. 고치는 작업(언어 선택 버그·임시 경로 안내)이라 첫 자리를
+         올리지 않았다. 첫 자리는 "쓰던 방식이 달라진다"는 신호로 남겨 둔다.
+         ⚠️ 이 파일을 PlistBuddy 로 고치지 말 것 — 주석을 전부 지우고 키를 재정렬한다(실측).
+         빌드 번호(CFBundleVersion)는 build.sh 가 번들 복사본에서 커밋 수로 덮어쓴다. -->
     <key>CFBundleVersion</key>
-    <string>1.0</string>
+    <string>1.1</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.0</string>
+    <string>1.1</string>
     <key>CFBundleExecutable</key>
     <string>ddak-a</string>
     <key>CFBundleIconFile</key>
     <string>AppIcon</string>
+    <!-- 2026-09-22: 앱이 "실제로 지원하는 언어"를 선언한다.
+         이 목록이 없으면 Bundle.main.preferredLocalizations 가 걸러 낼 기준 자체를 모른다.
+         실측(2026-09-22): 선호 언어가 fr-FR, ko-KR, en-US 인 사용자가 한국어 대신 영어를 봤다
+         — Locale.preferredLanguages 는 시스템 목록을 그대로 돌려주므로 1순위(미지원)에서 끝났다.
+         ⚠️ 부수 효과: 이 키를 선언하면 Locale.current 도 바뀐다(실측 ko_KR -> en_KR).
+         이 앱은 날짜·숫자 포맷을 쓰지 않아 지금은 영향이 없지만, 쓰게 되면 다시 확인할 것.
+         🔒 main.swift 의 UILanguage 5종과 이 목록은 항상 같아야 한다. -->
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en</string>
+    <key>CFBundleLocalizations</key>
+    <array>
+        <string>en</string>
+        <string>ko</string>
+        <string>ja</string>
+        <string>zh-Hans</string>
+        <string>zh-Hant</string>
+    </array>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>NSHumanReadableCopyright</key>

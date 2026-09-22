@@ -20,7 +20,20 @@ enum UILanguage { case en, ko, ja, zhHans, zhHant }
 // (SPM 실행 타겟 + 수동 .app 패키징 구조라 표준 로컬라이제이션 리소스를 쓰기 번거롭고,
 //  문자열이 십수 개뿐이라 코드에서 관리하는 편이 오히려 한눈에 들어온다.)
 let uiLanguage: UILanguage = {
-    guard let code = Locale.preferredLanguages.first?.lowercased() else { return .en }
+    // 🚨 2026-09-22: Locale.preferredLanguages -> Bundle.main.preferredLocalizations 로 교체.
+    // 앞의 것은 시스템 선호 언어 목록을 "그대로" 돌려준다. 그 첫 번째만 보므로 1순위가 우리가
+    // 지원하지 않는 언어면 2순위에 한국어가 있어도 영어로 떨어졌다
+    // (실측: fr-FR, ko-KR, en-US 사용자가 영어를 봤다).
+    // 뒤의 것은 Info.plist 의 CFBundleLocalizations 와 교집합을 내서 "우리가 실제로 보여줄 수
+    // 있는 것 중 사용자가 가장 원하는 것"을 돌려준다.
+    //
+    // 🔒 Info.plist 의 CFBundleLocalizations 와 반드시 짝으로 움직인다. 이쪽만 바꾸고 그 목록을
+    // 빠뜨리면 preferredLocalizations 가 en 하나만 들고 있어서 **모든 사용자가 영어로 떨어진다**
+    // (실측 2026-09-22: 목록을 뺀 번들에서는 선호 언어가 ko-KR 하나여도 en 이 나왔다).
+    //
+    // 돌아오는 값은 선언한 대로 en/ko/ja/zh-Hans/zh-Hant 로 딱 떨어지지만, 아래 hasPrefix 분기는
+    // 그대로 둔다 — 번들 Info.plist 없이 도는 경우(swift run 등)엔 시스템 표기가 그대로 올 수 있다.
+    guard let code = Bundle.main.preferredLocalizations.first?.lowercased() else { return .en }
     if code.hasPrefix("ko") { return .ko }
     if code.hasPrefix("ja") { return .ja }
     if code.hasPrefix("zh") {
@@ -64,6 +77,32 @@ enum Strings {
     )
     static let confirmStart = L("Start", "예", "開始", "开始", "開始")
     static let confirmCancel = L("Cancel", "아니오", "キャンセル", "取消", "取消")
+
+    // 임시 경로(App Translocation) 안내
+    // 🚨 2026-09-22 신설. 문구는 "무엇을 하면 되는지"만 말한다 — translocation 이 무엇인지
+    // 설명해 봐야 읽히지 않는다. 원인 설명은 개발자 몫이고, 사용자에게 필요한 건 다음 동작 하나다.
+    static let translocatedTitle = L(
+        "Move ddak-a to your Applications folder",
+        "‘응용 프로그램’ 폴더로 옮겨 주세요",
+        "「アプリケーション」フォルダに移動してください",
+        "请将 ddak-a 移到“应用程序”文件夹",
+        "請將 ddak-a 移到「應用程式」檔案夾"
+    )
+    // 🚨 2026-09-22 (PR #1 리뷰 F-5): 마지막 문단에 "확인 -> 종료 -> 옮기기" 순서를 명시한다.
+    // 종전 문구는 "옮긴 뒤 거기서 실행해 주세요"까지만 말했는데, 이 안내창은 모달이라
+    // 확인을 누르기 전까지 앱이 살아 있다. 그 상태에서 시키는 대로 앱을 옮겨 실행하면
+    // LSMultipleInstancesProhibited(=true) 때문에 새 인스턴스가 막히고 임시 사본이 앞으로
+    // 나와 같은 안내를 다시 보여 줄 수 있다 — 안내가 시킨 동작이 그대로 함정이 된다.
+    // ⚠️ 그 반복 자체는 아직 재현하지 못했다(리뷰 F-5 는 needs_check). 다만 "확인 -> 종료"가
+    //    실제 순서이므로, 재현 여부와 무관하게 이 문구가 더 정확하다.
+    // 🔒 "확인"은 Strings.ok 의 각 언어 표기와 같아야 한다(en OK / ko 확인 / ja OK / zh 好).
+    static let translocatedBody = L(
+        "macOS is running ddak-a from a temporary copy. In this state, Accessibility and Input Monitoring stay off no matter how many times you turn them on.\n\nClick OK to quit ddak-a. Then drag ddak-a into the Applications folder in Finder and open it from there.",
+        "지금 닦아가 임시 복사본에서 실행되고 있어요. 이 상태에서는 손쉬운 사용·입력 모니터링을 아무리 켜도 계속 꺼진 채로 남아요.\n\n‘확인’을 누르면 닦아가 종료돼요. 그다음 Finder 에서 닦아를 ‘응용 프로그램’ 폴더로 끌어다 놓고, 거기서 실행해 주세요.",
+        "macOS が ddak-a を一時的なコピーから実行しています。この状態では、アクセシビリティと入力監視を何度オンにしてもオフのままになります。\n\n「OK」を押すと ddak-a が終了します。その後、Finder で ddak-a を「アプリケーション」フォルダにドラッグして、そこから起動してください。",
+        "macOS 正在从临时副本运行 ddak-a。在这种状态下，无论开启多少次辅助功能和输入监控，它们都会保持关闭。\n\n点击“好”后 ddak-a 会退出。然后请在访达中将 ddak-a 拖到“应用程序”文件夹，并从那里启动。",
+        "macOS 正從暫存副本執行 ddak-a。在這種狀態下，無論開啟多少次輔助使用和輸入監控，都會維持關閉。\n\n按「好」後 ddak-a 會結束。接著請在 Finder 中將 ddak-a 拖到「應用程式」檔案夾，並從那裡啟動。"
+    )
 
     // 권한 안내
     static let permissionTitle = L(
@@ -265,6 +304,39 @@ final class OverlayButton: NSButton {
     }
 }
 
+// MARK: - 임시 경로(App Translocation) 감지
+//
+// 🚨 2026-09-22 신설. 브라우저로 받은 앱을 Finder 로 끌어다 옮기지 않고 그대로 실행하면,
+// macOS 가 원본 대신 /private/var/folders/.../AppTranslocation/<UUID>/d/ 의 읽기 전용 사본을
+// 띄운다(Gatekeeper 경로 무작위화). 이 상태에서는 손쉬운 사용·입력 모니터링 권한을 켜도
+// 다음 실행 때 다시 꺼져 있다 — 사용자에게는 "권한을 켰는데 앱이 계속 없다고 한다"로 보인다.
+// 실측(2026-09-22): 공증·티켓 부착까지 끝낸 v1.0 을 브라우저로 받아 설치했더니
+// com.apple.quarantine 이 번들 안팎 10곳에 남아 있었다. 공증은 quarantine 을 지우지 않는다.
+//
+// 판정을 두 갈래로 두는 이유: 애플의 정답은 SecTranslocateIsTranslocatedURL 인데 이 함수는
+// SDK 에 공개 헤더가 없어 Swift 에서 바로 부를 수 없다(실측 2026-09-22: Security 모듈에 없고
+// 런타임 심볼은 존재). 그래서 dlsym 으로 찾아 쓰되, 못 찾거나 호출이 실패하면 경로 성분으로
+// 떨어진다. 경로 규약도 문서화된 것이 아니라서 어느 한쪽만으로는 조용히 미탐이 될 수 있다.
+private func isRunningFromTemporaryCopy() -> Bool {
+    let bundleURL = Bundle.main.bundleURL
+
+    typealias IsTranslocatedFn = @convention(c) (
+        CFURL, UnsafeMutablePointer<DarwinBoolean>, UnsafeMutablePointer<Unmanaged<CFError>?>?
+    ) -> DarwinBoolean
+
+    // -2 = RTLD_DEFAULT. 이미 로드된 이미지 전체에서 심볼을 찾는다.
+    if let symbol = dlsym(UnsafeMutableRawPointer(bitPattern: -2), "SecTranslocateIsTranslocatedURL") {
+        let isTranslocated = unsafeBitCast(symbol, to: IsTranslocatedFn.self)
+        var flag: DarwinBoolean = false
+        var error: Unmanaged<CFError>?
+        let callSucceeded = isTranslocated(bundleURL as CFURL, &flag, &error).boolValue
+        error?.release() // 실패 시 +1 로 돌아오는 오류 객체를 흘리지 않는다
+        if callSucceeded { return flag.boolValue }
+    }
+
+    return bundleURL.pathComponents.contains("AppTranslocation")
+}
+
 final class AppDelegate: NSObject, NSApplicationDelegate {
     var overlayWindows: [NSWindow] = []
     var eventTap: CFMachPort?
@@ -284,6 +356,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.regular)
+
+        // 🔒 2026-09-22: 다른 어떤 것보다 먼저 검사한다. 특히 권한 요청창보다 앞이어야 한다 —
+        // 임시 사본에서 돌고 있는데 권한창부터 띄우면, 사용자가 시스템 설정까지 들어가 켠 권한이
+        // 다음 실행에 그대로 버려진다. 한 번 헛수고를 시키면 두 번째는 안 한다.
+        if isRunningFromTemporaryCopy() {
+            showTemporaryCopyGuideAndQuit()
+            return
+        }
+
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(screenParametersChanged),
@@ -328,6 +409,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         } else {
             NSApp.terminate(nil)
         }
+    }
+
+    // 🔒 2026-09-22: 안내만 하고 종료한다. 여기서 앱이 스스로 자신을 옮기는 선택지도 있었지만
+    // (사본이 원본을 옮기는 꼴이라) 원본 위치를 되찾는 SPI 가 또 필요하고, 사용자가 어디에
+    // 두고 싶은지도 알 수 없다. 옮기는 동작 자체가 translocation 을 푸는 유일한 사용자 동작이라
+    // 사람이 직접 하는 편이 확실하다.
+    func showTemporaryCopyGuideAndQuit() {
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = Strings.translocatedTitle
+        alert.informativeText = Strings.translocatedBody
+        alert.addButton(withTitle: Strings.ok)
+        NSApp.activate(ignoringOtherApps: true)
+        alert.runModal()
+        NSApp.terminate(nil)
     }
 
     func checkPermissionsAndStart() {

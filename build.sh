@@ -44,6 +44,38 @@ else
     echo "   ⚠️ Git 정보를 읽지 못해 빌드 번호를 그대로 둔다(Info.plist 값 사용)"
 fi
 
+# 🚨 2026-09-22 (PR #1 리뷰 F-2): 표시 언어의 "짝"을 빌드가 강제한다.
+# Info.plist 의 CFBundleLocalizations 와 main.swift 의 UILanguage 는 반드시 같아야 하는데,
+# 지금까지 코드 쪽만 컴파일러가 지켜 주고(L() 의 인자 5개) Info.plist 쪽은 아무도 보지 않았다.
+# 한쪽만 고치면 조용히 어긋난다 — 코드에만 더하면 그 언어는 목록에 없어서 영영 안 나오고,
+# 목록에서 빠뜨리면 preferredLocalizations 가 en 하나만 들고 있어 전원이 영어로 떨어진다
+# (2026-09-22 실측. v1.1 에서 고친 버그가 바로 이 짝이 깨져 있던 것이다).
+# 🔒 경고가 아니라 중단이다 — 아이콘처럼 경고로 두면 그냥 지나간다.
+echo "🌐 표시 언어 목록 대조 중..."
+CODE_LANGS="$(sed -n 's/^enum UILanguage { case \(.*\) }$/\1/p' Sources/ddaka/main.swift \
+    | tr -d ' ' | tr ',' '\n' | sed -E 's/([a-z])([A-Z])/\1-\2/g')"
+PLIST_LANGS="$(/usr/libexec/PlistBuddy -c "Print :CFBundleLocalizations" "$APP_BUNDLE/Contents/Info.plist" 2>/dev/null \
+    | sed -e '1d' -e '$d' -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+
+if [ -z "$CODE_LANGS" ]; then
+    echo "❌ main.swift 에서 UILanguage 목록을 읽지 못했어."
+    echo "   'enum UILanguage { case ... }' 한 줄 형태가 바뀌면 이 대조가 조용히 무력해진다."
+    echo "   확인하지 못한 채로 넘기지 않는다 — 위 sed 를 새 형태에 맞게 고쳐줘."
+    exit 1
+fi
+if [ -z "$PLIST_LANGS" ]; then
+    echo "❌ Info.plist 에서 CFBundleLocalizations 를 읽지 못했어."
+    echo "   이 키가 없으면 모든 사용자가 영어로 떨어진다(실측 2026-09-22)."
+    exit 1
+fi
+if [ "$(printf '%s\n' "$CODE_LANGS" | sort)" != "$(printf '%s\n' "$PLIST_LANGS" | sort)" ]; then
+    echo "❌ 표시 언어가 어긋났어 — Info.plist 와 main.swift 를 같이 고쳐야 한다."
+    echo "   main.swift : $(printf '%s\n' "$CODE_LANGS" | sort | tr '\n' ' ')"
+    echo "   Info.plist : $(printf '%s\n' "$PLIST_LANGS" | sort | tr '\n' ' ')"
+    exit 1
+fi
+echo "   $(printf '%s\n' "$PLIST_LANGS" | tr '\n' ' ')✓"
+
 # 2026-09-22: 앱 아이콘. Info.plist 의 CFBundleIconFile 이 이 파일명을 가리킨다.
 # 없어도 빌드는 되지만 기본 아이콘으로 나가므로 배포 전에 반드시 확인한다.
 ICON_SRC="assets/icon/AppIcon.icns"
