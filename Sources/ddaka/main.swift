@@ -20,7 +20,20 @@ enum UILanguage { case en, ko, ja, zhHans, zhHant }
 // (SPM 실행 타겟 + 수동 .app 패키징 구조라 표준 로컬라이제이션 리소스를 쓰기 번거롭고,
 //  문자열이 십수 개뿐이라 코드에서 관리하는 편이 오히려 한눈에 들어온다.)
 let uiLanguage: UILanguage = {
-    guard let code = Locale.preferredLanguages.first?.lowercased() else { return .en }
+    // 🚨 2026-09-22: Locale.preferredLanguages -> Bundle.main.preferredLocalizations 로 교체.
+    // 앞의 것은 시스템 선호 언어 목록을 "그대로" 돌려준다. 그 첫 번째만 보므로 1순위가 우리가
+    // 지원하지 않는 언어면 2순위에 한국어가 있어도 영어로 떨어졌다
+    // (실측: fr-FR, ko-KR, en-US 사용자가 영어를 봤다).
+    // 뒤의 것은 Info.plist 의 CFBundleLocalizations 와 교집합을 내서 "우리가 실제로 보여줄 수
+    // 있는 것 중 사용자가 가장 원하는 것"을 돌려준다.
+    //
+    // 🔒 Info.plist 의 CFBundleLocalizations 와 반드시 짝으로 움직인다. 이쪽만 바꾸고 그 목록을
+    // 빠뜨리면 preferredLocalizations 가 en 하나만 들고 있어서 **모든 사용자가 영어로 떨어진다**
+    // (실측 2026-09-22: 목록을 뺀 번들에서는 선호 언어가 ko-KR 하나여도 en 이 나왔다).
+    //
+    // 돌아오는 값은 선언한 대로 en/ko/ja/zh-Hans/zh-Hant 로 딱 떨어지지만, 아래 hasPrefix 분기는
+    // 그대로 둔다 — 번들 Info.plist 없이 도는 경우(swift run 등)엔 시스템 표기가 그대로 올 수 있다.
+    guard let code = Bundle.main.preferredLocalizations.first?.lowercased() else { return .en }
     if code.hasPrefix("ko") { return .ko }
     if code.hasPrefix("ja") { return .ja }
     if code.hasPrefix("zh") {
