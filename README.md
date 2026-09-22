@@ -10,6 +10,12 @@
 맥 키보드를 닦을 때 실수로 키가 눌려도 입력이 컴퓨터에 전달되지 않도록, 앱이 켜져 있는 동안
 **키보드를 통째로 차단**하는 macOS 유틸리티. **마우스와 트랙패드는 그대로 살아있다.**
 
+<p align="center">
+  <img src="assets/screenshot.png" width="680" alt="실행 중 화면">
+  <br>
+  <sub>실행 중 화면 — 연결된 <b>모든 모니터</b>를 이렇게 덮는다 (사진은 화면 가운데 부분)</sub>
+</p>
+
 ## 설치
 
 1. [Releases](https://github.com/Hyunjin-Cho/ddak-a/releases)에서 `.dmg`를 받는다
@@ -80,6 +86,10 @@ DDAKA_SIGN_IDENTITY="Developer ID Application: ..." bash build.sh
 > 손쉬운 사용·입력 모니터링 권한이 매번 풀린다. 정식 인증서로 서명해야 권한이 유지된다.
 
 ## 외부 배포 (Apple 공증)
+
+> **이 절은 저장소를 직접 빌드해 배포하려는 경우를 위한 것이다.** 앱을 쓰기만 할 거면 위 「설치」만
+> 보면 된다. 여기 적힌 절차는 **각자의 Developer ID 인증서와 Apple 계정으로** 진행하는 것이며,
+> 이 저장소에는 인증서나 비밀번호가 들어 있지 않다(둘 다 각자의 macOS 키체인에만 있다).
 
 다른 사람에게 배포하려면 Developer ID 서명뿐 아니라 Apple 공증과 티켓 부착까지 끝내야 한다.
 비밀번호는 저장소나 스크립트에 넣지 않고 macOS 키체인에 보관한다.
@@ -160,6 +170,7 @@ bash release.sh
 | `build.sh` | 유니버설 빌드 + `.app` 패키징 + 코드 서명 |
 | `release.sh` | 공증 + DMG 생성 + DMG 공증 + 티켓 부착 |
 | `assets/icon/` | 아이콘 원본·시안·생성 스크립트 (`AppIcon.icns` 가 빌드에 쓰인다) |
+| `assets/screenshot.png` | README 용 실행 화면 |
 
 ## 라이선스
 
