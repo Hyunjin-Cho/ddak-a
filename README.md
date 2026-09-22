@@ -125,6 +125,11 @@ python3 -m venv .tools/venv
 .tools/venv/bin/python -m pip install dmgbuild
 ```
 
+> 🔒 **`dmgbuild` 는 1.6.7 이상이어야 한다.** macOS 26.2 에서 `.DS_Store` 에 `pBBk` 블롭이
+> 들어 있으면 DMG 배경이 표시되지 않는 회귀가 있었는데(FB21405103), `dmgbuild` 1.6.7 이
+> 그 블롭을 빼면서 해결됐다. 낮은 버전으로 만들면 **배경 없는 맨 창이 조용히 나간다** —
+> 빌드는 성공하므로 눈으로 보기 전에는 모른다. `release.sh` 가 시작 전에 버전을 확인한다.
+
 > macOS 는 원래 이 설정을 Finder 에게 시켜서 만들지만, **macOS 27 에서는 Finder 의
 > "배경 그림 지정"이 동작하지 않는다** — 설정하면 오류 없이 무시되고, 읽으면 `-10000`
 > 오류가 난다(2026-09-22 실측). `dmgbuild` 는 Finder 를 거치지 않고 `.DS_Store` 를 직접
@@ -141,13 +146,20 @@ bash release.sh
 
 `release.sh`는 아래 단계를 모두 통과해야 `dist/` 안에 최종 `.dmg`를 만든다.
 
-1. 키체인 프로필·인증서·도구가 준비됐는지 먼저 확인 (빌드 전에 걸러낸다)
+1. 키체인 프로필·인증서·도구(`dmgbuild` 버전 포함)가 준비됐는지 먼저 확인 (빌드 전에 걸러낸다)
 2. Intel + Apple Silicon 유니버설 빌드
 3. Developer ID 서명과 Hardened Runtime 적용
-4. **앱** 공증 제출 → 승인 대기 → 티켓 부착
-5. 응용 프로그램 폴더 바로가기를 넣은 **DMG** 생성
-6. **DMG** 서명 → 공증 → 티켓 부착
-7. Gatekeeper 실행 가능 여부 최종 확인
+4. 서명이 **제대로** 됐는지 단언 — Hardened Runtime · 신뢰 타임스탬프 · `get-task-allow` 없음
+5. 디버그 심볼(dSYM)을 배포 바이너리와 UUID 대조 후 `release-records/` 에 보관
+6. **앱** 공증 제출 → 승인 대기 → 티켓 부착 (제출 ID·로그도 함께 보관)
+7. 응용 프로그램 폴더 바로가기를 넣은 **DMG** 생성
+8. **DMG** 서명 → 공증 → 티켓 부착
+9. Gatekeeper 실행 가능 여부 최종 확인
+10. 배포물 SHA-256 을 `dist/*.dmg.sha256` 에 기록
+
+> `release-records/<버전>/` 에는 dSYM·공증 로그·체크섬이 남는다. `.build/` 밖에 두는 이유는
+> `swift package clean` 한 번에 날아가지 않게 하려는 것이다 — dSYM 이 없으면 나중에 받은
+> 크래시 리포트에 함수 이름이 안 나오고 주소만 남는다. 이 폴더는 저장소에 올리지 않는다.
 
 > 앱과 DMG를 **둘 다** 공증한다. 앱에만 티켓을 붙이면 DMG를 열 때 경고가 남고,
 > DMG에만 붙이면 앱을 꺼내 옮겼을 때 검증이 약해진다.
