@@ -11,6 +11,10 @@
 **키보드를 통째로 차단**하는 macOS 유틸리티. **마우스와 트랙패드는 그대로 살아있다.**
 
 <p align="center">
+  <b>macOS 12 (Monterey) 이상</b> · <b>Intel · Apple Silicon 모두 지원</b>
+</p>
+
+<p align="center">
   <img src="assets/screenshot.png" width="680" alt="실행 중 화면">
   <br>
   <sub>실행 중 화면 — 연결된 <b>모든 모니터</b>를 이렇게 덮는다 (사진은 화면 가운데 부분)</sub>
@@ -156,9 +160,16 @@ bash release.sh
 
 ## 요구 사항
 
-- macOS 12 (Monterey) 이상
+- **macOS 12 (Monterey) 이상**
+  — 내 맥 버전은 화면 왼쪽 위 사과 메뉴 → **이 Mac에 관하여** 에서 볼 수 있다
+- **Intel · Apple Silicon 모두 지원**
+  — 두 아키텍처가 한 앱에 함께 들어 있는 유니버설 바이너리라, 맥 종류에 따라 다른 파일을
+  받을 필요가 없다. 받은 앱이 알아서 그 맥에 맞는 쪽으로 실행된다
 - 손쉬운 사용(Accessibility) 권한
 - 입력 모니터링(Input Monitoring) 권한 — 키 입력을 가로채려면 손쉬운 사용과 **별도로** 필요하다
+
+> 배포본에서 실제로 확인한 값이다 — 두 아키텍처 모두 최소 버전 `12.0`, 아키텍처 `x86_64 arm64`.
+> 다만 **개발·검증은 macOS 27에서 했고, 12~26 실기기에서는 확인하지 못했다.**
 
 ## 구조
 
