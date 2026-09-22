@@ -21,3 +21,18 @@ HANDOFF_*.md
 
 # 배포 기록(dSYM·공증 로그·체크섬) — 로컬 보관용이고 저장소에 올리지 않는다 (2026-09-22)
 release-records/
+
+# 서명 재료 — 인증서·개인키·프로비저닝 파일 (2026-09-23, #5)
+# 🔒 공개 저장소다. 인증서 백업(.p12)을 저장하다가 이 폴더를 고르고 `git add -A` 하면 개인키가
+#    그대로 공개되고, 한 번 푸시하면 기록에서 지우기 어렵다. "넣지 말 것"이라는 주의를 규칙으로 바꾼다.
+#    (*.key 는 Keynote 파일과 확장자가 같다 — 이 저장소에 Keynote 를 둘 일은 없다고 보고 함께 막는다)
+*.p12
+*.pfx
+*.cer
+*.certSigningRequest
+*.key
+*.pem
+*.p8
+*.keychain
+*.keychain-db
+*.provisionprofile
