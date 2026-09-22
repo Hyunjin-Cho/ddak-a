@@ -333,7 +333,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func startCleaning() {
-        createOverlayWindows()
+        // 화면에 종료 방법을 보여줄 수 없으면 키보드 차단 자체를 시작하지 않는다.
+        // 보이지 않는 차단 상태가 되는 것보다 즉시 종료하는 편이 안전하다.
+        guard createOverlayWindows() else {
+            NSApp.terminate(nil)
+            return
+        }
 
         if !startEventTap() {
             let alert = NSAlert()
@@ -355,7 +360,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     // MARK: - Overlay
 
-    func createOverlayWindows() {
+    func createOverlayWindows() -> Bool {
         closeOverlayWindows()
 
         // 🚨 2026-08-12 수정: NSScreen.screens는 호출할 때마다 다른 인스턴스를 돌려줄 수 있어서
@@ -363,7 +368,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // 어느 화면에도 안 그려짐). 한 번만 받아서 그 배열만 쓴다.
         // 동시에, 마우스가 어느 모니터에 있든 탈출 버튼을 누를 수 있도록 모든 화면에 콘텐츠를 그린다.
         let screens = NSScreen.screens
-        guard !screens.isEmpty else { return }
+        guard !screens.isEmpty else { return false }
 
         lastCountdownText = ""
 
@@ -399,6 +404,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         updateCountdownLabels()
         NSApp.activate(ignoringOtherApps: true)
+        return true
     }
 
     func setupOverlayContent(in view: NSView, size: NSSize) {
@@ -459,7 +465,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // 🚨 2026-08-12: 청소 도중 모니터를 꽂거나 빼면 새 화면이 안 덮인 채로 남는다 → 오버레이 재구성
     @objc func screenParametersChanged() {
         guard isCleaning, !isFinishing else { return }
-        createOverlayWindows()
+        // 화면이 모두 사라지면 보이지 않는 상태로 키보드 차단을 유지하지 않고 즉시 안전 종료한다.
+        guard createOverlayWindows() else {
+            finishCleaning()
+            return
+        }
     }
 
     func formattedTime(_ seconds: Int) -> String {
