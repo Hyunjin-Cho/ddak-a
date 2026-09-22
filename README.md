@@ -2,7 +2,11 @@
   <img src="assets/icon/AppIcon-256.png" width="128" alt="닦아 앱 아이콘">
 </p>
 
+<a id="korean"></a>
+
 # 닦아 (ddak-a)
+
+**한국어** · [English](#english)
 
 > **기준일:** 2026-09-22
 > **상태:** **v1.1 공개 배포 중** — [Releases](https://github.com/Hyunjin-Cho/ddak-a/releases)에서 받을 수 있다 (앱·DMG 모두 Apple 공증 완료)
@@ -271,5 +275,250 @@ bash release.sh
 > 올리지 않는다(로컬 보관용).
 
 ## 라이선스
+
+[MIT](LICENSE)
+
+---
+
+<a id="english"></a>
+
+<p align="center">
+  <img src="assets/icon/AppIcon-256.png" width="128" alt="ddak-a app icon">
+</p>
+
+# ddak-a (닦아) — English
+
+[한국어](#korean) · **English**
+
+> **As of:** 2026-09-22
+> **Status:** **v1.1 is out** — get it from [Releases](https://github.com/Hyunjin-Cho/ddak-a/releases) (both the app and the DMG are notarized by Apple)
+
+A macOS utility that **blocks the whole keyboard** while it runs, so keys you press by accident
+while wiping your Mac's keyboard never reach the computer. **Your mouse and trackpad keep working.**
+
+The name 닦아 (*ddak-a*) is Korean for "wipe it".
+
+<p align="center">
+  <b>macOS 12 (Monterey) or later</b> · <b>Intel and Apple Silicon</b>
+</p>
+
+<p align="center">
+  <img src="assets/screenshot.png" width="680" alt="ddak-a while running">
+  <br>
+  <sub>While running — it covers <b>every connected display</b> like this (the shot shows the centre of one screen)</sub>
+</p>
+
+## Install
+
+1. Download the `.dmg` from [Releases](https://github.com/Hyunjin-Cho/ddak-a/releases)
+2. In the window that opens, **drag `닦아` onto the `Applications` folder**
+3. Launch it from your Applications folder
+
+> ### ⚠️ Move it to Applications before you run it
+>
+> When you run an app downloaded from the internet from **outside** the Applications folder,
+> macOS runs it from a fresh temporary copy each time (App Translocation). **An app running from
+> that temporary path never keeps its Accessibility and Input Monitoring permissions** — you turn
+> them on, and the next launch has them off again.
+>
+> Moving it into Applications **yourself** releases that behaviour. If you leave the app sitting in
+> Downloads or on the Desktop, the permissions will never stick.
+>
+> Since v1.1 the app notices this itself and tells you **before asking for any permission**, then quits.
+
+On first launch it asks for **Accessibility** and **Input Monitoring**. It needs both to block the keyboard.
+
+## How it works
+
+1. Launch → "Start ddak-a?" confirmation
+2. Permission check — **Accessibility** + **Input Monitoring** (the app requests them itself if missing)
+3. Covers **every connected display** with a sky-blue full-screen overlay and starts the countdown
+4. It ends on whichever comes first:
+   - Clicking **"Done"** → quits immediately
+   - The 3-minute countdown finishing → quits automatically
+   - **Cmd + Shift + 9 (⌘⇧9)** → the app detects it itself and quits immediately
+
+## What gets blocked
+
+| Input | Blocked? |
+|---|---|
+| Built-in keyboard | Blocked |
+| Bluetooth / USB external keyboards | Blocked |
+| Media keys (brightness, volume, …) | Blocked |
+| Cmd + Shift + 9 (⌘⇧9) | Caught by the app to **quit immediately** (never passed to other apps) |
+| Mouse / trackpad | Not blocked |
+
+## Safety nets
+
+For an app that blocks your keyboard, the dangerous failure is "it never lets go". So several
+independent mechanisms are layered on top of each other.
+
+- The 3-minute countdown ends with a normal quit
+- A safety timer that runs **independently of the countdown** tries again at 190 seconds
+- In case even that timer fails, a **background watchdog unrelated to the app's main logic** counts
+  to 195 seconds and kills the process. When the process is gone, so is the keyboard block
+- The escape button is shown on **every display**, so it is reachable wherever your mouse is
+- The layout scales down proportionally so the escape button is never clipped on small screens
+- **A second instance is prevented.** With two blockers running, the escape shortcut would quit only
+  one and the other would keep blocking. Verified on macOS 27; not verified below that — and even if
+  it were not prevented, every automatic release above still runs per instance
+
+## Build
+
+```bash
+bash build.sh
+```
+
+Builds a universal binary (Intel + Apple Silicon), wraps it in an `.app` bundle and code-signs it.
+The signing identity can be overridden:
+
+```bash
+DDAKA_SIGN_IDENTITY="Developer ID Application: ..." bash build.sh
+```
+
+> With an ad-hoc signature (no certificate) **the app's identity changes on every build**, macOS sees
+> a different app each time, and the Accessibility / Input Monitoring grants are dropped. A real
+> certificate keeps the identity — and the permissions — stable.
+
+## Distributing it yourself (Apple notarization)
+
+> **This section is for building and distributing from this repository.** If you only want to use the
+> app, the [Install](#install) section is all you need. Everything here runs with **your own
+> Developer ID certificate and Apple account**; no certificate or password is stored in this
+> repository (both live only in your own macOS Keychain).
+
+Shipping to other people needs Developer ID signing, Apple notarization and a stapled ticket.
+Credentials go in the Keychain, never in the repo or a script.
+
+### 1. One-time — store notarization credentials in the Keychain
+
+Create an app-specific password at [account.apple.com](https://account.apple.com/) under
+**Sign-In and Security > App-Specific Passwords**. The command below asks for it without echoing it
+and saves it under the name `ddaka-notary`:
+
+```bash
+xcrun notarytool store-credentials "ddaka-notary" \
+  --apple-id "your Apple ID" \
+  --team-id "6RH6FXY82P"
+```
+
+### 2. One-time — the tool that builds the installer window
+
+The installer window you see when opening the DMG (background art, icon positions, window size) is
+produced by `dmgbuild`. Install it in a project-local virtualenv so the system Python stays untouched:
+
+```bash
+python3 -m venv .tools/venv
+.tools/venv/bin/python -m pip install dmgbuild
+```
+
+> 🔒 **`dmgbuild` must be 1.6.7 or newer.** On macOS 26.2 a `pBBk` blob inside `.DS_Store` stopped the
+> DMG background from showing (FB21405103); `dmgbuild` 1.6.7 fixed it by dropping that blob. An older
+> version **silently ships a blank installer window** — the build still succeeds, so you only find out
+> by looking. `release.sh` checks the version before it starts.
+
+> macOS normally has Finder produce these settings, but **on macOS 27 Finder's "set background
+> picture" does not work** — setting it is ignored without an error, and reading it returns `-10000`
+> (measured 2026-09-22). `dmgbuild` writes `.DS_Store` directly without going through Finder, so it is
+> unaffected.
+
+### 3. Build the distributable
+
+```bash
+bash release.sh
+```
+
+`release.sh` only produces the final `.dmg` in `dist/` after every step below passes.
+
+1. Check the Keychain profile, certificate and tooling (including the `dmgbuild` version) **before** the long build
+2. Universal build (Intel + Apple Silicon)
+3. Developer ID signature with Hardened Runtime
+4. Assert the signature is actually **correct** — Hardened Runtime, trusted timestamp, no `get-task-allow`
+5. Match the dSYM's UUID against the shipping binary, then keep it in `release-records/`
+6. Submit the **app** for notarization → wait → staple the ticket (submission ID and log are kept too)
+7. Build the **DMG** with an Applications shortcut inside
+8. Sign → notarize → staple the **DMG**
+9. Final Gatekeeper assessment
+10. Record the SHA-256 of the distributable in `dist/*.dmg.sha256`
+
+> 🔒 **Upload the `.dmg` and the `.dmg.sha256` together** (or put the hash in the release notes). The
+> checksum exists so people can verify that what they downloaded is what you uploaded — but neither
+> `dist/` nor `release-records/` is committed, so if you do not upload it the value is one only you can
+> see. On the receiving end: `shasum -c ddak-a-<version>.dmg.sha256`.
+
+> **Both the app and the DMG are notarized.** Stapling only the app leaves a warning when the DMG is
+> opened; stapling only the DMG weakens verification once the app is copied out of it.
+
+Other Keychain profiles or signing identities can be passed by environment variable:
+
+```bash
+DDAKA_NOTARY_PROFILE="another-profile" \
+DDAKA_SIGN_IDENTITY="Developer ID Application: ..." \
+bash release.sh
+```
+
+Apple's guide: [Notarizing macOS software before distribution](https://developer.apple.com/documentation/security/notarizing-macos-software-before-distribution)
+
+> **This app cannot ship on the Mac App Store.** The App Store requires sandboxing, and the key
+> interception (`CGEventTap`) and Input Monitoring permission this app depends on do not work inside
+> the sandbox. Direct Developer ID distribution is the only route.
+
+## Display language
+
+The app follows your Mac's system language automatically. There is no in-app setting.
+
+More precisely, it uses **the highest entry in your system's "Preferred Languages" list that this app
+actually supports**. If your first choice is a language it does not support (French, say) but Korean
+is second, you get Korean.
+
+| System language | Shown as |
+|---|---|
+| 한국어 | Korean |
+| English | English |
+| 日本語 | Japanese |
+| 简体中文 (mainland China, Singapore) | Simplified Chinese |
+| 繁體中文 (Taiwan, Hong Kong, Macau) | Traditional Chinese |
+| None of the supported languages in the list | English |
+
+Strings are not `.lproj` resources; all five languages sit side by side in an `L()` call in the
+source. Adding a string with a language missing **fails the build**, so none can be forgotten.
+
+## Requirements
+
+- **macOS 12 (Monterey) or later**
+  — check yours under  → **About This Mac**
+- **Intel and Apple Silicon**
+  — one universal binary contains both architectures, so there is no separate download per Mac
+- Accessibility permission
+- Input Monitoring permission — intercepting key input needs this **separately** from Accessibility
+
+> These are verified against the shipping build: minimum version `12.0` and architectures
+> `x86_64 arm64` for both slices. Note that **development and testing were done on macOS 27; 12
+> through 26 have not been verified on real hardware.**
+
+## Project layout
+
+| File | Role |
+|---|---|
+| `Sources/ddaka/main.swift` | The whole app (single file) |
+| `Package.swift` | SwiftPM manifest |
+| `Info.plist` | Bundle information |
+| `build.sh` | Universal build + `.app` packaging + code signing |
+| `release.sh` | Notarization + DMG + DMG notarization + stapling |
+| `assets/icon/` | Icon sources and conversion script (`AppIcon.icns` is what the build uses) |
+| `assets/screenshot.png` | The screenshot in this README |
+| `assets/dmg-settings.py` | Installer window layout (background, icon positions, window size) |
+| `assets/dmg-background.swift` | Script that draws the installer background (`swift ... <output dir>`) |
+| `assets/dmg-background.tiff` | The background it produces (1x + 2x, combined with `tiffutil -cathidpicheck`) |
+
+> 🔒 **The three installer-window files move together.** The background's `W x H` must match
+> `window_rect` in `dmg-settings.py` (otherwise the bottom is cut off in the Finder window), and the
+> icon coordinates must match the arrow in the background (otherwise the arrow points nowhere).
+> If you redraw the background, regenerate the `.tiff` too or nothing changes.
+
+> `release-records/<version>/` accumulates the dSYM, notarization logs and checksum for each release.
+> It is not committed (local keeping only).
+
+## License
 
 [MIT](LICENSE)
