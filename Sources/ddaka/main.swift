@@ -76,7 +76,9 @@ enum Strings {
         "螢幕將被天藍色覆蓋，鍵盤輸入將被完全阻擋 \(totalMinutes) 分鐘（或直到您點擊「完成」按鈕）。滑鼠和觸控板仍可正常使用。\n\n隨時按 ⌘⇧9 即可結束。"
     )
     static let confirmStart = L("Start", "예", "開始", "开始", "開始")
-    static let confirmCancel = L("Cancel", "아니오", "キャンセル", "取消", "取消")
+    // 🚨 2026-09-23 (#8): "아니오" -> "아니요". 대답하는 말은 '아니요'가 표준이다('아니오'는
+    // "그것은 사과가 아니오"처럼 문장을 끝맺는 말). macOS 자체 대화상자도 '아니요'를 쓴다.
+    static let confirmCancel = L("Cancel", "아니요", "キャンセル", "取消", "取消")
 
     // 임시 경로(App Translocation) 안내
     // 🚨 2026-09-22 신설. 문구는 "무엇을 하면 되는지"만 말한다 — translocation 이 무엇인지
@@ -112,10 +114,12 @@ enum Strings {
         "需要额外权限",
         "需要額外權限"
     )
+    // 🚨 2026-09-23 (#8): 한국어 문구는 전부 해요체로 맞춘다. 이 문구만 "켜줘"(반말)로 시작해
+    // 한 메시지 안에서 반말과 해요체("돼요")가 섞여 있었다. 탭 실패 안내(tapFailedBody)도 같은 문제.
     static func permissionBody(_ list: String) -> String {
         return L(
             "Open System Settings › Privacy & Security and turn on ddak-a for:\n\n\(list)\n\nThen launch ddak-a again.",
-            "시스템 설정 > 개인정보 보호 및 보안에서 아래 항목의 '닦아(ddak-a)'를 켜줘.\n\n\(list)\n\n켠 다음 닦아를 다시 실행하면 돼요.",
+            "시스템 설정 > 개인정보 보호 및 보안에서 아래 항목의 '닦아(ddak-a)'를 켜 주세요.\n\n\(list)\n\n켠 다음 닦아를 다시 실행하면 돼요.",
             "「システム設定 › プライバシーとセキュリティ」で、以下の項目の ddak-a をオンにしてください。\n\n\(list)\n\nオンにしたら ddak-a をもう一度起動してください。",
             "请在“系统设置 › 隐私与安全性”中为以下项目启用 ddak-a：\n\n\(list)\n\n启用后请重新启动 ddak-a。",
             "請在「系統設定 › 隱私權與安全性」中為以下項目啟用 ddak-a：\n\n\(list)\n\n啟用後請重新啟動 ddak-a。"
@@ -161,7 +165,7 @@ enum Strings {
     )
     static let tapFailedBody = L(
         "Turn on both Accessibility and Input Monitoring for ddak-a in System Settings › Privacy & Security, then launch it again.",
-        "시스템 설정 > 개인정보 보호 및 보안에서 손쉬운 사용과 입력 모니터링 둘 다 '닦아'를 켜준 다음 다시 실행해줘.",
+        "시스템 설정 > 개인정보 보호 및 보안에서 손쉬운 사용과 입력 모니터링 둘 다 '닦아'를 켠 다음 다시 실행해 주세요.",
         "「システム設定 › プライバシーとセキュリティ」でアクセシビリティと入力監視の両方をオンにしてから、もう一度起動してください。",
         "请在“系统设置 › 隐私与安全性”中同时启用辅助功能和输入监控，然后重新启动。",
         "請在「系統設定 › 隱私權與安全性」中同時啟用輔助使用和輸入監控，然後重新啟動。"
@@ -169,9 +173,10 @@ enum Strings {
     static let ok = L("OK", "확인", "OK", "好", "好")
 
     // 오버레이 화면
+    // 🚨 2026-09-23 (#8): "청소중" -> "청소 중". '중'은 의존 명사라 띄어 쓴다.
     static let cleaning = L(
         "Cleaning keyboard",
-        "키보드 청소중",
+        "키보드 청소 중",
         "キーボード清掃中",
         "正在清洁键盘",
         "正在清潔鍵盤"
