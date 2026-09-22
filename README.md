@@ -1,7 +1,11 @@
+<p align="center">
+  <img src="assets/icon/AppIcon-256.png" width="128" alt="닦아 앱 아이콘">
+</p>
+
 # 닦아 (ddak-a)
 
 > **기준일:** 2026-09-22
-> **상태:** 배포 준비 — 기능 확정, 서명·공증 파이프라인 구축 완료, 코드 검토 1회 반영
+> **상태:** **v1.0 공개 배포 중** — [Releases](https://github.com/Hyunjin-Cho/ddak-a/releases)에서 받을 수 있다 (앱·DMG 모두 Apple 공증 완료)
 
 맥 키보드를 닦을 때 실수로 키가 눌려도 입력이 컴퓨터에 전달되지 않도록, 앱이 켜져 있는 동안
 **키보드를 통째로 차단**하는 macOS 유틸리티. **마우스와 트랙패드는 그대로 살아있다.**
