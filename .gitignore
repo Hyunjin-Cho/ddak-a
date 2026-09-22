@@ -15,3 +15,6 @@ assets/icon/AI-프롬프트.md
 # DMG 설치 창을 만드는 도구용 가상환경 — 각자 로컬에 만든다 (2026-09-22)
 # 설치: python3 -m venv .tools/venv && .tools/venv/bin/python -m pip install dmgbuild
 .tools/
+
+# 세션 인계 문서 — 로컬 작업 메모다 (2026-09-22)
+HANDOFF_*.md
