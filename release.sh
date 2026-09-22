@@ -219,7 +219,19 @@ if ! printf '%s' "$SIGN_INFO" | grep -q '^Timestamp='; then
 fi
 
 # (3) get-task-allow — 디버거를 붙일 수 있게 하는 디버그용 권한. 섞이면 공증이 거부된다.
-APP_ENTITLEMENTS="$(codesign --display --entitlements - --xml "$APP_BUNDLE" 2>&1 || true)"
+# 🚨 2026-09-22 (PR #1 리뷰 F-1): 종전에는 뒤에 `|| true` 를 붙여 덤프 실패까지 삼켰다.
+# 그러면 명령이 깨져서 오류 문구만 돌아와도 grep 이 아무것도 못 찾아 "없음 ✓" 으로 통과한다
+# — 금속탐지기가 꺼져 있는데 "삐 소리가 안 났으니 통과"라고 하는 꼴이다.
+# 같은 절의 (1)·(2)는 명령이 실패하면 set -e 로 멈추는데 이 하나만 헐거웠다.
+# 🔒 "깨끗하다"와 "못 봤다"를 가른다 — 확인하지 못했으면 통과시키지 않는다.
+ENTITLEMENTS_EXIT=0
+APP_ENTITLEMENTS="$(codesign --display --entitlements - --xml "$APP_BUNDLE" 2>&1)" || ENTITLEMENTS_EXIT=$?
+if [ "$ENTITLEMENTS_EXIT" -ne 0 ]; then
+    echo "❌ 권한(entitlements) 목록을 읽지 못했어 (codesign 종료코드 $ENTITLEMENTS_EXIT)."
+    echo "   읽지 못한 것은 '섞여 있지 않다'의 근거가 되지 못한다."
+    printf '%s\n' "$APP_ENTITLEMENTS" | sed 's/^/   /'
+    exit 1
+fi
 if printf '%s' "$APP_ENTITLEMENTS" | grep -q 'get-task-allow'; then
     echo "❌ get-task-allow 가 섞여 있어. 디버그 빌드가 배포 경로로 들어왔다."
     exit 1
