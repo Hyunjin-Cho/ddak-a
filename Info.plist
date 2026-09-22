@@ -18,6 +18,23 @@
     <string>AppIcon</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
+    <key>NSHumanReadableCopyright</key>
+    <string>© 2026 Hyunjin Cho · github.com/Hyunjin-Cho</string>
+    <!-- 2026-09-22: 중복 실행 금지. 두 인스턴스가 각각 키보드를 막으면 ⌘⇧9 로 하나만 꺼지고
+         나머지가 계속 막아서, 사용자에게는 "탈출 단축키가 안 듣는다"로 보인다.
+         🚨 문서와 실제 동작이 다르다: Apple 공식 설명은 "여러 사용자가 동시에 실행하는 것"을
+         막는 키로 읽히는데, macOS 27.0 실측에서는 같은 사용자의 두 번째 실행과 open -n 까지
+         막혔다. 문서화되지 않은 범위라 OS 버전에 따라 달라질 수 있으므로 이 키에만 기대지
+         않는다 — 195초 강제 종료가 인스턴스마다 따로 돌아가는 것이 최종 안전망이다.
+         (macOS 12~26 에서의 동작은 확인하지 못했다) -->
+    <key>LSMultipleInstancesProhibited</key>
+    <true/>
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.utilities</string>
+    <!-- 2026-09-22: VoiceOver 가 읽을 이름. 한글을 못 읽는 음성 환경에서 "디-디-에이-케이-에이"로
+         더듬는 것을 막는다. 원래 발음(따까)에 가장 가까운 로마자 표기를 쓴다. -->
+    <key>CFBundleSpokenName</key>
+    <string>Ddaka</string>
     <key>LSMinimumSystemVersion</key>
     <string>12.0</string>
     <key>NSHighResolutionCapable</key>

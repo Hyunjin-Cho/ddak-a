@@ -10,8 +10,11 @@ let safetyLimitSeconds: TimeInterval = 190 // 카운트다운보다 10초 길게
 let hardKillGraceSeconds: TimeInterval = 5 // 세이프티 타이머마저 실패했을 때 프로세스를 강제 종료하기까지의 여유 (총 195초)
 
 // MARK: - 다국어 (2026-08-12: 영어 기본 / 한국어 / 일본어 / 중국어)
+// 🚨 2026-09-22: 중국어를 간체(zhHans)와 번체(zhHant)로 나눴다. 종전에는 zh 로 시작하면
+// 전부 간체로 보냈기 때문에 대만·홍콩 사용자가 어색한 표기를 봤다(리뷰 F-8).
+// 이 4개(실질 5종) 밖의 언어는 전부 영어로 떨어진다 — 독일어·프랑스어 등은 영어를 본다.
 
-enum UILanguage { case en, ko, ja, zh }
+enum UILanguage { case en, ko, ja, zhHans, zhHant }
 
 // 번들에 .lproj 리소스를 넣지 않고 시스템 선호 언어를 직접 읽는다.
 // (SPM 실행 타겟 + 수동 .app 패키징 구조라 표준 로컬라이제이션 리소스를 쓰기 번거롭고,
@@ -20,16 +23,24 @@ let uiLanguage: UILanguage = {
     guard let code = Locale.preferredLanguages.first?.lowercased() else { return .en }
     if code.hasPrefix("ko") { return .ko }
     if code.hasPrefix("ja") { return .ja }
-    if code.hasPrefix("zh") { return .zh } // 간체 기준. 번체를 따로 두려면 zh-hant를 분기할 것
+    if code.hasPrefix("zh") {
+        // 대만·홍콩·마카오는 번체. 표기는 zh-hant-tw 처럼 오기도 하고 zh-tw 처럼 짧게 오기도 한다.
+        // 싱가포르(zh-hans-sg)와 본토(zh-hans-cn)는 간체이므로 아래 목록에 넣지 않는다.
+        for hant in ["zh-hant", "zh-tw", "zh-hk", "zh-mo"] where code.hasPrefix(hant) {
+            return .zhHant
+        }
+        return .zhHans
+    }
     return .en
 }()
 
-func L(_ en: String, _ ko: String, _ ja: String, _ zh: String) -> String {
+func L(_ en: String, _ ko: String, _ ja: String, _ zhHans: String, _ zhHant: String) -> String {
     switch uiLanguage {
     case .en: return en
     case .ko: return ko
     case .ja: return ja
-    case .zh: return zh
+    case .zhHans: return zhHans
+    case .zhHant: return zhHant
     }
 }
 
@@ -41,100 +52,117 @@ enum Strings {
         "Start ddak-a?",
         "닦아 실행할까요?",
         "ddak-a を開始しますか？",
-        "要启动 ddak-a 吗？"
+        "要启动 ddak-a 吗？",
+        "要啟動 ddak-a 嗎？"
     )
     static let confirmBody = L(
         "Your screen will be covered in sky blue and every keystroke will be blocked for \(totalMinutes) minutes — or until you click “Done”. Your mouse and trackpad keep working.\n\nYou can quit at any time with ⌘⇧9.",
         "실행하면 화면이 하늘색으로 덮이고, 키보드 입력이 \(totalMinutes)분간(또는 '다 닦았어요' 버튼을 누를 때까지) 완전히 차단돼요. 마우스·트랙패드는 그대로 움직여요.\n\n언제든 ⌘⇧9 을 누르면 바로 종료돼요.",
         "画面が水色で覆われ、キーボード入力が\(totalMinutes)分間（または「完了」ボタンを押すまで）完全にブロックされます。マウス・トラックパッドはそのまま使えます。\n\n⌘⇧9 でいつでも終了できます。",
-        "屏幕将被天蓝色覆盖，键盘输入将被完全阻止 \(totalMinutes) 分钟（或直到您点击“完成”按钮）。鼠标和触控板仍可正常使用。\n\n随时按 ⌘⇧9 即可退出。"
+        "屏幕将被天蓝色覆盖，键盘输入将被完全阻止 \(totalMinutes) 分钟（或直到您点击“完成”按钮）。鼠标和触控板仍可正常使用。\n\n随时按 ⌘⇧9 即可退出。",
+        "螢幕將被天藍色覆蓋，鍵盤輸入將被完全阻擋 \(totalMinutes) 分鐘（或直到您點擊「完成」按鈕）。滑鼠和觸控板仍可正常使用。\n\n隨時按 ⌘⇧9 即可結束。"
     )
-    static let confirmStart = L("Start", "예", "開始", "开始")
-    static let confirmCancel = L("Cancel", "아니오", "キャンセル", "取消")
+    static let confirmStart = L("Start", "예", "開始", "开始", "開始")
+    static let confirmCancel = L("Cancel", "아니오", "キャンセル", "取消", "取消")
 
     // 권한 안내
     static let permissionTitle = L(
         "Additional permissions needed",
         "권한이 더 필요해요",
         "追加の権限が必要です",
-        "需要额外权限"
+        "需要额外权限",
+        "需要額外權限"
     )
     static func permissionBody(_ list: String) -> String {
         return L(
             "Open System Settings › Privacy & Security and turn on ddak-a for:\n\n\(list)\n\nThen launch ddak-a again.",
             "시스템 설정 > 개인정보 보호 및 보안에서 아래 항목의 '닦아(ddak-a)'를 켜줘.\n\n\(list)\n\n켠 다음 닦아를 다시 실행하면 돼요.",
             "「システム設定 › プライバシーとセキュリティ」で、以下の項目の ddak-a をオンにしてください。\n\n\(list)\n\nオンにしたら ddak-a をもう一度起動してください。",
-            "请在“系统设置 › 隐私与安全性”中为以下项目启用 ddak-a：\n\n\(list)\n\n启用后请重新启动 ddak-a。"
+            "请在“系统设置 › 隐私与安全性”中为以下项目启用 ddak-a：\n\n\(list)\n\n启用后请重新启动 ddak-a。",
+            "請在「系統設定 › 隱私權與安全性」中為以下項目啟用 ddak-a：\n\n\(list)\n\n啟用後請重新啟動 ddak-a。"
         )
     }
     static let permissionAccessibility = L(
         "• Accessibility",
         "• 손쉬운 사용 (Accessibility)",
         "• アクセシビリティ",
-        "• 辅助功能"
+        "• 辅助功能",
+        "• 輔助使用"
     )
     static let permissionInputMonitoring = L(
         "• Input Monitoring",
         "• 입력 모니터링 (Input Monitoring)",
         "• 入力監視",
-        "• 输入监控"
+        "• 输入监控",
+        "• 輸入監控"
     )
     static let openInputMonitoring = L(
         "Open Input Monitoring",
         "입력 모니터링 열기",
         "入力監視を開く",
-        "打开输入监控"
+        "打开输入监控",
+        "打開輸入監控"
     )
     static let openAccessibility = L(
         "Open Accessibility",
         "손쉬운 사용 열기",
         "アクセシビリティを開く",
-        "打开辅助功能"
+        "打开辅助功能",
+        "打開輔助使用"
     )
-    static let close = L("Close", "닫기", "閉じる", "关闭")
+    static let close = L("Close", "닫기", "閉じる", "关闭", "關閉")
 
     // 이벤트탭 실패
     static let tapFailedTitle = L(
         "Couldn’t block the keyboard",
         "키보드를 막지 못했어요",
         "キーボードをブロックできませんでした",
-        "无法阻止键盘输入"
+        "无法阻止键盘输入",
+        "無法阻擋鍵盤輸入"
     )
     static let tapFailedBody = L(
         "Turn on both Accessibility and Input Monitoring for ddak-a in System Settings › Privacy & Security, then launch it again.",
         "시스템 설정 > 개인정보 보호 및 보안에서 손쉬운 사용과 입력 모니터링 둘 다 '닦아'를 켜준 다음 다시 실행해줘.",
         "「システム設定 › プライバシーとセキュリティ」でアクセシビリティと入力監視の両方をオンにしてから、もう一度起動してください。",
-        "请在“系统设置 › 隐私与安全性”中同时启用辅助功能和输入监控，然后重新启动。"
+        "请在“系统设置 › 隐私与安全性”中同时启用辅助功能和输入监控，然后重新启动。",
+        "請在「系統設定 › 隱私權與安全性」中同時啟用輔助使用和輸入監控，然後重新啟動。"
     )
-    static let ok = L("OK", "확인", "OK", "好")
+    static let ok = L("OK", "확인", "OK", "好", "好")
 
     // 오버레이 화면
     static let cleaning = L(
         "Cleaning keyboard",
         "키보드 청소중",
         "キーボード清掃中",
-        "正在清洁键盘"
+        "正在清洁键盘",
+        "正在清潔鍵盤"
     )
     static let mouseHint = L(
         "Your mouse and trackpad still work",
         "마우스·트랙패드는 자유롭게 움직여도 돼요",
         "マウス・トラックパッドはそのまま使えます",
-        "鼠标和触控板仍可正常使用"
+        "鼠标和触控板仍可正常使用",
+        "滑鼠和觸控板仍可正常使用"
     )
-    static let done = L("Done", "다 닦았어요", "完了", "完成")
+    static let done = L("Done", "다 닦았어요", "完了", "完成", "完成")
     // 🚨 2026-08-12: 갇혔을 때 화면에 탈출 방법이 보이지 않으면 안전장치로서 의미가 없다
     static let shortcutHint = L(
         "Press ⌘⇧9 to quit right away",
         "⌘⇧9 을 누르면 바로 종료돼요",
         "⌘⇧9 でいつでも終了できます",
-        "按 ⌘⇧9 可立即退出"
+        "按 ⌘⇧9 可立即退出",
+        "按 ⌘⇧9 可立即結束"
     )
 }
 
-// 2026-08-12 최적화: 0.6초마다 문자열을 새로 조립하지 않도록 4가지 상태를 미리 만들어 둔다
+// 2026-08-12 최적화: 0.6초마다 문자열을 새로 조립하지 않도록 상태를 미리 만들어 둔다
+// 🚨 2026-09-22 오너 요청: 점이 3개까지 늘던 것을 5개까지로 바꿨다(상태 6가지).
+// dotCount 는 이 배열 길이로 나머지 연산을 하므로 개수를 여기서만 바꾸면 된다.
+// 한 바퀴는 1초 x 6 = 6초다.
+let maxCleaningDots = 5
 let cleaningTitles: [String] = {
     let base = Strings.cleaning
-    return (0...3).map { base + String(repeating: ".", count: $0) }
+    return (0...maxCleaningDots).map { base + String(repeating: ".", count: $0) }
 }()
 
 // 2026-08-12 최적화: 색·폰트·문구는 모니터 수만큼 다시 만들 이유가 없어 한 번만 만들어 공유한다
@@ -188,24 +216,31 @@ final class OverlayWindow: NSWindow {
 // 🚨 2026-08-12: 앱이 활성 상태가 아닐 때 첫 클릭이 "창 활성화"로만 소비되면 탈출 버튼이 안 눌린다.
 // 키보드가 막힌 상태에서 유일한 탈출구이므로 첫 클릭부터 반드시 먹혀야 한다.
 final class OverlayButton: NSButton {
+    // 2026-09-22: 눌림 모양에서도 같은 비율을 써야 해서 기억해 둔다
+    private var cornerScale: CGFloat = 1.0
+
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 
     // 2026-08-12: 평상시 모양. frame을 정한 뒤에 불러야 한다(shadowPath가 bounds를 쓰므로).
     // 흰 배경만 깔면 "평평한 사각형"이라 눌러도 눌린 느낌이 안 난다 → 그림자로 살짝 띄운다.
-    func applyRestingStyle() {
+    // 2026-09-22: scale 은 작은 화면에서 배치가 줄어든 비율. 모서리와 그림자만 원래 크기로
+    // 남으면 버튼이 뭉툭해 보여서 함께 줄인다.
+    func applyRestingStyle(scale: CGFloat = 1.0) {
         wantsLayer = true
         guard let layer = layer else { return }
+        cornerScale = scale
         layer.backgroundColor = buttonNormalColor
-        layer.cornerRadius = 10
+        layer.cornerRadius = 10 * scale
         layer.borderWidth = 1
         layer.borderColor = buttonBorderColorResting
         layer.masksToBounds = false // 그림자가 잘리지 않게
         layer.shadowColor = NSColor.black.cgColor
         layer.shadowOpacity = buttonShadowOpacityResting
-        layer.shadowRadius = 8
-        layer.shadowOffset = CGSize(width: 0, height: -3) // macOS는 y가 위쪽이 + → 음수가 아래
+        layer.shadowRadius = 8 * scale
+        layer.shadowOffset = CGSize(width: 0, height: -3 * scale) // macOS는 y가 위쪽이 + → 음수가 아래
         // 경로를 직접 주면 매 프레임 알파를 훑어 그림자를 계산하지 않는다(그리기 비용 절감)
-        layer.shadowPath = CGPath(roundedRect: bounds, cornerWidth: 10, cornerHeight: 10, transform: nil)
+        layer.shadowPath = CGPath(roundedRect: bounds, cornerWidth: 10 * scale,
+                                  cornerHeight: 10 * scale, transform: nil)
     }
 
     // 2026-08-12 추가: isBordered = false + 커스텀 배경이라 시스템 기본 눌림 효과가 없다.
@@ -224,8 +259,8 @@ final class OverlayButton: NSButton {
         layer?.backgroundColor = pressed ? buttonPressedColor : buttonNormalColor
         layer?.borderColor = pressed ? buttonBorderColorPressed : buttonBorderColorResting
         layer?.shadowOpacity = pressed ? buttonShadowOpacityPressed : buttonShadowOpacityResting
-        layer?.shadowRadius = pressed ? 3 : 8
-        layer?.shadowOffset = CGSize(width: 0, height: pressed ? -1 : -3)
+        layer?.shadowRadius = (pressed ? 3 : 8) * cornerScale
+        layer?.shadowOffset = CGSize(width: 0, height: (pressed ? -1 : -3) * cornerScale)
         CATransaction.commit()
     }
 }
@@ -269,6 +304,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         alert.informativeText = Strings.confirmBody
         alert.addButton(withTitle: Strings.confirmStart)
         alert.addButton(withTitle: Strings.confirmCancel)
+
+        // 🚨 2026-09-22: 만든 곳을 남기는 유일한 자리다.
+        // 청소 화면(오버레이)에는 일부러 넣지 않는다 — 거기는 "지금 막혀 있고 이렇게 나간다"만
+        // 말해야 하는 화면이라, 다른 정보가 탈출 안내와 시선을 나눠 갖게 하면 안 된다.
+        // 이 확인창은 아직 키보드가 막히기 전이라 사람이 여유롭게 읽을 수 있다.
+        // 주소는 고유명사라 번역이 필요 없어서 L() 을 쓰지 않는다.
+        let credit = NSTextField(labelWithString: "github.com/Hyunjin-Cho")
+        // 2026-09-22: 처음엔 11pt·tertiary 였는데 실물에서 너무 흐려 있는지도 모르고 지나갔다.
+        // 12pt 로 키우고 색은 오너가 실물을 보고 본문과 같은 labelColor 로 확정했다
+        // (중간 단계인 secondary 도 후보였으나 여전히 약하다는 판단).
+        credit.font = NSFont.systemFont(ofSize: 12, weight: .regular)
+        credit.textColor = .labelColor
+        credit.alignment = .center
+        credit.isSelectable = true // 주소를 복사할 수 있게 (클릭으로 열리지는 않는다)
+        credit.frame = NSRect(x: 0, y: 0, width: 320, height: 18)
+        alert.accessoryView = credit
+
         NSApp.activate(ignoringOtherApps: true)
         let response = alert.runModal()
         if response == .alertFirstButtonReturn {
@@ -411,44 +463,67 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let centerX = size.width / 2
         let centerY = size.height / 2
 
+        // 🚨 2026-09-22: 화면이 작으면 배치 전체를 비례 축소한다.
+        // 고정 오프셋만 쓰던 이전 코드는 600x340pt 미만 화면에서 탈출 버튼이 화면 밖으로
+        // 나갔다(좌표 계산을 복제해 실측). 모니터를 3~4대 쓰는 구성에서 작은 보조
+        // 디스플레이가 섞여 들어오는 경우가 여기 해당한다.
+        // 버튼은 마우스로 쓸 수 있는 유일한 탈출구라, 어느 화면에서든 반드시 보여야 한다.
+        //
+        // 세로 기준 194 = 버튼 아래끝(170) + 아래 여백(24). 가로 기준 600 = 라벨 폭.
+        // 하한 0.45를 두는 이유: 더 줄이면 글자가 읽히지 않아 안내로서 의미가 없어진다.
+        // (그런 화면에서도 ⌘⇧9 와 190/195초 자동 해제는 그대로 남는다)
+        let fit = min(1.0, (size.width - 40) / 600, (centerY - 24) / 194)
+        let s = max(0.45, fit)
+
+        // 폰트도 같은 비율로 줄인다. 배치만 줄이고 글자를 그대로 두면 서로 겹친다.
+        let scaledTitleFont = s < 1 ? NSFont.systemFont(ofSize: 48 * s, weight: .semibold) : titleFont
+        let scaledSubFont = s < 1 ? NSFont.systemFont(ofSize: 16 * s, weight: .regular) : subLabelFont
+        let scaledCountFont = s < 1
+            ? NSFont.monospacedDigitSystemFont(ofSize: 22 * s, weight: .regular) : countdownFont
+
         let label = NSTextField(labelWithString: cleaningTitles[0])
-        label.font = titleFont
+        label.font = scaledTitleFont
         label.textColor = .white
         label.alignment = .center
-        label.frame = NSRect(x: centerX - 300, y: centerY + 10, width: 600, height: 70)
+        label.frame = NSRect(x: centerX - 300 * s, y: centerY + 10 * s, width: 600 * s, height: 70 * s)
         view.addSubview(label)
         titleFields.append(label)
 
         let subLabel = NSTextField(labelWithString: Strings.mouseHint)
-        subLabel.font = subLabelFont
+        subLabel.font = scaledSubFont
         subLabel.textColor = NSColor.white.withAlphaComponent(0.85)
         subLabel.alignment = .center
-        subLabel.frame = NSRect(x: centerX - 300, y: centerY - 30, width: 600, height: 24)
+        subLabel.frame = NSRect(x: centerX - 300 * s, y: centerY - 30 * s, width: 600 * s, height: 24 * s)
         view.addSubview(subLabel)
 
         let countdown = NSTextField(labelWithString: formattedTime(remainingSeconds))
-        countdown.font = countdownFont
+        countdown.font = scaledCountFont
         countdown.textColor = NSColor.white.withAlphaComponent(0.85)
         countdown.alignment = .center
-        countdown.frame = NSRect(x: centerX - 150, y: centerY - 80, width: 300, height: 30)
+        countdown.frame = NSRect(x: centerX - 150 * s, y: centerY - 80 * s, width: 300 * s, height: 30 * s)
         view.addSubview(countdown)
         countdownFields.append(countdown)
 
         // 🚨 2026-08-12: 탈출 단축키를 화면에 계속 띄워 둔다 — 마우스를 못 쓰는 상황의 마지막 안내
         let shortcutLabel = NSTextField(labelWithString: Strings.shortcutHint)
-        shortcutLabel.font = subLabelFont
+        shortcutLabel.font = scaledSubFont
         shortcutLabel.textColor = NSColor.white.withAlphaComponent(0.7)
         shortcutLabel.alignment = .center
-        shortcutLabel.frame = NSRect(x: centerX - 300, y: centerY - 118, width: 600, height: 24)
+        shortcutLabel.frame = NSRect(x: centerX - 300 * s, y: centerY - 118 * s, width: 600 * s, height: 24 * s)
         view.addSubview(shortcutLabel)
 
         let button = OverlayButton(title: Strings.done, target: self, action: #selector(finishButtonTapped))
-        button.frame = NSRect(x: centerX - 90, y: centerY - 170, width: 180, height: 44)
+        button.frame = NSRect(x: centerX - 90 * s, y: centerY - 170 * s, width: 180 * s, height: 44 * s)
         // 🚨 2026-08-12: 시스템 기본 버튼 배경이 하늘색 배경 위에서 옅게 렌더링돼 안 보이는 문제
         // 방지 — 흰 배경 + 진한 텍스트로 명시적으로 대비를 줌
         button.isBordered = false
-        button.attributedTitle = buttonAttributedTitle
-        button.applyRestingStyle() // frame 확정 후에 호출 (그림자 경로가 bounds 기준)
+        button.attributedTitle = s < 1 ? NSAttributedString(
+            string: Strings.done,
+            attributes: [
+                .foregroundColor: NSColor(calibratedRed: 0.1, green: 0.35, blue: 0.5, alpha: 1.0),
+                .font: NSFont.systemFont(ofSize: 18 * s, weight: .medium)
+            ]) : buttonAttributedTitle
+        button.applyRestingStyle(scale: s) // frame 확정 후에 호출 (그림자 경로가 bounds 기준)
         view.addSubview(button)
     }
 
@@ -495,7 +570,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // 🚨 2026-08-12: .common 모드로 등록 — 모달·드래그 등 다른 런루프 모드에서도 계속 돌게 함
         // 2026-08-12 최적화: tolerance를 주면 macOS가 여러 타이머의 깨우기를 묶어 처리해 전력을 아낀다.
         // 점 애니메이션·카운트다운 모두 몇십 ms 늦어도 눈에 띄지 않는다.
-        let dots = Timer(timeInterval: 0.6, repeats: true) { [weak self] _ in
+        // 🚨 2026-09-22 오너 요청: 점 하나가 늘어나는 간격을 0.6초 → 1초로. 한 바퀴는 6초다.
+        let dots = Timer(timeInterval: 1.0, repeats: true) { [weak self] _ in
             guard let self = self else { return }
             self.dotCount = (self.dotCount + 1) % cleaningTitles.count
             let title = cleaningTitles[self.dotCount]
@@ -503,7 +579,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 field.stringValue = title
             }
         }
-        dots.tolerance = 0.15
+        dots.tolerance = 0.2
         RunLoop.main.add(dots, forMode: .common)
         dotTimer = dots
 
@@ -579,6 +655,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 // 2026-08-12 최적화: 이 콜백은 키를 누를 때마다(키를 꾹 누르면 초당 수십 번) 실행된다.
                 // 여기가 느리면 macOS가 탭을 강제로 끊어버려 키보드가 순간 뚫리므로,
                 // 힙 할당을 만들지 않고 필요한 값만 그때그때 꺼내 쓴다.
+                // 🚨 2026-09-22 단서 추가: 아래 default 분기만 예외로 NSEvent 를 만든다.
+                // 거기는 미디어 키(NX_SYSDEFINED)에서만 지나가므로 빈도가 낮아 괜찮다 —
+                // 반대로 말하면 그 분기를 더 무겁게 만들면 안 된다.
                 if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
                     if let refcon = refcon {
                         let delegate = Unmanaged<AppDelegate>.fromOpaque(refcon).takeUnretainedValue()

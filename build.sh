@@ -31,6 +31,19 @@ cp "$BIN_PATH" "$APP_BUNDLE/Contents/MacOS/ddak-a"
 cp Info.plist "$APP_BUNDLE/Contents/Info.plist"
 chmod +x "$APP_BUNDLE/Contents/MacOS/ddak-a"
 
+# 🚨 2026-09-22 (리뷰 F-5): 표시 버전(CFBundleShortVersionString)은 소스 Info.plist 값을 그대로 쓰고,
+# 빌드 번호(CFBundleVersion)만 커밋 수로 자동 부여한다. 둘 다 1.0 으로 고정돼 있으면
+# 내용이 다른 빌드가 같은 버전으로 나가 "이 사람이 가진 게 어느 빌드인지" 알 수 없다.
+# 소스 Info.plist 는 건드리지 않고 번들 안 복사본만 고치므로 저장소가 더러워지지 않는다.
+# 서명 전에 해야 한다 — Info.plist 변경이 서명에 포함되어야 하기 때문이다.
+BUILD_NUMBER="$(git rev-list --count HEAD 2>/dev/null || true)"
+if [ -n "$BUILD_NUMBER" ]; then
+    /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" "$APP_BUNDLE/Contents/Info.plist"
+    echo "   빌드 번호: $BUILD_NUMBER (커밋 수 기준)"
+else
+    echo "   ⚠️ Git 정보를 읽지 못해 빌드 번호를 그대로 둔다(Info.plist 값 사용)"
+fi
+
 # 2026-09-22: 앱 아이콘. Info.plist 의 CFBundleIconFile 이 이 파일명을 가리킨다.
 # 없어도 빌드는 되지만 기본 아이콘으로 나가므로 배포 전에 반드시 확인한다.
 ICON_SRC="assets/icon/AppIcon.icns"
