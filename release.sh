@@ -329,3 +329,10 @@ echo "   앱과 DMG 모두 공증 + 티켓 부착 완료."
 echo "   체크섬: $SHA_FILE"
 echo "$(cat "$SHA_FILE")" | sed 's/^/     /'
 echo "   기록 보관: $RELEASE_RECORDS/ (dSYM · 공증 로그 · 체크섬)"
+echo ""
+# 🔒 2026-09-22 (PR #1 리뷰 F-4): 체크섬은 올려야 값어치가 생긴다.
+# dist/ 도 release-records/ 도 저장소에 안 올라가므로, 여기서 말해 주지 않으면
+# "받은 파일이 올린 그 파일인지 사용자가 대조한다"는 원래 목적을 못 한다.
+echo "📌 다음: 릴리스에 아래 둘을 함께 올린다"
+echo "     $FINAL_DMG"
+echo "     $SHA_FILE   ← 이걸 같이 올려야 사용자가 shasum -c 로 대조할 수 있다"
