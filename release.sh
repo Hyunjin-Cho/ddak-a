@@ -74,9 +74,14 @@ if ! SOURCE_STATUS="$(git status --porcelain --untracked-files=all)"; then
     exit 1
 fi
 # dirty 빌드의 diff 해시. 가드에서 한 번, 빌드 뒤에 한 번 계산해 대조하므로 같은 명령을 한 곳에 둔다.
-# --binary 가 없으면 바이너리(예: 번들에 들어가는 AppIcon.icns)는 "Binary files differ" 한 줄로만
-# 나와서 내용이 달라도 해시가 같아진다. --no-color·--no-ext-diff 는 사용자 Git 설정이 출력(=해시)을
-# 바꾸지 못하게 한다. 추적하지 않는 새 파일의 내용은 git diff 에 들어가지 않는다(목록에 이름만 남는다).
+# --binary 는 바이너리(예: 번들에 들어가는 AppIcon.icns) 변경의 내용까지 diff 에 담는다 — 없으면
+# "Binary files … differ" 한 줄만 남아 그 diff 로는 변경을 되살릴 수 없다.
+# 🚨 2026-09-23 정정(통합 검증): 이 자리에는 "--binary 가 없으면 내용이 달라도 해시가 같아진다"고
+#    적혀 있었다. 실측하니 아니었다 — --binary 없이도 diff 의 `index <blob해시>..<blob해시>` 줄이
+#    내용마다 달라서 해시는 바뀌었다(내용이 다른 두 바이너리 변경 → 서로 다른 해시). --binary 를
+#    쓰는 이유는 해시 구별이 아니라 diff 를 온전하게 두는 것이다.
+# --no-color·--no-ext-diff 는 사용자 Git 설정이 출력(=해시)을 바꾸지 못하게 한다.
+# 추적하지 않는 새 파일의 내용은 git diff 에 들어가지 않는다(목록에 이름만 남는다).
 source_diff_sha() {
     git diff --no-color --no-ext-diff --binary HEAD | shasum -a 256 | awk '{print $1}'
 }
