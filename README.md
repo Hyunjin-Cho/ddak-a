@@ -8,8 +8,8 @@
 
 **한국어** · [English](#english)
 
-> **기준일:** 2026-09-22
-> **상태:** **v1.1 공개 배포 중** — [Releases](https://github.com/Hyunjin-Cho/ddak-a/releases)에서 받을 수 있다 (앱·DMG 모두 Apple 공증 완료)
+> **기준일:** 2026-09-23
+> **상태:** **v1.1 공개 배포 중** · v1.2 준비 중 — [Releases](https://github.com/Hyunjin-Cho/ddak-a/releases)에서 받을 수 있다 (앱·DMG 모두 Apple 공증 완료)
 
 <!-- 🔒 2026-09-22 (PR #1 리뷰 F-3): 이 상태 줄과 아래 "v1.1부터는 …" 문장은 반드시 같이 움직인다.
      이 문서가 새 버전 동작을 현재형으로 안내하는데 Releases 에 그 버전이 없으면, 받아서 써 본
@@ -307,8 +307,8 @@ bash release.sh
 
 [한국어](#korean) · **English**
 
-> **As of:** 2026-09-22
-> **Status:** **v1.1 is out** — get it from [Releases](https://github.com/Hyunjin-Cho/ddak-a/releases) (both the app and the DMG are notarized by Apple)
+> **As of:** 2026-09-23
+> **Status:** **v1.1 is out** · v1.2 in preparation — get it from [Releases](https://github.com/Hyunjin-Cho/ddak-a/releases) (both the app and the DMG are notarized by Apple)
 
 A macOS utility that **blocks the whole keyboard** while it runs, so keys you press by accident
 while wiping your Mac's keyboard never reach the computer. **Your mouse and trackpad keep working.**
