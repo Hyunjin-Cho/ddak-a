@@ -277,11 +277,16 @@ bash release.sh
 | `Info.plist` | 번들 정보 |
 | `build.sh` | 유니버설 빌드 + `.app` 패키징 + 코드 서명 |
 | `release.sh` | 공증 + DMG 생성 + DMG 공증 + 티켓 부착 |
-| `assets/icon/` | 아이콘 원본과 변환 스크립트 (`AppIcon.icns` 가 빌드에 쓰인다) |
+| `assets/icon/` | 앱 아이콘 — 원본 SVG 와 결과물 (`AppIcon.icns` 가 빌드에 쓰인다). 파일별 설명과 다시 만드는 법은 [`assets/icon/README.md`](assets/icon/README.md) |
+| `assets/icon/make-icon.sh` | 원본 SVG 에서 `AppIcon.icns` 까지 다시 만드는 스크립트 (`assets/icon/make-icon.sh <출력폴더>` · 커밋된 파일은 덮어쓰지 않는다) |
 | `assets/screenshot.png` | README 용 실행 화면 |
 | `assets/dmg-settings.py` | DMG 설치 창 구성 (배경·아이콘 위치·창 크기) |
 | `assets/dmg-background.swift` | 설치 창 배경 그림을 그리는 스크립트 (`swift ... <출력폴더>`) |
 | `assets/dmg-background.tiff` | 위 스크립트로 만든 실제 배경 (1x·2x 두 장. `tiffutil -cathidpicheck` 로 합친다) |
+
+<!-- 🚨 2026-09-23 (#11): assets/icon 행 정정. 종전 "아이콘 원본과 변환 스크립트" 는 실제와 달랐다 —
+     mask.swift 가 저장소에 없는 파일을 읽고 커밋된 것과 다른 이름으로 써서, 저장소만으로는 아이콘을
+     다시 만들 수 없었다. 전체 과정은 make-icon.sh 와 assets/icon/README.md 에 있다. -->
 
 > 🔒 **설치 창 관련 세 파일은 같이 움직인다.** 배경 그림의 `W x H` 와 `dmg-settings.py` 의
 > `window_rect` 가 같아야 하고(다르면 Finder 창에서 아래가 잘린다), 아이콘 좌표와 배경의
@@ -538,7 +543,8 @@ source. Adding a string with a language missing **fails the build**, so none can
 | `Info.plist` | Bundle information |
 | `build.sh` | Universal build + `.app` packaging + code signing |
 | `release.sh` | Notarization + DMG + DMG notarization + stapling |
-| `assets/icon/` | Icon sources and conversion script (`AppIcon.icns` is what the build uses) |
+| `assets/icon/` | App icon — source SVG and outputs (`AppIcon.icns` is what the build uses). Per-file notes and how to regenerate: [`assets/icon/README.md`](assets/icon/README.md#english) |
+| `assets/icon/make-icon.sh` | Regenerates the icon from the source SVG up to `AppIcon.icns` (`assets/icon/make-icon.sh <output dir>`; never overwrites the committed files) |
 | `assets/screenshot.png` | The screenshot in this README |
 | `assets/dmg-settings.py` | Installer window layout (background, icon positions, window size) |
 | `assets/dmg-background.swift` | Script that draws the installer background (`swift ... <output dir>`) |
