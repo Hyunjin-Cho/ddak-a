@@ -101,6 +101,46 @@ else
     exit 1
 fi
 
+# 🚨 2026-09-23 (#7): 이미 공개된 버전은 다시 만들지 않는다.
+# 같은 버전으로 다시 돌리면 그 버전의 dSYM·공증 기록이 새 빌드 것으로 바뀐다. 다시 빌드한다고
+# 이미 사용자 손에 있는 바이너리와 UUID 가 맞는 dSYM 이 나온다는 보장은 없으므로, 잃으면 되찾을 길이 없다.
+# 공개 여부는 v<버전> 태그로 판단한다. GitHub 는 draft 릴리스를 publish 할 때 태그를 만들므로
+# draft 단계의 재실행(예: v1.1 재공증)은 여기서 막지 않는다 — 그건 빌드 직전의 "이전 결과 옮겨 두기"가 지킨다.
+# 🔒 우회 스위치를 두지 않는다. 넘어가는 길은 Info.plist 의 버전을 올리는 것 하나뿐이다.
+RELEASE_TAG="v${VERSION}"
+if git show-ref --verify --quiet "refs/tags/${RELEASE_TAG}"; then
+    echo "❌ ${RELEASE_TAG} 태그가 이미 있어 — 이미 공개된 버전이야."
+    echo "   Info.plist 의 CFBundleShortVersionString 을 올려줘 (지금: ${VERSION})."
+    exit 1
+fi
+echo "   로컬에 ${RELEASE_TAG} 태그 없음 ✓"
+
+# 🔒 로컬에 없다고 끝이 아니다 — 다른 맥이나 GitHub 웹에서 publish 했으면 태그는 원격에만 있다.
+# 원격을 확인하지 못했으면(네트워크·인증·origin 없음) 통과시키지 않는다. 확인하지 못한 것은
+# '없다'의 근거가 아니다. 어차피 공증에 네트워크가 필요하므로 여기서 요구해도 잃는 것은 없다.
+# git ls-remote --exit-code: 0 = 찾음, 2 = 원격과 통신했는데 없음, 그 밖 = 확인 실패.
+# GIT_TERMINAL_PROMPT=0 — 인증을 물으며 멈춰 서지 말고 바로 실패로 떨어지게 한다.
+REMOTE_TAG_EXIT=0
+REMOTE_TAG_OUT="$(GIT_TERMINAL_PROMPT=0 git ls-remote --exit-code --tags origin "refs/tags/${RELEASE_TAG}" 2>&1)" \
+    || REMOTE_TAG_EXIT=$?
+case "$REMOTE_TAG_EXIT" in
+    0)
+        echo "❌ 원격(origin)에 ${RELEASE_TAG} 태그가 이미 있어 — 이미 공개된 버전이야."
+        printf '%s\n' "$REMOTE_TAG_OUT" | sed 's/^/     /'
+        echo "   Info.plist 의 CFBundleShortVersionString 을 올려줘 (지금: ${VERSION})."
+        exit 1
+        ;;
+    2)
+        echo "   원격(origin)에 ${RELEASE_TAG} 태그 없음 ✓"
+        ;;
+    *)
+        echo "❌ 원격 태그를 확인하지 못했어 (git ls-remote 종료코드 ${REMOTE_TAG_EXIT})."
+        echo "   확인하지 못한 것은 '없다'의 근거가 아니다 — 네트워크와 origin 설정을 확인해줘."
+        printf '%s\n' "$REMOTE_TAG_OUT" | sed 's/^/     /'
+        exit 1
+        ;;
+esac
+
 # 🚨 2026-09-22: 공증은 "제출 → 대기 → 결과 판정 → 로그 저장"이 앱과 DMG 두 번 반복된다.
 # 같은 절차를 두 벌 적으면 한쪽만 고치는 사고가 나므로 함수 하나로 묶는다.
 #
@@ -117,6 +157,8 @@ notarize_and_staple() {
 
     echo "☁️ Apple 공증 서비스에 제출 중 (${label})..."
     echo "   키체인 프로필: $NOTARY_PROFILE"
+    # 2026-09-23 (#7): 이전 실행의 기록은 빌드 전에 통째로 .prev-… 로 옮겨지므로,
+    # 이 rm 이 지우는 이전 기록은 없다(이번 실행이 쓸 자리만 비운다).
     rm -f "$result_plist" "$log_json"
 
     local submit_exit=0
@@ -232,6 +274,43 @@ if [ ! -f "assets/icon/AppIcon.icns" ]; then
     echo "   Info.plist 의 CFBundleIconFile 이 AppIcon 을 가리키는데 파일이 없어."
     echo "   기본 아이콘으로 배포되는 것을 막기 위해 여기서 멈춘다."
     exit 1
+fi
+
+# 🚨 2026-09-23 (#7): 같은 버전으로 먼저 만든 결과는 지우지 않고 옮겨 둔다.
+# 종전에는 다시 돌리면 공증 결과·로그(rm -f)·dSYM(rm -rf)·dist 의 DMG(rm -f)를 말없이 덮어썼다.
+# 그 버전이 이미 나가 있었다면 사용자 손에 있는 바이너리와 짝인 dSYM 을 영영 잃는다.
+# (v1.1 을 재공증하려고 한 번 다시 돌렸을 때는 첫 DMG 가 draft 에만 있어서 피해가 없었다.)
+# 공개된(태그가 붙은) 버전은 맨 앞에서 이미 막았으므로, 여기 오는 것은 draft 단계의 재실행이다.
+# 사전 검사를 다 통과한 뒤에 옮긴다 — 검사에서 멈출 실행이 기록을 흩트리지 않게.
+# 🔒 지우지 않는다 — 옮기기만 한다. 폴더 이름에 시각을 붙여 여러 번 돌려도 서로 덮지 않는다.
+#    dist 에서 옮기는 것은 그 안의 dist/ 에 따로 둔다. 기록 폴더에도 같은 이름의 체크섬 사본
+#    (ddak-a-<버전>.dmg.sha256)이 있어서, 한 폴더에 섞으면 mv 가 그걸 말없이 덮어쓴다.
+PREV_RECORDS=""
+if [ -e "$RELEASE_RECORDS" ] || [ -e "$FINAL_DMG" ] || [ -e "${FINAL_DMG}.sha256" ]; then
+    PREV_RECORDS="release-records/${VERSION}.prev-$(date +%Y%m%d-%H%M%S)"
+    if [ -e "$PREV_RECORDS" ]; then
+        echo "❌ 이전 결과를 옮겨 둘 자리가 이미 있어: $PREV_RECORDS"
+        echo "   덮어쓰지 않으려고 멈춘다. 잠깐 뒤에 다시 실행해줘."
+        exit 1
+    fi
+    echo "⚠️ 같은 버전(${VERSION})으로 먼저 만든 결과가 있어 — 지우지 않고 옮겨 둔다."
+    echo "   (draft 에 올려 둔 DMG 와 짝인 dSYM·공증 기록을 잃지 않으려는 것)"
+    if [ -e "$RELEASE_RECORDS" ]; then
+        mv "$RELEASE_RECORDS" "$PREV_RECORDS"
+        echo "   $RELEASE_RECORDS/ → $PREV_RECORDS/"
+    fi
+    for PREV_ITEM in "$FINAL_DMG" "${FINAL_DMG}.sha256"; do
+        if [ -e "$PREV_ITEM" ]; then
+            PREV_DEST="$PREV_RECORDS/dist/$(basename "$PREV_ITEM")"
+            if [ -e "$PREV_DEST" ]; then
+                echo "❌ 옮길 자리에 같은 이름이 이미 있어: $PREV_DEST — 덮어쓰지 않으려고 멈춘다."
+                exit 1
+            fi
+            mkdir -p "$PREV_RECORDS/dist"
+            mv "$PREV_ITEM" "$PREV_DEST"
+            echo "   $PREV_ITEM → $PREV_DEST"
+        fi
+    done
 fi
 
 echo "🚀 외부 배포용 앱 빌드 중..."
@@ -376,6 +455,7 @@ if [ "$APP_UUIDS" != "$DSYM_UUIDS" ]; then
     exit 1
 fi
 mkdir -p "$RELEASE_RECORDS"
+# 2026-09-23 (#7): 이전 실행의 dSYM 은 빌드 전에 .prev-… 로 옮겨졌다 — 이 rm 이 지우는 이전 기록은 없다.
 rm -rf "$RELEASE_RECORDS/ddaka.dSYM"
 cp -R "$DSYM_SRC" "$RELEASE_RECORDS/ddaka.dSYM"
 echo "   보관: $RELEASE_RECORDS/ddaka.dSYM (UUID 일치 확인)"
@@ -426,6 +506,7 @@ spctl --assess --type open --context context:primary-signature --verbose=2 "$WOR
 # 여기까지 왔으면 서명·공증·티켓·Gatekeeper 를 모두 통과했다. 이제서야 배포 폴더로 옮긴다.
 echo "📤 배포 폴더로 옮기는 중..."
 mkdir -p "$DIST_DIR"
+# 2026-09-23 (#7): 이전 DMG·체크섬은 빌드 전에 release-records/<버전>.prev-…/dist/ 로 옮겨졌다.
 rm -f "$FINAL_DMG"
 mv "$WORK_DMG" "$FINAL_DMG"
 xcrun stapler validate "$FINAL_DMG"
@@ -448,6 +529,9 @@ echo "   기록 보관: $RELEASE_RECORDS/ (소스 기록 · dSYM · 공증 로�
 echo "   소스 기록: $SOURCE_RECORD (커밋 $SOURCE_COMMIT_SHORT · 빌드 번호 $SOURCE_COMMIT_COUNT)"
 if [ "$SOURCE_DIRTY" = "yes" ]; then
     echo "   ⚠️ 커밋하지 않은 변경이 섞인 빌드다 (DDAKA_ALLOW_DIRTY=1) — 이 커밋만으로는 재현되지 않는다."
+fi
+if [ -n "$PREV_RECORDS" ]; then
+    echo "   이전 결과: $PREV_RECORDS/ (같은 버전으로 먼저 만든 것 — 지우지 않고 옮겨 둠)"
 fi
 echo ""
 # 🔒 2026-09-22 (PR #1 리뷰 F-4): 체크섬은 올려야 값어치가 생긴다.
