@@ -50,6 +50,57 @@ if [ "$#" -ne 0 ]; then
     exit 2
 fi
 
+# 🚨 2026-09-23 (#6): 커밋하지 않은 변경이 섞인 채로는 배포본을 만들지 않는다.
+# 빌드 번호(CFBundleVersion)는 build.sh 가 커밋 수로 붙이는데, 커밋하지 않은 변경은 그 수를
+# 바꾸지 않는다 — 소스가 달라도 같은 번호로 나가서, 나중에 "이 빌드가 어느 소스였나"를 되짚을 수 없다.
+# 추적하지 않는 새 파일도 막는다. Sources/ 에 새 .swift 가 있으면 커밋하지 않았어도 컴파일된다.
+# .gitignore 에 걸린 것(.build/·dist/·release-records/·.tools/ 등)은 소스가 아니라서 보지 않는다.
+# 🔒 다른 사전 검사·네트워크·빌드보다 먼저 한다 — 여기서 걸리면 아무것도 건드리지 않고 끝난다.
+echo "📋 소스 상태 확인 중..."
+if [ "$(git rev-parse --is-inside-work-tree 2>/dev/null || true)" != "true" ]; then
+    echo "❌ Git 저장소 안에서 실행한 게 아니야 — 어떤 소스로 만든 빌드인지 기록할 수 없어."
+    echo "   git clone 한 저장소 폴더에서 실행해줘."
+    exit 1
+fi
+if ! SOURCE_COMMIT="$(git rev-parse --verify --quiet 'HEAD^{commit}')"; then
+    echo "❌ 커밋이 하나도 없어 — 어떤 소스로 만든 빌드인지 기록할 수 없어."
+    exit 1
+fi
+SOURCE_COMMIT_SHORT="$(git rev-parse --short "$SOURCE_COMMIT")"
+# --untracked-files=all 을 명시한다. 사용자 설정(status.showUntrackedFiles=no)이 새 파일을 숨기면
+# 이 가드가 조용히 무력해진다.
+if ! SOURCE_STATUS="$(git status --porcelain --untracked-files=all)"; then
+    echo "❌ git status 를 읽지 못했어 — 깨끗한지 확인하지 못한 채로는 진행하지 않아."
+    exit 1
+fi
+# dirty 빌드의 diff 해시. 가드에서 한 번, 빌드 뒤에 한 번 계산해 대조하므로 같은 명령을 한 곳에 둔다.
+# --binary 가 없으면 바이너리(예: 번들에 들어가는 AppIcon.icns)는 "Binary files differ" 한 줄로만
+# 나와서 내용이 달라도 해시가 같아진다. --no-color·--no-ext-diff 는 사용자 Git 설정이 출력(=해시)을
+# 바꾸지 못하게 한다. 추적하지 않는 새 파일의 내용은 git diff 에 들어가지 않는다(목록에 이름만 남는다).
+source_diff_sha() {
+    git diff --no-color --no-ext-diff --binary HEAD | shasum -a 256 | awk '{print $1}'
+}
+SOURCE_DIRTY="no"
+SOURCE_DIFF_SHA=""
+if [ -z "$SOURCE_STATUS" ]; then
+    echo "   커밋 $SOURCE_COMMIT_SHORT · 작업 폴더 깨끗함 ✓"
+elif [ "${DDAKA_ALLOW_DIRTY:-}" = "1" ]; then
+    SOURCE_DIRTY="yes"
+    SOURCE_DIFF_SHA="$(source_diff_sha)"
+    echo "⚠️ ──────────────────────────────────────────────────────────────"
+    echo "⚠️  DDAKA_ALLOW_DIRTY=1 — 커밋하지 않은 변경을 섞은 채로 만든다."
+    echo "⚠️  이 빌드는 커밋 $SOURCE_COMMIT_SHORT 그대로가 아니다. 빌드 번호가 같아도 소스가 다르다."
+    echo "⚠️  source.txt 에 dirty 로 남긴다 (변경 목록 + diff 해시)."
+    echo "⚠️ ──────────────────────────────────────────────────────────────"
+    printf '%s\n' "$SOURCE_STATUS" | sed 's/^/     /'
+else
+    echo "❌ 커밋하지 않은 변경이 있어. 이대로 만들면 다른 소스가 같은 빌드 번호로 나간다."
+    printf '%s\n' "$SOURCE_STATUS" | sed 's/^/     /'
+    echo "   커밋하거나 치워 둔 뒤(git stash -u) 다시 실행해줘."
+    echo "   급할 때만: DDAKA_ALLOW_DIRTY=1 bash release.sh (크게 경고하고 기록에 dirty 로 남긴다)"
+    exit 1
+fi
+
 # 🚨 2026-09-22: 공증은 "제출 → 대기 → 결과 판정 → 로그 저장"이 앱과 DMG 두 번 반복된다.
 # 같은 절차를 두 벌 적으면 한쪽만 고치는 사고가 나므로 함수 하나로 묶는다.
 #
@@ -185,6 +236,71 @@ fi
 
 echo "🚀 외부 배포용 앱 빌드 중..."
 DDAKA_SIGN_IDENTITY="$SIGN_IDENTITY" bash build.sh
+
+# 🚨 2026-09-23 (#6): 어떤 소스로 만든 빌드인지 release-records/<버전>/source.txt 에 남긴다.
+# 빌드 직후, 공증 전에 쓴다 — 뒤에서 실패해도 "그 빌드가 어느 커밋이었나"는 남아야 한다.
+# 쓰기 전에 셋을 대조한다. 하나라도 어긋나면 기록이 거짓이 되므로 중단한다.
+#   ① 빌드하는 동안 HEAD 가 그대로인가 — 다른 창에서 커밋·체크아웃하면 기록할 커밋이 달라진다
+#   ② 빌드하는 동안 작업 폴더가 그대로인가 — 맨 앞 가드를 통과한 뒤에 고치면 "깨끗함"이 거짓이 된다
+#      (DDAKA_ALLOW_DIRTY 빌드는 이미 고친 파일을 더 고쳐도 목록이 같으므로 diff 해시까지 대조한다)
+#   ③ 번들의 빌드 번호(CFBundleVersion)가 커밋 수와 같은가 — build.sh 는 Git 을 못 읽으면 경고만
+#      하고 Info.plist 값을 그대로 쓰는데, 배포 경로에서는 그걸 통과시키지 않는다
+echo "🧾 빌드한 소스 기록 중..."
+if [ "$(git rev-parse HEAD)" != "$SOURCE_COMMIT" ]; then
+    echo "❌ 빌드하는 동안 HEAD 가 바뀌었어 ($SOURCE_COMMIT_SHORT → $(git rev-parse --short HEAD))."
+    echo "   어느 커밋으로 빌드됐는지 단정할 수 없어. 다시 실행해줘."
+    exit 1
+fi
+SOURCE_STATUS_NOW="$(git status --porcelain --untracked-files=all)"
+SOURCE_DIFF_SHA_NOW=""
+if [ "$SOURCE_DIRTY" = "yes" ]; then
+    SOURCE_DIFF_SHA_NOW="$(source_diff_sha)"
+fi
+if [ "$SOURCE_STATUS_NOW" != "$SOURCE_STATUS" ] || [ "$SOURCE_DIFF_SHA_NOW" != "$SOURCE_DIFF_SHA" ]; then
+    echo "❌ 빌드하는 동안 작업 폴더가 바뀌었어 — 무엇이 빌드에 들어갔는지 단정할 수 없어."
+    if [ "$SOURCE_STATUS_NOW" = "$SOURCE_STATUS" ]; then
+        echo "   (바뀐 파일 목록은 그대로지만, 이미 고쳐 둔 파일의 내용이 빌드 도중에 또 바뀌었어)"
+    fi
+    echo "   지금 상태:"
+    printf '%s\n' "$SOURCE_STATUS_NOW" | sed 's/^/     /'
+    exit 1
+fi
+SOURCE_COMMIT_COUNT="$(git rev-list --count HEAD)"
+if ! BUNDLE_BUILD_NUMBER="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$APP_BUNDLE/Contents/Info.plist")"; then
+    echo "❌ 번들에서 빌드 번호(CFBundleVersion)를 읽지 못했어: $APP_BUNDLE/Contents/Info.plist"
+    exit 1
+fi
+if [ "$BUNDLE_BUILD_NUMBER" != "$SOURCE_COMMIT_COUNT" ]; then
+    echo "❌ 번들의 빌드 번호가 커밋 수와 달라 (번들: $BUNDLE_BUILD_NUMBER · 커밋 수: $SOURCE_COMMIT_COUNT)."
+    echo "   build.sh 가 빌드 번호를 붙이지 못했거나 다른 빌드가 섞였어. 위 build.sh 출력을 확인해줘."
+    exit 1
+fi
+# 값은 먼저 변수에 받는다 — echo 인자 안의 $(…) 는 실패해도 set -e 에 걸리지 않고 빈 값으로 새어 나간다.
+SOURCE_BRANCH="$(git symbolic-ref --short -q HEAD || echo '(detached)')"
+SOURCE_DESCRIBE="$(git describe --tags --always)"
+SOURCE_RECORDED_AT="$(date '+%Y-%m-%dT%H:%M:%S%z' | sed -E 's/([+-][0-9][0-9])([0-9][0-9])$/\1:\2/')"
+SOURCE_RECORD="$RELEASE_RECORDS/source.txt"
+mkdir -p "$RELEASE_RECORDS"
+{
+    echo "# 닦아(ddak-a) 배포본의 소스 기록 — release.sh 가 빌드 직후에 남긴다."
+    echo "# dirty: no 면 'git checkout <commit>' 으로 이 빌드의 소스를 그대로 다시 볼 수 있다."
+    echo "version: $VERSION"
+    echo "commit: $SOURCE_COMMIT"
+    echo "commit_short: $SOURCE_COMMIT_SHORT"
+    echo "branch: $SOURCE_BRANCH"
+    echo "commit_count: $SOURCE_COMMIT_COUNT (= 번들의 CFBundleVersion)"
+    echo "describe: $SOURCE_DESCRIBE"
+    echo "dirty: $SOURCE_DIRTY"
+    if [ "$SOURCE_DIRTY" = "yes" ]; then
+        echo "dirty_diff_sha256: $SOURCE_DIFF_SHA"
+        echo "#   다시 계산: git diff --no-color --no-ext-diff --binary HEAD | shasum -a 256"
+        echo "#   추적하지 않는 새 파일은 이 diff 에 들어가지 않는다 — 아래 목록에 이름으로만 남는다."
+        echo "dirty_status:"
+        printf '%s\n' "$SOURCE_STATUS" | sed 's/^/    /'
+    fi
+    echo "recorded_at: $SOURCE_RECORDED_AT"
+} > "$SOURCE_RECORD"
+echo "   $SOURCE_RECORD (커밋 $SOURCE_COMMIT_SHORT · 빌드 번호 $SOURCE_COMMIT_COUNT · dirty: $SOURCE_DIRTY)"
 
 echo "🔍 서명과 아키텍처 확인 중..."
 # 🚨 2026-09-22: lipo 의 -verify_arch 는 usage 표기(`-verify_arch <arch> ...`)와 달리
@@ -328,7 +444,11 @@ echo "   버전: $VERSION"
 echo "   앱과 DMG 모두 공증 + 티켓 부착 완료."
 echo "   체크섬: $SHA_FILE"
 echo "$(cat "$SHA_FILE")" | sed 's/^/     /'
-echo "   기록 보관: $RELEASE_RECORDS/ (dSYM · 공증 로그 · 체크섬)"
+echo "   기록 보관: $RELEASE_RECORDS/ (소스 기록 · dSYM · 공증 로그 · 체크섬)"
+echo "   소스 기록: $SOURCE_RECORD (커밋 $SOURCE_COMMIT_SHORT · 빌드 번호 $SOURCE_COMMIT_COUNT)"
+if [ "$SOURCE_DIRTY" = "yes" ]; then
+    echo "   ⚠️ 커밋하지 않은 변경이 섞인 빌드다 (DDAKA_ALLOW_DIRTY=1) — 이 커밋만으로는 재현되지 않는다."
+fi
 echo ""
 # 🔒 2026-09-22 (PR #1 리뷰 F-4): 체크섬은 올려야 값어치가 생긴다.
 # dist/ 도 release-records/ 도 저장소에 안 올라가므로, 여기서 말해 주지 않으면

@@ -198,16 +198,26 @@ bash release.sh
 
 `release.sh`는 아래 단계를 모두 통과해야 `dist/` 안에 최종 `.dmg`를 만든다.
 
-1. 키체인 프로필·인증서·도구(`dmgbuild` 버전 포함)가 준비됐는지 먼저 확인 (빌드 전에 걸러낸다)
-2. Intel + Apple Silicon 유니버설 빌드
-3. Developer ID 서명과 Hardened Runtime 적용
-4. 서명이 **제대로** 됐는지 단언 — Hardened Runtime · 신뢰 타임스탬프 · `get-task-allow` 없음
-5. 디버그 심볼(dSYM)을 배포 바이너리와 UUID 대조 후 `release-records/` 에 보관
-6. **앱** 공증 제출 → 승인 대기 → 티켓 부착 (제출 ID·로그도 함께 보관)
-7. 응용 프로그램 폴더 바로가기를 넣은 **DMG** 생성
-8. **DMG** 서명 → 공증 → 티켓 부착
-9. Gatekeeper 실행 가능 여부 최종 확인
-10. 배포물 SHA-256 을 `dist/*.dmg.sha256` 에 기록
+<!-- 2026-09-23 (#6): 1번(작업 폴더 확인)과 5번(소스 기록)을 더했다. -->
+
+1. 작업 폴더가 깨끗한지 확인 — 커밋하지 않은 변경이나 추적하지 않는 새 파일이 있으면 멈춘다
+   (빌드 번호가 커밋 수라서, 섞인 채로 만들면 다른 소스가 같은 번호로 나간다)
+2. 키체인 프로필·인증서·도구(`dmgbuild` 버전 포함)가 준비됐는지 확인 (여기까지 모두 긴 빌드 전에 걸러낸다)
+3. Intel + Apple Silicon 유니버설 빌드
+4. Developer ID 서명과 Hardened Runtime 적용
+5. 어떤 소스로 빌드했는지 `release-records/<버전>/source.txt` 에 기록 — 빌드 도중 커밋·파일이 바뀌지
+   않았는지, 빌드 번호가 커밋 수와 같은지 대조한 뒤에 남긴다
+6. 서명이 **제대로** 됐는지 단언 — Hardened Runtime · 신뢰 타임스탬프 · `get-task-allow` 없음
+7. 디버그 심볼(dSYM)을 배포 바이너리와 UUID 대조 후 `release-records/` 에 보관
+8. **앱** 공증 제출 → 승인 대기 → 티켓 부착 (제출 ID·로그도 함께 보관)
+9. 응용 프로그램 폴더 바로가기를 넣은 **DMG** 생성
+10. **DMG** 서명 → 공증 → 티켓 부착
+11. Gatekeeper 실행 가능 여부 최종 확인
+12. 배포물 SHA-256 을 `dist/*.dmg.sha256` 에 기록
+
+> 급할 때는 `DDAKA_ALLOW_DIRTY=1 bash release.sh` 로 1번을 넘길 수 있다. 크게 경고하고, `source.txt` 에
+> dirty 표시와 변경 목록·diff 해시를 남긴다 — 그 커밋만으로는 재현되지 않는 빌드라는 표시다.
+> (2026-09-23 · #6)
 
 > 🔒 **`.dmg` 와 `.dmg.sha256` 을 함께 릴리스에 올린다**(또는 릴리스 노트에 해시를 적는다).
 > 체크섬은 "받은 파일이 우리가 올린 그 파일인지" 사용자가 직접 대조하라고 만드는 값인데,
@@ -215,9 +225,10 @@ bash release.sh
 > 되어 아무 일도 하지 못한다. 받은 쪽에서는 `shasum -c ddak-a-<버전>.dmg.sha256` 로 확인한다.
 > (2026-09-22 · PR #1 리뷰 F-4)
 
-> `release-records/<버전>/` 에는 dSYM·공증 로그·체크섬이 남는다. `.build/` 밖에 두는 이유는
-> `swift package clean` 한 번에 날아가지 않게 하려는 것이다 — dSYM 이 없으면 나중에 받은
-> 크래시 리포트에 함수 이름이 안 나오고 주소만 남는다. 이 폴더는 저장소에 올리지 않는다.
+> `release-records/<버전>/` 에는 소스 기록(`source.txt` — 커밋·브랜치·빌드 번호·dirty 여부)·dSYM·
+> 공증 로그·체크섬이 남는다. `.build/` 밖에 두는 이유는 `swift package clean` 한 번에 날아가지
+> 않게 하려는 것이다 — dSYM 이 없으면 나중에 받은 크래시 리포트에 함수 이름이 안 나오고 주소만
+> 남는다. 이 폴더는 저장소에 올리지 않는다. (소스 기록: 2026-09-23 · #6)
 
 > 앱과 DMG를 **둘 다** 공증한다. 앱에만 티켓을 붙이면 DMG를 열 때 경고가 남고,
 > DMG에만 붙이면 앱을 꺼내 옮겼을 때 검증이 약해진다.
@@ -293,8 +304,8 @@ bash release.sh
 > 화살표 위치도 같아야 한다(다르면 화살표가 엉뚱한 곳을 가리킨다).
 > 배경을 다시 그렸으면 `.tiff` 까지 새로 만들어야 반영된다.
 
-> `release-records/<버전>/` 에는 배포할 때마다 dSYM·공증 로그·체크섬이 쌓인다. 저장소에는
-> 올리지 않는다(로컬 보관용).
+> `release-records/<버전>/` 에는 배포할 때마다 소스 기록(`source.txt`)·dSYM·공증 로그·체크섬이 쌓인다.
+> 저장소에는 올리지 않는다(로컬 보관용).
 
 ## 라이선스
 
@@ -468,21 +479,36 @@ bash release.sh
 
 `release.sh` only produces the final `.dmg` in `dist/` after every step below passes.
 
-1. Check the Keychain profile, certificate and tooling (including the `dmgbuild` version) **before** the long build
-2. Universal build (Intel + Apple Silicon)
-3. Developer ID signature with Hardened Runtime
-4. Assert the signature is actually **correct** — Hardened Runtime, trusted timestamp, no `get-task-allow`
-5. Match the dSYM's UUID against the shipping binary, then keep it in `release-records/`
-6. Submit the **app** for notarization → wait → staple the ticket (submission ID and log are kept too)
-7. Build the **DMG** with an Applications shortcut inside
-8. Sign → notarize → staple the **DMG**
-9. Final Gatekeeper assessment
-10. Record the SHA-256 of the distributable in `dist/*.dmg.sha256`
+<!-- 2026-09-23 (#6): added step 1 (clean working tree) and step 5 (source record). -->
+
+1. Check the working tree is clean — it stops on uncommitted changes or untracked new files
+   (the build number is the commit count, so mixed-in changes would ship different source under the same number)
+2. Check the Keychain profile, certificate and tooling (including the `dmgbuild` version) — everything up to here runs **before** the long build
+3. Universal build (Intel + Apple Silicon)
+4. Developer ID signature with Hardened Runtime
+5. Record which source was built in `release-records/<version>/source.txt` — only after checking that
+   neither the commit nor the files changed during the build and that the build number equals the commit count
+6. Assert the signature is actually **correct** — Hardened Runtime, trusted timestamp, no `get-task-allow`
+7. Match the dSYM's UUID against the shipping binary, then keep it in `release-records/`
+8. Submit the **app** for notarization → wait → staple the ticket (submission ID and log are kept too)
+9. Build the **DMG** with an Applications shortcut inside
+10. Sign → notarize → staple the **DMG**
+11. Final Gatekeeper assessment
+12. Record the SHA-256 of the distributable in `dist/*.dmg.sha256`
+
+> In an emergency, `DDAKA_ALLOW_DIRTY=1 bash release.sh` lets step 1 through. It warns loudly and marks
+> `source.txt` as dirty, with the list of changes and a hash of the diff — a build the commit alone cannot
+> reproduce. (2026-09-23 · #6)
 
 > 🔒 **Upload the `.dmg` and the `.dmg.sha256` together** (or put the hash in the release notes). The
 > checksum exists so people can verify that what they downloaded is what you uploaded — but neither
 > `dist/` nor `release-records/` is committed, so if you do not upload it the value is one only you can
 > see. On the receiving end: `shasum -c ddak-a-<version>.dmg.sha256`.
+
+> `release-records/<version>/` keeps the source record (`source.txt` — commit, branch, build number, dirty
+> or not), the dSYM, the notarization logs and the checksum. It lives outside `.build/` so that a single
+> `swift package clean` cannot wipe it — without the dSYM, crash reports you receive later show bare
+> addresses instead of function names. The folder is not committed. (source record: 2026-09-23 · #6)
 
 > **Both the app and the DMG are notarized.** Stapling only the app leaves a warning when the DMG is
 > opened; stapling only the DMG weakens verification once the app is copied out of it.
@@ -555,8 +581,8 @@ source. Adding a string with a language missing **fails the build**, so none can
 > icon coordinates must match the arrow in the background (otherwise the arrow points nowhere).
 > If you redraw the background, regenerate the `.tiff` too or nothing changes.
 
-> `release-records/<version>/` accumulates the dSYM, notarization logs and checksum for each release.
-> It is not committed (local keeping only).
+> `release-records/<version>/` accumulates the source record (`source.txt`), dSYM, notarization logs and
+> checksum for each release. It is not committed (local keeping only).
 
 ## License
 
