@@ -89,6 +89,32 @@
    - 3분 카운트다운 종료 → 자동 종료
    - **Cmd + Shift + 9 (⌘⇧9)** → 앱이 직접 감지해 즉시 종료
 
+## 단축키 하나로 켜고 끄기 (선택)
+
+<!-- 🚨 2026-09-23 신설 — 홍보글 댓글 제안("아이콘 클릭 없이 단축키로 실행 · 같은 키를 한 번 더 누르면 해제")을
+     앱을 고치지 않고 macOS 단축어 앱으로 푼다. 닦아는 청소가 끝나면 스스로 종료하는 앱이라 꺼져 있을 때는
+     단축키를 받을 수 없다. 앱이 직접 받으려면 메뉴 막대 상주형으로 바꿔야 하고(종료 경로 · 195초 강제 종료를
+     다시 짜야 한다) 그건 v1.2 범위 밖이다.
+     실측(2026-09-23 · macOS 27.0 · 단축어 10.0 · 닦아 v1.1 — ⌘⇧9 처리는 v1.2 와 같다): 오너가 ⌘⇧9 로 켜고
+     청소 중 ⌘⇧9 로 껐고, 실행 기록상 청소까지 들어간 세션 3번 모두 끝나는 순간의 단축어 실행
+     (BackgroundShortcutRunner)이 0건이었다. 청소 밖에서는 ⌘⇧9 마다 단축어가 돌았다 — 즉 청소 중에는 닦아의
+     키 차단이 ⌘⇧9 를 먼저 삼켜 단축어에 닿지 않는다. 타이밍이 아니라 순서의 문제라 "다시 켜짐" 경쟁이 없다.
+     🔒 메뉴 이름은 같은 맥의 단축어 문구 파일(WorkflowUI · WorkflowKit 의 Localizable.loctable)에서 확인한 값이다.
+     단축어 앱이 바뀌면 이름도 바뀔 수 있으니 이 절을 고칠 때 다시 확인한다. -->
+
+macOS에 기본으로 들어 있는 **단축어** 앱에 키보드 단축키를 걸면, 아이콘을 누르지 않고 닦아를 켤 수 있다.
+그 키를 **⌘⇧9** 로 걸면 켜는 키와 끄는 키가 같아진다 — **⌘⇧9 하나만 기억하면 된다.**
+
+1. **단축어** 앱에서 **＋** 를 눌러 새 단축어를 만든다
+2. **앱 열기** 동작을 넣고, 앱으로 **닦아**를 고른다
+3. **단축어 세부사항**(ⓘ) → **키보드 단축키 추가** → **⌘⇧9** 를 누른다
+
+이제 **⌘⇧9** → 확인창에서 **예** → 청소 시작, 청소 중 **⌘⇧9** → 종료.
+
+- 청소 중에 누른 ⌘⇧9 는 닦아가 먼저 받는다. 단축어가 닦아를 다시 켜는 일은 없다
+  (macOS 27.0 · 단축어 10.0 에서 실행 기록으로 확인. 단축어 앱은 macOS 12부터 있지만 그 아래 버전은 확인하지 못했다)
+- 다른 키를 걸어도 켜는 건 되지만, **끄는 키는 언제나 ⌘⇧9** 다
+
 ## 차단 범위
 
 | 대상 | 차단 여부 |
@@ -382,6 +408,27 @@ On first launch it asks for **Accessibility** and **Input Monitoring**. It needs
    - Clicking **"Done"** → quits immediately
    - The 3-minute countdown finishing → quits automatically
    - **Cmd + Shift + 9 (⌘⇧9)** → the app detects it itself and quits immediately
+
+## Start and stop with one shortcut (optional)
+
+<!-- 2026-09-23: new — answers a user suggestion ("start it with a shortcut instead of clicking the icon,
+     and press the same key again to release") with the Shortcuts app instead of changing the app.
+     Evidence and the reason the app itself doesn't listen for a global shortcut: see the comment in the
+     Korean section above. Menu names verified in Shortcuts 10.0 on macOS 27.0 (the app's own string tables). -->
+
+Give the built-in **Shortcuts** app a keyboard shortcut and you can start ddak-a without clicking its icon.
+Make that shortcut **⌘⇧9** and the start key and the quit key become the same — **⌘⇧9 is all you need to remember.**
+
+1. In **Shortcuts**, click **＋** to make a new shortcut
+2. Add the **Open App** action and choose **닦아** as the app
+3. **Shortcut Details** (ⓘ) → **Add Keyboard Shortcut** → press **⌘⇧9**
+
+Now **⌘⇧9** → **Start** in the confirmation → cleaning starts; **⌘⇧9** while cleaning → it quits.
+
+- A ⌘⇧9 pressed during cleaning reaches ddak-a first, so Shortcuts never launches it again
+  (confirmed from the run logs on macOS 27.0 with Shortcuts 10.0. Shortcuts has shipped since macOS 12, but
+  earlier versions have not been verified)
+- Any other key can start it too, but **the quit key is always ⌘⇧9**
 
 ## What gets blocked
 
