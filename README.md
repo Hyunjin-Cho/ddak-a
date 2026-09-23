@@ -8,8 +8,8 @@
 
 **한국어** · [English](#english)
 
-> **기준일:** 2026-09-22
-> **상태:** **v1.1 공개 배포 중** — [Releases](https://github.com/Hyunjin-Cho/ddak-a/releases)에서 받을 수 있다 (앱·DMG 모두 Apple 공증 완료)
+> **기준일:** 2026-09-23
+> **상태:** **v1.1 공개 배포 중** · v1.2 준비 중 — [Releases](https://github.com/Hyunjin-Cho/ddak-a/releases)에서 받을 수 있다 (앱·DMG 모두 Apple 공증 완료)
 
 <!-- 🔒 2026-09-22 (PR #1 리뷰 F-3): 이 상태 줄과 아래 "v1.1부터는 …" 문장은 반드시 같이 움직인다.
      이 문서가 새 버전 동작을 현재형으로 안내하는데 Releases 에 그 버전이 없으면, 받아서 써 본
@@ -89,6 +89,32 @@
    - 3분 카운트다운 종료 → 자동 종료
    - **Cmd + Shift + 9 (⌘⇧9)** → 앱이 직접 감지해 즉시 종료
 
+## 단축키 하나로 켜고 끄기 (선택)
+
+<!-- 🚨 2026-09-23 신설 — 홍보글 댓글 제안("아이콘 클릭 없이 단축키로 실행 · 같은 키를 한 번 더 누르면 해제")을
+     앱을 고치지 않고 macOS 단축어 앱으로 푼다. 닦아는 청소가 끝나면 스스로 종료하는 앱이라 꺼져 있을 때는
+     단축키를 받을 수 없다. 앱이 직접 받으려면 메뉴 막대 상주형으로 바꿔야 하고(종료 경로 · 195초 강제 종료를
+     다시 짜야 한다) 그건 v1.2 범위 밖이다.
+     실측(2026-09-23 · macOS 27.0 · 단축어 10.0 · 닦아 v1.1 — ⌘⇧9 처리는 v1.2 와 같다): 오너가 ⌘⇧9 로 켜고
+     청소 중 ⌘⇧9 로 껐고, 실행 기록상 청소까지 들어간 세션 3번 모두 끝나는 순간의 단축어 실행
+     (BackgroundShortcutRunner)이 0건이었다. 청소 밖에서는 ⌘⇧9 마다 단축어가 돌았다 — 즉 청소 중에는 닦아의
+     키 차단이 ⌘⇧9 를 먼저 삼켜 단축어에 닿지 않는다. 타이밍이 아니라 순서의 문제라 "다시 켜짐" 경쟁이 없다.
+     🔒 메뉴 이름은 같은 맥의 단축어 문구 파일(WorkflowUI · WorkflowKit 의 Localizable.loctable)에서 확인한 값이다.
+     단축어 앱이 바뀌면 이름도 바뀔 수 있으니 이 절을 고칠 때 다시 확인한다. -->
+
+macOS에 기본으로 들어 있는 **단축어** 앱에 키보드 단축키를 걸면, 아이콘을 누르지 않고 닦아를 켤 수 있다.
+그 키를 **⌘⇧9** 로 걸면 켜는 키와 끄는 키가 같아진다 — **⌘⇧9 하나만 기억하면 된다.**
+
+1. **단축어** 앱에서 **＋** 를 눌러 새 단축어를 만든다
+2. **앱 열기** 동작을 넣고, 앱으로 **닦아**를 고른다
+3. **단축어 세부사항**(ⓘ) → **키보드 단축키 추가** → **⌘⇧9** 를 누른다
+
+이제 **⌘⇧9** → 확인창에서 **예** → 청소 시작, 청소 중 **⌘⇧9** → 종료.
+
+- 청소 중에 누른 ⌘⇧9 는 닦아가 먼저 받는다. 단축어가 닦아를 다시 켜는 일은 없다
+  (macOS 27.0 · 단축어 10.0 에서 실행 기록으로 확인. 단축어 앱은 macOS 12부터 있지만 그 아래 버전은 확인하지 못했다)
+- 다른 키를 걸어도 켜는 건 되지만, **끄는 키는 언제나 ⌘⇧9** 다
+
 ## 차단 범위
 
 | 대상 | 차단 여부 |
@@ -113,6 +139,23 @@
 - **두 번 실행되지 않도록 막아 둔다.** 차단하는 앱이 둘이면 탈출 단축키를 눌러도 하나만 꺼지고
   나머지가 계속 막기 때문이다. macOS 27에서 동작을 확인했고 그 아래 버전은 확인하지 못했다 —
   설령 막히지 않더라도 위의 자동 해제 장치들이 각 인스턴스마다 그대로 돌아간다
+
+## 문제가 생겼을 때 (로그)
+
+<!-- 2026-09-23 (#10) 신설. 종료 이유 값은 main.swift 의 FinishReason 과 짝이다 — 한쪽만 바꾸지 말 것. -->
+
+v1.2부터 닦아는 청소가 **어떻게 끝났는지**를 macOS 로그에 남긴다. 키보드가 늦게 풀렸거나
+이상하게 끝났다면, 터미널에서 아래를 실행해 결과를 [이슈](https://github.com/Hyunjin-Cho/ddak-a/issues)에
+붙여 주면 원인을 빨리 찾을 수 있다.
+
+```bash
+/usr/bin/log show --last 1h --predicate 'subsystem == "com.vismotive.ddaka"'
+```
+
+- `reason=` 뒤가 종료 이유다 — `done-button`(버튼) · `countdown`(3분) · `shortcut`(⌘⇧9) ·
+  `safety-timer`(190초 안전 타이머) · `screens-gone`(화면이 모두 사라짐)
+- 195초 강제 종료가 동작했다면 `hard kill` 이 남는다
+- 🔒 **키 입력 내용은 기록하지 않는다.** 남는 것은 시작·종료, 종료 이유, 권한 상태 같은 앱의 동작뿐이다
 
 ## 빌드
 
@@ -181,16 +224,31 @@ bash release.sh
 
 `release.sh`는 아래 단계를 모두 통과해야 `dist/` 안에 최종 `.dmg`를 만든다.
 
-1. 키체인 프로필·인증서·도구(`dmgbuild` 버전 포함)가 준비됐는지 먼저 확인 (빌드 전에 걸러낸다)
-2. Intel + Apple Silicon 유니버설 빌드
-3. Developer ID 서명과 Hardened Runtime 적용
-4. 서명이 **제대로** 됐는지 단언 — Hardened Runtime · 신뢰 타임스탬프 · `get-task-allow` 없음
-5. 디버그 심볼(dSYM)을 배포 바이너리와 UUID 대조 후 `release-records/` 에 보관
-6. **앱** 공증 제출 → 승인 대기 → 티켓 부착 (제출 ID·로그도 함께 보관)
-7. 응용 프로그램 폴더 바로가기를 넣은 **DMG** 생성
-8. **DMG** 서명 → 공증 → 티켓 부착
-9. Gatekeeper 실행 가능 여부 최종 확인
-10. 배포물 SHA-256 을 `dist/*.dmg.sha256` 에 기록
+<!-- 2026-09-23 (#6·#7): 1번(작업 폴더 확인)·2번(공개된 버전 확인)·4번(이전 결과 옮겨 두기)·
+     7번(소스 기록)을 더했다. -->
+
+1. 작업 폴더가 깨끗한지 확인 — 커밋하지 않은 변경이나 추적하지 않는 새 파일이 있으면 멈춘다
+   (빌드 번호가 커밋 수라서, 섞인 채로 만들면 다른 소스가 같은 번호로 나간다)
+2. 이미 공개된 버전인지 확인 — 로컬이나 `origin` 에 `v<버전>` 태그가 있으면 멈춘다. 원격을 확인하지
+   못해도(네트워크·인증) 멈춘다 — 확인하지 못한 것을 "없다"로 치지 않는다
+3. 키체인 프로필·인증서·도구(`dmgbuild` 버전 포함)가 준비됐는지 확인 (여기까지 모두 긴 빌드 전에 걸러낸다)
+4. 같은 버전으로 먼저 만든 결과가 있으면 지우지 않고 `release-records/<버전>.prev-<시각>/` 으로 옮긴다
+5. Intel + Apple Silicon 유니버설 빌드
+6. Developer ID 서명과 Hardened Runtime 적용
+7. 어떤 소스로 빌드했는지 `release-records/<버전>/source.txt` 에 기록 — 빌드 도중 커밋·파일이 바뀌지
+   않았는지, 빌드 번호가 커밋 수와 같은지 대조한 뒤에 남긴다
+8. 서명이 **제대로** 됐는지 단언 — Hardened Runtime · 신뢰 타임스탬프 · `get-task-allow` 없음
+9. 디버그 심볼(dSYM)을 배포 바이너리와 UUID 대조 후 `release-records/` 에 보관
+10. **앱** 공증 제출 → 승인 대기 → 티켓 부착 (제출 ID·로그도 함께 보관)
+11. 응용 프로그램 폴더 바로가기를 넣은 **DMG** 생성
+12. **DMG** 서명 → 공증 → 티켓 부착
+13. Gatekeeper 실행 가능 여부 최종 확인
+14. 배포물 SHA-256 을 `dist/*.dmg.sha256` 에 기록
+
+> 급할 때는 `DDAKA_ALLOW_DIRTY=1 bash release.sh` 로 1번을 넘길 수 있다. 크게 경고하고, `source.txt` 에
+> dirty 표시와 변경 목록·diff 해시를 남긴다 — 그 커밋만으로는 재현되지 않는 빌드라는 표시다.
+> 2번(태그 확인)에는 우회 스위치가 없다 — 넘어가는 길은 버전을 올리는 것뿐이다.
+> (2026-09-23 · #6·#7)
 
 > 🔒 **`.dmg` 와 `.dmg.sha256` 을 함께 릴리스에 올린다**(또는 릴리스 노트에 해시를 적는다).
 > 체크섬은 "받은 파일이 우리가 올린 그 파일인지" 사용자가 직접 대조하라고 만드는 값인데,
@@ -198,9 +256,16 @@ bash release.sh
 > 되어 아무 일도 하지 못한다. 받은 쪽에서는 `shasum -c ddak-a-<버전>.dmg.sha256` 로 확인한다.
 > (2026-09-22 · PR #1 리뷰 F-4)
 
-> `release-records/<버전>/` 에는 dSYM·공증 로그·체크섬이 남는다. `.build/` 밖에 두는 이유는
-> `swift package clean` 한 번에 날아가지 않게 하려는 것이다 — dSYM 이 없으면 나중에 받은
-> 크래시 리포트에 함수 이름이 안 나오고 주소만 남는다. 이 폴더는 저장소에 올리지 않는다.
+> `release-records/<버전>/` 에는 소스 기록(`source.txt` — 커밋·브랜치·빌드 번호·dirty 여부)·dSYM·
+> 공증 로그·체크섬이 남는다. `.build/` 밖에 두는 이유는 `swift package clean` 한 번에 날아가지
+> 않게 하려는 것이다 — dSYM 이 없으면 나중에 받은 크래시 리포트에 함수 이름이 안 나오고 주소만
+> 남는다. 이 폴더는 저장소에 올리지 않는다. (소스 기록: 2026-09-23 · #6)
+>
+> 🔒 **기록은 덮어쓰지 않는다.** 같은 버전으로 다시 돌리면(예: draft 단계의 재공증) 이전 기록은
+> `release-records/<버전>.prev-<시각>/` 으로 옮겨지고, `dist/` 에 있던 이전 DMG·체크섬도 그 안의
+> `dist/` 로 함께 옮겨진다. 이미 `v<버전>` 태그가 붙은(= 공개된) 버전은 아예 다시 만들지 않는다 —
+> 다시 빌드한다고 사용자 손에 있는 바이너리와 짝이 맞는 dSYM 이 나온다는 보장이 없기 때문이다.
+> 다시 만들어야 하면 `Info.plist` 의 버전(`CFBundleShortVersionString`)을 올린다. (2026-09-23 · #7)
 
 > 앱과 DMG를 **둘 다** 공증한다. 앱에만 티켓을 붙이면 DMG를 열 때 경고가 남고,
 > DMG에만 붙이면 앱을 꺼내 옮겼을 때 검증이 약해진다.
@@ -260,19 +325,25 @@ bash release.sh
 | `Info.plist` | 번들 정보 |
 | `build.sh` | 유니버설 빌드 + `.app` 패키징 + 코드 서명 |
 | `release.sh` | 공증 + DMG 생성 + DMG 공증 + 티켓 부착 |
-| `assets/icon/` | 아이콘 원본과 변환 스크립트 (`AppIcon.icns` 가 빌드에 쓰인다) |
+| `assets/icon/` | 앱 아이콘 — 원본 SVG 와 결과물 (`AppIcon.icns` 가 빌드에 쓰인다). 파일별 설명과 다시 만드는 법은 [`assets/icon/README.md`](assets/icon/README.md) |
+| `assets/icon/make-icon.sh` | 원본 SVG 에서 `AppIcon.icns` 까지 다시 만드는 스크립트 (`assets/icon/make-icon.sh <출력폴더>` · 커밋된 파일은 덮어쓰지 않는다) |
 | `assets/screenshot.png` | README 용 실행 화면 |
 | `assets/dmg-settings.py` | DMG 설치 창 구성 (배경·아이콘 위치·창 크기) |
 | `assets/dmg-background.swift` | 설치 창 배경 그림을 그리는 스크립트 (`swift ... <출력폴더>`) |
 | `assets/dmg-background.tiff` | 위 스크립트로 만든 실제 배경 (1x·2x 두 장. `tiffutil -cathidpicheck` 로 합친다) |
+
+<!-- 🚨 2026-09-23 (#11): assets/icon 행 정정. 종전 "아이콘 원본과 변환 스크립트" 는 실제와 달랐다 —
+     mask.swift 가 저장소에 없는 파일을 읽고 커밋된 것과 다른 이름으로 써서, 저장소만으로는 아이콘을
+     다시 만들 수 없었다. 전체 과정은 make-icon.sh 와 assets/icon/README.md 에 있다. -->
 
 > 🔒 **설치 창 관련 세 파일은 같이 움직인다.** 배경 그림의 `W x H` 와 `dmg-settings.py` 의
 > `window_rect` 가 같아야 하고(다르면 Finder 창에서 아래가 잘린다), 아이콘 좌표와 배경의
 > 화살표 위치도 같아야 한다(다르면 화살표가 엉뚱한 곳을 가리킨다).
 > 배경을 다시 그렸으면 `.tiff` 까지 새로 만들어야 반영된다.
 
-> `release-records/<버전>/` 에는 배포할 때마다 dSYM·공증 로그·체크섬이 쌓인다. 저장소에는
-> 올리지 않는다(로컬 보관용).
+> `release-records/<버전>/` 에는 배포할 때마다 소스 기록(`source.txt`)·dSYM·공증 로그·체크섬이 쌓인다.
+> 같은 버전을 다시 돌리면 이전 것은 `release-records/<버전>.prev-<시각>/` 으로 옮겨져 남는다.
+> 저장소에는 올리지 않는다(로컬 보관용).
 
 ## 라이선스
 
@@ -290,8 +361,8 @@ bash release.sh
 
 [한국어](#korean) · **English**
 
-> **As of:** 2026-09-22
-> **Status:** **v1.1 is out** — get it from [Releases](https://github.com/Hyunjin-Cho/ddak-a/releases) (both the app and the DMG are notarized by Apple)
+> **As of:** 2026-09-23
+> **Status:** **v1.1 is out** · v1.2 in preparation — get it from [Releases](https://github.com/Hyunjin-Cho/ddak-a/releases) (both the app and the DMG are notarized by Apple)
 
 A macOS utility that **blocks the whole keyboard** while it runs, so keys you press by accident
 while wiping your Mac's keyboard never reach the computer. **Your mouse and trackpad keep working.**
@@ -338,6 +409,27 @@ On first launch it asks for **Accessibility** and **Input Monitoring**. It needs
    - The 3-minute countdown finishing → quits automatically
    - **Cmd + Shift + 9 (⌘⇧9)** → the app detects it itself and quits immediately
 
+## Start and stop with one shortcut (optional)
+
+<!-- 2026-09-23: new — answers a user suggestion ("start it with a shortcut instead of clicking the icon,
+     and press the same key again to release") with the Shortcuts app instead of changing the app.
+     Evidence and the reason the app itself doesn't listen for a global shortcut: see the comment in the
+     Korean section above. Menu names verified in Shortcuts 10.0 on macOS 27.0 (the app's own string tables). -->
+
+Give the built-in **Shortcuts** app a keyboard shortcut and you can start ddak-a without clicking its icon.
+Make that shortcut **⌘⇧9** and the start key and the quit key become the same — **⌘⇧9 is all you need to remember.**
+
+1. In **Shortcuts**, click **＋** to make a new shortcut
+2. Add the **Open App** action and choose **닦아** as the app
+3. **Shortcut Details** (ⓘ) → **Add Keyboard Shortcut** → press **⌘⇧9**
+
+Now **⌘⇧9** → **Start** in the confirmation → cleaning starts; **⌘⇧9** while cleaning → it quits.
+
+- A ⌘⇧9 pressed during cleaning reaches ddak-a first, so Shortcuts never launches it again
+  (confirmed from the run logs on macOS 27.0 with Shortcuts 10.0. Shortcuts has shipped since macOS 12, but
+  earlier versions have not been verified)
+- Any other key can start it too, but **the quit key is always ⌘⇧9**
+
 ## What gets blocked
 
 | Input | Blocked? |
@@ -362,6 +454,22 @@ independent mechanisms are layered on top of each other.
 - **A second instance is prevented.** With two blockers running, the escape shortcut would quit only
   one and the other would keep blocking. Verified on macOS 27; not verified below that — and even if
   it were not prevented, every automatic release above still runs per instance
+
+## If something goes wrong (logs)
+
+Since v1.2, ddak-a writes **how each cleaning session ended** to the macOS log. If the keyboard was
+released late or something looked wrong, run this in Terminal and attach the output to an
+[issue](https://github.com/Hyunjin-Cho/ddak-a/issues):
+
+```bash
+/usr/bin/log show --last 1h --predicate 'subsystem == "com.vismotive.ddaka"'
+```
+
+- The word after `reason=` is why it ended — `done-button` · `countdown` (3 minutes) · `shortcut` (⌘⇧9) ·
+  `safety-timer` (the 190-second safety timer) · `screens-gone` (every display disappeared)
+- If the 195-second hard stop fired, you will see `hard kill`
+- 🔒 **Keystrokes are never logged.** Only what the app itself did is recorded — start and end,
+  the end reason and permission status
 
 ## Build
 
@@ -430,21 +538,48 @@ bash release.sh
 
 `release.sh` only produces the final `.dmg` in `dist/` after every step below passes.
 
-1. Check the Keychain profile, certificate and tooling (including the `dmgbuild` version) **before** the long build
-2. Universal build (Intel + Apple Silicon)
-3. Developer ID signature with Hardened Runtime
-4. Assert the signature is actually **correct** — Hardened Runtime, trusted timestamp, no `get-task-allow`
-5. Match the dSYM's UUID against the shipping binary, then keep it in `release-records/`
-6. Submit the **app** for notarization → wait → staple the ticket (submission ID and log are kept too)
-7. Build the **DMG** with an Applications shortcut inside
-8. Sign → notarize → staple the **DMG**
-9. Final Gatekeeper assessment
-10. Record the SHA-256 of the distributable in `dist/*.dmg.sha256`
+<!-- 2026-09-23 (#6, #7): added step 1 (clean working tree), step 2 (already-published version),
+     step 4 (move previous results aside) and step 7 (source record). -->
+
+1. Check the working tree is clean — it stops on uncommitted changes or untracked new files
+   (the build number is the commit count, so mixed-in changes would ship different source under the same number)
+2. Check the version is not already published — it stops if a `v<version>` tag exists locally or on `origin`,
+   and it also stops if it cannot check the remote (network, auth): not being able to check never counts as "no tag"
+3. Check the Keychain profile, certificate and tooling (including the `dmgbuild` version) — everything up to here runs **before** the long build
+4. If an earlier run of the same version left results, move them — never delete them — to `release-records/<version>.prev-<timestamp>/`
+5. Universal build (Intel + Apple Silicon)
+6. Developer ID signature with Hardened Runtime
+7. Record which source was built in `release-records/<version>/source.txt` — only after checking that
+   neither the commit nor the files changed during the build and that the build number equals the commit count
+8. Assert the signature is actually **correct** — Hardened Runtime, trusted timestamp, no `get-task-allow`
+9. Match the dSYM's UUID against the shipping binary, then keep it in `release-records/`
+10. Submit the **app** for notarization → wait → staple the ticket (submission ID and log are kept too)
+11. Build the **DMG** with an Applications shortcut inside
+12. Sign → notarize → staple the **DMG**
+13. Final Gatekeeper assessment
+14. Record the SHA-256 of the distributable in `dist/*.dmg.sha256`
+
+> In an emergency, `DDAKA_ALLOW_DIRTY=1 bash release.sh` lets step 1 through. It warns loudly and marks
+> `source.txt` as dirty, with the list of changes and a hash of the diff — a build the commit alone cannot
+> reproduce. Step 2 (the tag check) has no override: bumping the version is the only way past it.
+> (2026-09-23 · #6, #7)
 
 > 🔒 **Upload the `.dmg` and the `.dmg.sha256` together** (or put the hash in the release notes). The
 > checksum exists so people can verify that what they downloaded is what you uploaded — but neither
 > `dist/` nor `release-records/` is committed, so if you do not upload it the value is one only you can
 > see. On the receiving end: `shasum -c ddak-a-<version>.dmg.sha256`.
+
+> `release-records/<version>/` keeps the source record (`source.txt` — commit, branch, build number, dirty
+> or not), the dSYM, the notarization logs and the checksum. It lives outside `.build/` so that a single
+> `swift package clean` cannot wipe it — without the dSYM, crash reports you receive later show bare
+> addresses instead of function names. The folder is not committed. (source record: 2026-09-23 · #6)
+>
+> 🔒 **Records are never overwritten.** Re-running the same version (e.g. re-notarizing during the draft
+> stage) moves the previous records to `release-records/<version>.prev-<timestamp>/`, and the previous DMG
+> and checksum in `dist/` go into a `dist/` folder inside it. A version that already has a `v<version>` tag
+> (i.e. is published) is not rebuilt at all — a rebuild is not guaranteed to produce a dSYM that matches the
+> binary people already have. To rebuild, bump the version (`CFBundleShortVersionString`) in `Info.plist`.
+> (2026-09-23 · #7)
 
 > **Both the app and the DMG are notarized.** Stapling only the app leaves a warning when the DMG is
 > opened; stapling only the DMG weakens verification once the app is copied out of it.
@@ -505,7 +640,8 @@ source. Adding a string with a language missing **fails the build**, so none can
 | `Info.plist` | Bundle information |
 | `build.sh` | Universal build + `.app` packaging + code signing |
 | `release.sh` | Notarization + DMG + DMG notarization + stapling |
-| `assets/icon/` | Icon sources and conversion script (`AppIcon.icns` is what the build uses) |
+| `assets/icon/` | App icon — source SVG and outputs (`AppIcon.icns` is what the build uses). Per-file notes and how to regenerate: [`assets/icon/README.md`](assets/icon/README.md#english) |
+| `assets/icon/make-icon.sh` | Regenerates the icon from the source SVG up to `AppIcon.icns` (`assets/icon/make-icon.sh <output dir>`; never overwrites the committed files) |
 | `assets/screenshot.png` | The screenshot in this README |
 | `assets/dmg-settings.py` | Installer window layout (background, icon positions, window size) |
 | `assets/dmg-background.swift` | Script that draws the installer background (`swift ... <output dir>`) |
@@ -516,8 +652,9 @@ source. Adding a string with a language missing **fails the build**, so none can
 > icon coordinates must match the arrow in the background (otherwise the arrow points nowhere).
 > If you redraw the background, regenerate the `.tiff` too or nothing changes.
 
-> `release-records/<version>/` accumulates the dSYM, notarization logs and checksum for each release.
-> It is not committed (local keeping only).
+> `release-records/<version>/` accumulates the source record (`source.txt`), dSYM, notarization logs and
+> checksum for each release. Re-running the same version moves the previous ones to
+> `release-records/<version>.prev-<timestamp>/`, where they stay. It is not committed (local keeping only).
 
 ## License
 
