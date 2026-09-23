@@ -117,11 +117,22 @@ macOS에 기본으로 들어 있는 **단축어** 앱에 키보드 단축키를 
 
 ## 차단 범위
 
+<!-- 🧪 2026-09-23 실기로 두 줄 추가 (리뷰 N-1 · N-3) — 오너 · macOS 27.0 · Mac Studio + Magic Keyboard with Touch ID · v1.2.
+     통합 로그로 확정한 것:
+     - Touch ID 키는 키보드 이벤트가 아니라 biometrickitd(`touchIDButtonPressed`)가 받는다 → 이벤트 탭 밖이고, macOS 의 정상 동작이다.
+       한 번 → loginwindow `lockScreenImmediateFromTouchIDPress`(잠금). 0.6초 안에 세 번 → UniversalAccessControl(「손쉬운 사용 단축키」 창 + 음성).
+       잠긴 동안에도 닦아는 계속 돌았고, 잠금을 푼 뒤 버튼으로 정상 종료했다(`tapReenabled=0`).
+     - 🌐(fn)은 flagsChanged 로 들어와 탭이 통과시킨다(⌘⇧9 판정을 위해 조합키를 통과시키는 설계 — main.swift `.flagsChanged` 분기).
+       🌐 를 받아쓰기로 쓰는 맥에서 "Dictation Hotkey start triggered" 바로 다음에 "Dictation did not start because there is
+       bottom line input" — 받아쓰기는 시작 단계에서 끝났다. 🌐 를 입력 소스 전환·이모지로 쓰는 맥은 아직 확인하지 않았다. -->
+
 | 대상 | 차단 여부 |
 |---|---|
 | 내장 키보드 | 차단 |
 | 블루투스·USB 외장 키보드 | 차단 |
 | 밝기·볼륨 등 미디어 키 | 차단 |
+| Touch ID 키 | **통과 — macOS 가 처리하는 정상 동작.** 한 번 누르면 화면이 잠기고, 빠르게 세 번 누르면 「손쉬운 사용 단축키」 창이 뜬다. 잠금을 풀면 청소 화면이 그대로 이어진다 |
+| 🌐(fn) 키 | **통과** — 청소 화면에는 입력 칸이 없어서 그대로 지나간다 |
 | Cmd + Shift + 9 (⌘⇧9) | 앱이 감지해 **즉시 종료** (다른 앱에는 전달하지 않음) |
 | 마우스 · 트랙패드 | 차단하지 않음 |
 
@@ -432,11 +443,16 @@ Now **⌘⇧9** → **Start** in the confirmation → cleaning starts; **⌘⇧9
 
 ## What gets blocked
 
+<!-- 2026-09-23: the Touch ID and 🌐 (fn) rows come from a real-device check on macOS 27.0 (review N-1 · N-3).
+     The log evidence is in the comment above the Korean table. -->
+
 | Input | Blocked? |
 |---|---|
 | Built-in keyboard | Blocked |
 | Bluetooth / USB external keyboards | Blocked |
 | Media keys (brightness, volume, …) | Blocked |
+| Touch ID key | **Passes through — macOS handles it, which is normal.** One press locks the screen; three quick presses open the Accessibility Shortcuts panel. Unlock and the cleaning screen carries on |
+| 🌐 (fn) key | **Passes through** — the cleaning screen has no text field, so the press simply goes by |
 | Cmd + Shift + 9 (⌘⇧9) | Caught by the app to **quit immediately** (never passed to other apps) |
 | Mouse / trackpad | Not blocked |
 
