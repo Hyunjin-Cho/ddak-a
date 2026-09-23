@@ -140,7 +140,7 @@ enum Strings {
         "需要额外权限",
         "需要額外權限"
     )
-    // 🚨 2026-09-23 (#8): 한국어 문구는 전부 해요체로 맞춘다. 이 문구만 "켜줘"(반말)로 시작해
+    // 🚨 2026-09-23 (#8): 한국어 문구는 전부 해요체로 맞춘다. 이 문구에는 "켜줘"(반말)가 있어서
     // 한 메시지 안에서 반말과 해요체("돼요")가 섞여 있었다. 탭 실패 안내(tapFailedBody)도 같은 문제.
     static func permissionBody(_ list: String) -> String {
         return L(
@@ -778,11 +778,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         isFinishing = true
         isCleaning = false
 
-        // 2026-09-23 (#10): 어느 장치가 끝냈는지 · 시작 뒤 몇 초였는지 · 탭이 몇 번 끊겼는지 남긴다.
+        // 2026-09-23 (#10): 끝난 순간의 경과 시간은 여기서 재고, 기록은 키보드를 푼 **뒤에** 남긴다
+        // (차단 해제가 늘 먼저다 — 로그가 그 앞을 가로막을 이유가 없다).
         let elapsed = cleaningStartedAt.map {
             Double(DispatchTime.now().uptimeNanoseconds - $0.uptimeNanoseconds) / 1_000_000_000
         } ?? -1
-        appLog.notice("cleaning finished: reason=\(reason.rawValue, privacy: .public) elapsed=\(elapsed, format: .fixed(precision: 1), privacy: .public)s tapReenabled=\(self.tapReenableCount, privacy: .public)")
 
         dotTimer?.invalidate()
         countdownTimer?.invalidate()
@@ -791,6 +791,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         countdownTimer = nil
         safetyTimer = nil
         stopEventTap()
+        // 어느 장치가 끝냈는지 · 시작 뒤 몇 초였는지 · 탭이 몇 번 끊겼는지.
+        appLog.notice("cleaning finished: reason=\(reason.rawValue, privacy: .public) elapsed=\(elapsed, format: .fixed(precision: 1), privacy: .public)s tapReenabled=\(self.tapReenableCount, privacy: .public)")
         closeOverlayWindows()
         NSApp.terminate(nil)
     }
