@@ -114,6 +114,23 @@
   나머지가 계속 막기 때문이다. macOS 27에서 동작을 확인했고 그 아래 버전은 확인하지 못했다 —
   설령 막히지 않더라도 위의 자동 해제 장치들이 각 인스턴스마다 그대로 돌아간다
 
+## 문제가 생겼을 때 (로그)
+
+<!-- 2026-09-23 (#10) 신설. 종료 이유 값은 main.swift 의 FinishReason 과 짝이다 — 한쪽만 바꾸지 말 것. -->
+
+v1.2부터 닦아는 청소가 **어떻게 끝났는지**를 macOS 로그에 남긴다. 키보드가 늦게 풀렸거나
+이상하게 끝났다면, 터미널에서 아래를 실행해 결과를 [이슈](https://github.com/Hyunjin-Cho/ddak-a/issues)에
+붙여 주면 원인을 빨리 찾을 수 있다.
+
+```bash
+/usr/bin/log show --last 1h --predicate 'subsystem == "com.vismotive.ddaka"'
+```
+
+- `reason=` 뒤가 종료 이유다 — `done-button`(버튼) · `countdown`(3분) · `shortcut`(⌘⇧9) ·
+  `safety-timer`(190초 안전 타이머) · `screens-gone`(화면이 모두 사라짐)
+- 195초 강제 종료가 동작했다면 `hard kill` 이 남는다
+- 🔒 **키 입력 내용은 기록하지 않는다.** 남는 것은 시작·종료, 종료 이유, 권한 상태 같은 앱의 동작뿐이다
+
 ## 빌드
 
 ```bash
@@ -362,6 +379,22 @@ independent mechanisms are layered on top of each other.
 - **A second instance is prevented.** With two blockers running, the escape shortcut would quit only
   one and the other would keep blocking. Verified on macOS 27; not verified below that — and even if
   it were not prevented, every automatic release above still runs per instance
+
+## If something goes wrong (logs)
+
+Since v1.2, ddak-a writes **how each cleaning session ended** to the macOS log. If the keyboard was
+released late or something looked wrong, run this in Terminal and attach the output to an
+[issue](https://github.com/Hyunjin-Cho/ddak-a/issues):
+
+```bash
+/usr/bin/log show --last 1h --predicate 'subsystem == "com.vismotive.ddaka"'
+```
+
+- The word after `reason=` is why it ended — `done-button` · `countdown` (3 minutes) · `shortcut` (⌘⇧9) ·
+  `safety-timer` (the 190-second safety timer) · `screens-gone` (every display disappeared)
+- If the 195-second hard stop fired, you will see `hard kill`
+- 🔒 **Keystrokes are never logged.** Only what the app itself did is recorded — start and end,
+  the end reason and permission status
 
 ## Build
 

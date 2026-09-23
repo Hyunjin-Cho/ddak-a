@@ -1,6 +1,29 @@
 import Cocoa
 import ApplicationServices
 import IOKit.hid
+import os
+
+// 🚨 2026-09-23 (#10): 청소가 "어떻게" 끝났는지 macOS 로그에 남긴다. 끝나는 경로가 여섯 개
+// (버튼 · 180초 카운트다운 · ⌘⇧9 · 190초 안전 타이머 · 195초 강제 종료 · 화면 소실)인데 기록이
+// 한 줄도 없어서, "늦게 풀렸다" 같은 제보를 받아도 어느 층이 동작했는지 알 수 없었다.
+// 🔒 키 입력 내용은 어떤 경우에도 기록하지 않는다 — 이 앱은 키보드 전체를 가로챈다.
+// 🔒 이벤트탭 콜백 안에서는 로그를 찍지 않는다 — 키마다 도는 경로라 느려지면 macOS 가 탭을 끊는다.
+//    콜백에서 생긴 일(탭이 꺼졌다 다시 켜짐)은 숫자만 세 두었다가 종료 때 한 줄로 남긴다.
+// 확인: /usr/bin/log show --last 1h --predicate 'subsystem == "com.vismotive.ddaka"'
+//      (README 「문제가 생겼을 때」와 짝이다 — 아래 FinishReason 값을 바꾸면 README 도 고친다)
+//      전체 경로를 쓰는 이유: 비대화형 zsh 에서는 `log` 가 셸 내장 명령으로 잡혀 "too many arguments"
+//      로 실패한다(2026-09-23 실측 — 터미널의 대화형 zsh 는 /etc/zshrc 의 `disable log` 덕에 괜찮다).
+let appLog = Logger(subsystem: "com.vismotive.ddaka", category: "session")
+// 195초 강제 종료는 정상 종료(0)와 구별되게 0 이 아닌 코드로 끝낸다.
+let hardKillExitCode: Int32 = 3
+
+enum FinishReason: String {
+    case doneButton = "done-button"
+    case countdown = "countdown"
+    case shortcut = "shortcut"
+    case safetyTimer = "safety-timer"
+    case screensGone = "screens-gone"
+}
 
 // 🚨 2026-08-12 오너 결정: 청소 시간을 5분 → 3분으로 확정.
 // 이전에는 화면에 "05:00"이 표시되는데 테스트용 안전장치가 60초에 앱을 꺼버려서
@@ -367,6 +390,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var isCleaning = false
     var isFinishing = false
     var lastCountdownText = "" // 2026-08-12 최적화: 값이 안 바뀌었으면 화면을 다시 그리지 않기 위한 비교용
+    // 2026-09-23 (#10): 종료 로그용. 시작 시각은 단조 시계로 잰다(벽시계는 사용자가 바꿀 수 있다).
+    var cleaningStartedAt: DispatchTime?
+    // 이벤트탭이 macOS 에 의해 꺼졌다가 다시 켜진 횟수 — 콜백 안에서는 세기만 한다(위 🔒 참조).
+    var tapReenableCount = 0
 
     // 🚨 2026-08-12: 모든 모니터에 같은 내용을 표시하므로 단일 필드가 아니라 배열로 관리
     var titleFields: [NSTextField] = []
@@ -379,6 +406,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // 임시 사본에서 돌고 있는데 권한창부터 띄우면, 사용자가 시스템 설정까지 들어가 켠 권한이
         // 다음 실행에 그대로 버려진다. 한 번 헛수고를 시키면 두 번째는 안 한다.
         if isRunningFromTemporaryCopy() {
+            appLog.notice("quit: running from a translocated temporary copy")
             showTemporaryCopyGuideAndQuit()
             return
         }
@@ -425,6 +453,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if response == .alertFirstButtonReturn {
             checkPermissionsAndStart()
         } else {
+            appLog.notice("quit: user declined to start")
             NSApp.terminate(nil)
         }
     }
@@ -474,6 +503,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func showPermissionGuide(axTrusted: Bool, hidGranted: Bool) {
+        appLog.notice("quit: missing permissions accessibility=\(axTrusted, privacy: .public) inputMonitoring=\(hidGranted, privacy: .public)")
         var missing: [String] = []
         if !axTrusted { missing.append(Strings.permissionAccessibility) }
         if !hidGranted { missing.append(Strings.permissionInputMonitoring) }
@@ -502,11 +532,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // 화면에 종료 방법을 보여줄 수 없으면 키보드 차단 자체를 시작하지 않는다.
         // 보이지 않는 차단 상태가 되는 것보다 즉시 종료하는 편이 안전하다.
         guard createOverlayWindows() else {
+            appLog.error("quit: could not create overlay windows (no screens)")
             NSApp.terminate(nil)
             return
         }
 
         if !startEventTap() {
+            appLog.error("quit: CGEvent.tapCreate failed")
             let alert = NSAlert()
             alert.alertStyle = .warning
             alert.messageText = Strings.tapFailedTitle
@@ -520,6 +552,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         isCleaning = true
         remainingSeconds = totalSeconds
+        cleaningStartedAt = .now()
+        appLog.notice("cleaning started: screens=\(self.overlayWindows.count, privacy: .public) limit=\(totalSeconds, privacy: .public)s")
         startTimers()
         startSafetyTimer()
     }
@@ -656,9 +690,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard isCleaning, !isFinishing else { return }
         // 화면이 모두 사라지면 보이지 않는 상태로 키보드 차단을 유지하지 않고 즉시 안전 종료한다.
         guard createOverlayWindows() else {
-            finishCleaning()
+            finishCleaning(reason: .screensGone)
             return
         }
+        appLog.notice("screens changed: overlays rebuilt on \(self.overlayWindows.count, privacy: .public) screen(s)")
     }
 
     func formattedTime(_ seconds: Int) -> String {
@@ -701,7 +736,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             guard let self = self else { return }
             self.remainingSeconds -= 1
             if self.remainingSeconds <= 0 {
-                self.finishCleaning()
+                self.finishCleaning(reason: .countdown)
                 return
             }
             self.updateCountdownLabels()
@@ -717,7 +752,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // 카운트다운(180초)보다 10초 길어서 정상 동작을 가로채지 않는다.
         // (안전장치라 tolerance를 일부러 주지 않는다 — 한 번만 도는 타이머여서 전력에도 영향이 없다)
         let timer = Timer(timeInterval: safetyLimitSeconds, repeats: false) { [weak self] _ in
-            self?.finishCleaning()
+            self?.finishCleaning(reason: .safetyTimer)
         }
         RunLoop.main.add(timer, forMode: .common)
         safetyTimer = timer
@@ -725,20 +760,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // 🚨 2026-08-12: 최후의 보루 — Timer는 메인 런루프에 얹혀 있어서 앱이 멈추면 같이 멈춘다.
         // 런루프와 무관한 백그라운드 큐에서 시간을 재다가, 정상 종료가 안 됐으면 프로세스를 강제 종료한다.
         // 프로세스가 사라지면 이벤트탭도 함께 사라지므로 키보드는 무조건 복구된다.
+        // 🚨 2026-09-23 (#10): 종료 코드를 0 -> hardKillExitCode 로. 정상 종료와 구별되게 하고,
+        // 로그에 fault 로 남긴다(이게 찍혔다면 정상 경로가 전부 실패했다는 뜻이다).
         let deadline = DispatchTime.now() + safetyLimitSeconds + hardKillGraceSeconds
         DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: deadline) {
-            exit(0)
+            appLog.fault("hard kill: the process was still alive \(safetyLimitSeconds + hardKillGraceSeconds, format: .fixed(precision: 0), privacy: .public)s after start")
+            exit(hardKillExitCode)
         }
     }
 
     @objc func finishButtonTapped() {
-        finishCleaning()
+        finishCleaning(reason: .doneButton)
     }
 
-    func finishCleaning() {
+    func finishCleaning(reason: FinishReason) {
         if isFinishing { return }
         isFinishing = true
         isCleaning = false
+
+        // 2026-09-23 (#10): 어느 장치가 끝냈는지 · 시작 뒤 몇 초였는지 · 탭이 몇 번 끊겼는지 남긴다.
+        let elapsed = cleaningStartedAt.map {
+            Double(DispatchTime.now().uptimeNanoseconds - $0.uptimeNanoseconds) / 1_000_000_000
+        } ?? -1
+        appLog.notice("cleaning finished: reason=\(reason.rawValue, privacy: .public) elapsed=\(elapsed, format: .fixed(precision: 1), privacy: .public)s tapReenabled=\(self.tapReenableCount, privacy: .public)")
 
         dotTimer?.invalidate()
         countdownTimer?.invalidate()
@@ -778,6 +822,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                         if let tap = delegate.eventTap {
                             CGEvent.tapEnable(tap: tap, enable: true)
                         }
+                        // 2026-09-23 (#10): 여기서는 세기만 한다(정수 증가 — 할당 없음). 로그는 종료 때.
+                        delegate.tapReenableCount += 1
                     }
                     return Unmanaged.passUnretained(event)
                 }
@@ -793,7 +839,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                                 let delegate = Unmanaged<AppDelegate>.fromOpaque(refcon).takeUnretainedValue()
                                 // 이 콜백 안에서 창을 닫고 종료하면 처리 시간이 길어져 macOS가 탭을
                                 // 끊을 수 있다 → 다음 런루프 사이클로 미룬다.
-                                DispatchQueue.main.async { delegate.finishCleaning() }
+                                DispatchQueue.main.async { delegate.finishCleaning(reason: .shortcut) }
                             }
                             return nil // 다른 앱으로는 전달하지 않는다
                         }
