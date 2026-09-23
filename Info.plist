@@ -53,7 +53,12 @@
     <key>LSApplicationCategoryType</key>
     <string>public.app-category.utilities</string>
     <!-- 2026-09-22: VoiceOver 가 읽을 이름. 한글을 못 읽는 음성 환경에서 "디-디-에이-케이-에이"로
-         더듬는 것을 막는다. 원래 발음(따까)에 가장 가까운 로마자 표기를 쓴다. -->
+         더듬는 것을 막는다.
+         🚨 2026-09-23 정정 (#12): 여기 "원래 발음(따까)에 가장 가까운 로마자 표기"라고 적혀 있었다.
+         '닦아'의 표준 발음은 [다까]다 — 받침 ㄲ 이 뒤 음절로 넘어가고 첫소리 ㄷ 은 된소리가 되지
+         않는다(표준 발음법 제13항, 같은 꼴 예시 '깎아[까까]'). 값은 그대로 둔다: 영어 음성은 된소리를
+         표현하지 못해서, Samantha(en_US)로 합성하면 Ddaka · Dakka · Daka 가 바이트까지 같은 소리로
+         나왔다(실측 2026-09-23, macOS 27.0). 즉 이 값은 이미 [다까]에 가깝게 읽힌다. -->
     <key>CFBundleSpokenName</key>
     <string>Ddaka</string>
     <key>LSMinimumSystemVersion</key>
