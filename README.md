@@ -91,8 +91,6 @@
 
 ## 단축키 하나로 켜고 끄기 (선택)
 
-**네이버 카페 맥쓰사 (맥 쓰는 사람들) 봄물결님 감사합니다.**
-
 macOS에 기본으로 들어 있는 **단축어** 앱에 키보드 단축키를 걸면, 아이콘을 누르지 않고 닦아를 켤 수 있다.
 그 키를 **⌘⇧9** 로 걸면 켜는 키와 끄는 키가 같아진다 — **⌘⇧9 하나만 기억하면 된다.**
 
@@ -109,6 +107,11 @@ macOS 기본 앱 '단축어' 검색 (보라색배경 아이콘)
 - 청소 중에 누른 ⌘⇧9 는 닦아가 먼저 받는다. 단축어가 닦아를 다시 켜는 일은 없다
   (macOS 27.0 · 단축어 10.0 에서 실행 기록으로 확인. 단축어 앱은 macOS 12부터 있지만 그 아래 버전은 확인하지 못했다)
 - 다른 키를 걸어도 켜는 건 되지만, **끄는 키는 언제나 ⌘⇧9** 다
+
+<!-- 2026-09-25 오너 결정: 감사 문구를 절 맨 위 굵은 글씨에서 절 끝 인용 박스로 옮기고, 무엇을 제안했는지 붙였다.
+     영어 절에도 같은 문구를 넣었다. 카페 주소 inmacbook = 맥쓰사는 네이버 카페 정보 API(mobileCafeName)로 확인. -->
+
+> 💡 이 방법은 네이버 카페 [맥쓰사 (맥 쓰는 사람들)](https://cafe.naver.com/inmacbook)의 **봄물결**님이 제안해 주셨다. 감사합니다!
 
 ## 차단 범위
 
@@ -435,6 +438,10 @@ Now **⌘⇧9** → **Start** in the confirmation → cleaning starts; **⌘⇧9
   (confirmed from the run logs on macOS 27.0 with Shortcuts 10.0. Shortcuts has shipped since macOS 12, but
   earlier versions have not been verified)
 - Any other key can start it too, but **the quit key is always ⌘⇧9**
+
+<!-- 2026-09-25: credit added to mirror the Korean section (owner decision). -->
+
+> 💡 This tip was suggested by **봄물결 (Bommulgyeol)** on the Korean Naver cafe [MacSSA (맥쓰사)](https://cafe.naver.com/inmacbook). Thank you!
 
 ## What gets blocked
 
