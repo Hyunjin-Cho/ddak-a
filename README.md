@@ -96,7 +96,7 @@ macOS에 기본으로 들어 있는 **단축어** 앱에 키보드 단축키를 
 
 macOS 기본 앱 '단축어' 검색 (보라색배경 아이콘)
 1) 플러스(+) 눌러서 새 단축어를 만들면 아래 무엇을 추가할 지 물어봅니다.
-2) 아래 챗에서 "ddak-a 앱 열기" 혹은 "ddak a 앱 열기" 로 입력하면 찾아줍니다. 설치가 되어 있어야 합니다.)
+2) 아래 챗에서 "ddak-a 앱 열기" 혹은 "ddak a 앱 열기" 로 입력하면 찾아줍니다. 닦아가 설치 되어 있어야 합니다.)
 3) 2번까지 완료 됐다면, 단축키 클릭 후 상단에 있는 edit 클릭.
 4) 그러면 새로운 창이 열리는데 그 새로운 창 우측 상단에 세부사항(ⓘ) 클릭.
 5) 거기 아래 '키보드 단축키 추가' 에서 ⌘⇧9 를 눌러 주세요. 실제로 단축키에선 ⌘⇧( 이렇게 보입니다.
@@ -441,7 +441,7 @@ Now **⌘⇧9** → **Start** in the confirmation → cleaning starts; **⌘⇧9
 
 <!-- 2026-09-25: credit added to mirror the Korean section (owner decision). -->
 
-> 💡 This tip was suggested by **봄물결 (Bommulgyeol)** on the Korean Naver cafe [MacSSA (맥쓰사)](https://cafe.naver.com/inmacbook). Thank you!
+> 💡 This tip was suggested by **봄물결 (Bommulgyeol)** on the Korean Naver cafe [(맥쓰사)](https://cafe.naver.com/inmacbook). Thank you!
 
 ## What gets blocked
 
