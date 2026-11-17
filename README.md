@@ -8,8 +8,8 @@
 
 **한국어** · [English](#english)
 
-> **기준일:** 2026-09-23
-> **상태:** **v1.2 공개 배포 중** — [Releases](https://github.com/Hyunjin-Cho/ddak-a/releases)에서 받을 수 있다 (앱·DMG 모두 Apple 공증 완료)
+> **기준일:** 2026-11-17
+> **상태:** **v1.2 공개 배포 중** — [Releases](https://github.com/Hyunjin-Cho/ddak-a/releases)에서 받을 수 있다 (앱·DMG 모두 Apple 공증 완료) · **v1.3 준비 중** — 청소 화면이 그림 테마로 바뀐다 ([#16](https://github.com/Hyunjin-Cho/ddak-a/issues/16))
 
 <!-- 🔒 2026-09-22 (PR #1 리뷰 F-3): 이 상태 줄과 아래 "v1.1부터는 …" 문장은 반드시 같이 움직인다.
      이 문서가 새 버전 동작을 현재형으로 안내하는데 Releases 에 그 버전이 없으면, 받아서 써 본
@@ -24,9 +24,9 @@
 </p>
 
 <p align="center">
-  <img src="assets/screenshot.png" width="680" alt="실행 중 화면">
+  <img src="assets/screenshot.jpg" width="680" alt="실행 중 화면">
   <br>
-  <sub>실행 중 화면 — 연결된 <b>모든 모니터</b>를 이렇게 덮는다 (사진은 화면 가운데 부분)</sub>
+  <sub>실행 중 화면 (v1.3) — 실행할 때마다 10가지 그림 중 하나가 연결된 <b>모든 모니터</b>를 덮는다</sub>
 </p>
 
 ## 설치
@@ -83,7 +83,7 @@
 
 1. 앱 실행 → "닦아 실행할까요?" 확인
 2. 권한 확인 — **손쉬운 사용** + **입력 모니터링** 두 가지가 필요 (없으면 앱이 직접 요청한다)
-3. 연결된 **모든 모니터**를 하늘색 전체화면으로 덮고 카운트다운 시작
+3. 연결된 **모든 모니터**를 그림 한 장으로 덮고 카운트다운 시작 — 그림은 실행할 때마다 10가지 장면 중 하나가 무작위로 나온다(v1.3)
 4. 종료 조건 (셋 중 먼저 오는 것)
    - "다 닦았어요" 버튼 클릭 → 즉시 종료
    - 3분 카운트다운 종료 → 자동 종료
@@ -164,6 +164,7 @@ v1.2부터 닦아는 청소가 **어떻게 끝났는지**를 macOS 로그에 남
 - `reason=` 뒤가 종료 이유다 — `done-button`(버튼) · `countdown`(3분) · `shortcut`(⌘⇧9) ·
   `safety-timer`(190초 안전 타이머) · `screens-gone`(화면이 모두 사라짐)
 - 195초 강제 종료가 동작했다면 `hard kill` 이 남는다
+- v1.3부터 시작 줄에 `theme=` (그날 나온 그림의 이름)과 `art=` (그림을 읽었는지 — `false` 면 하늘색 바탕으로 물러난 것)가 함께 남는다
 - 🔒 **키 입력 내용은 기록하지 않는다.** 남는 것은 시작·종료, 종료 이유, 권한 상태 같은 앱의 동작뿐이다
 
 ## 빌드
@@ -329,14 +330,17 @@ bash release.sh
 
 | 파일 | 역할 |
 |---|---|
-| `Sources/ddaka/main.swift` | 앱 전체 로직 (단일 파일) |
+| `Sources/ddaka/main.swift` | 앱 로직 — 키보드 차단 · 창 · 타이머 · 청소 화면 배치 |
+| `Sources/ddaka/Themes.swift` | 청소 화면 테마 — 장면 10개의 표(글자·버튼 자리, 글자색) · 그림·글꼴 읽기 (v1.3) |
 | `Package.swift` | SPM 설정 |
 | `Info.plist` | 번들 정보 |
 | `build.sh` | 유니버설 빌드 + `.app` 패키징 + 코드 서명 |
 | `release.sh` | 공증 + DMG 생성 + DMG 공증 + 티켓 부착 |
 | `assets/icon/` | 앱 아이콘 — 원본 SVG 와 결과물 (`AppIcon.icns` 가 빌드에 쓰인다). 파일별 설명과 다시 만드는 법은 [`assets/icon/README.md`](assets/icon/README.md) |
 | `assets/icon/make-icon.sh` | 원본 SVG 에서 `AppIcon.icns` 까지 다시 만드는 스크립트 (`assets/icon/make-icon.sh <출력폴더>` · 커밋된 파일은 덮어쓰지 않는다) |
-| `assets/screenshot.png` | README 용 실행 화면 |
+| `assets/themes/` | 청소 화면 그림 10장 (2560×1440 JPEG). 🔒 `Themes.swift` 의 표와 개수·이름이 같아야 한다 — `build.sh` 가 대조한다 |
+| `assets/fonts/` | 고운돋움(Gowun Dodum) — 앱이 쓰는 글자만 남긴 서브셋과 SIL OFL 1.1 원문 |
+| `assets/screenshot.jpg` | README 용 실행 화면 |
 | `assets/dmg-settings.py` | DMG 설치 창 구성 (배경·아이콘 위치·창 크기) |
 | `assets/dmg-background.swift` | 설치 창 배경 그림을 그리는 스크립트 (`swift ... <출력폴더>`) |
 | `assets/dmg-background.tiff` | 위 스크립트로 만든 실제 배경 (1x·2x 두 장. `tiffutil -cathidpicheck` 로 합친다) |
@@ -358,6 +362,8 @@ bash release.sh
 
 [MIT](LICENSE)
 
+글꼴 고운돋움(Gowun Dodum, © 2021 The Gowun Dodum Project Authors)은 SIL Open Font License 1.1 을 따른다 — [`assets/fonts/OFL-GowunDodum.txt`](assets/fonts/OFL-GowunDodum.txt)
+
 ---
 
 <a id="english"></a>
@@ -371,7 +377,7 @@ bash release.sh
 [한국어](#korean) · **English**
 
 > **As of:** 2026-09-23
-> **Status:** **v1.2 is out** — get it from [Releases](https://github.com/Hyunjin-Cho/ddak-a/releases) (both the app and the DMG are notarized by Apple)
+> **Status:** **v1.2 is out** — get it from [Releases](https://github.com/Hyunjin-Cho/ddak-a/releases) (both the app and the DMG are notarized by Apple) · **v1.3 in preparation** — the cleaning screen becomes an illustrated theme ([#16](https://github.com/Hyunjin-Cho/ddak-a/issues/16))
 
 A macOS utility that **blocks the whole keyboard** while it runs, so keys you press by accident
 while wiping your Mac's keyboard never reach the computer. **Your mouse and trackpad keep working.**
@@ -383,9 +389,9 @@ The name 닦아 (*ddak-a*) is Korean for "wipe it".
 </p>
 
 <p align="center">
-  <img src="assets/screenshot.png" width="680" alt="ddak-a while running">
+  <img src="assets/screenshot.jpg" width="680" alt="ddak-a while running">
   <br>
-  <sub>While running — it covers <b>every connected display</b> like this (the shot shows the centre of one screen)</sub>
+  <sub>While running (v1.3) — each launch, one of 10 illustrations covers <b>every connected display</b></sub>
 </p>
 
 ## Install
@@ -412,7 +418,7 @@ On first launch it asks for **Accessibility** and **Input Monitoring**. It needs
 
 1. Launch → "Start ddak-a?" confirmation
 2. Permission check — **Accessibility** + **Input Monitoring** (the app requests them itself if missing)
-3. Covers **every connected display** with a sky-blue full-screen overlay and starts the countdown
+3. Covers **every connected display** with a full-screen illustration and starts the countdown — a different one of 10 scenes is picked at random each launch (v1.3)
 4. It ends on whichever comes first:
    - Clicking **"Done"** → quits immediately
    - The 3-minute countdown finishing → quits automatically
@@ -486,6 +492,7 @@ released late or something looked wrong, run this in Terminal and attach the out
 - The word after `reason=` is why it ended — `done-button` · `countdown` (3 minutes) · `shortcut` (⌘⇧9) ·
   `safety-timer` (the 190-second safety timer) · `screens-gone` (every display disappeared)
 - If the 195-second hard stop fired, you will see `hard kill`
+- Since v1.3 the start line also carries `theme=` (which illustration was shown) and `art=` (whether it loaded — `false` means it fell back to the plain sky-blue background)
 - 🔒 **Keystrokes are never logged.** Only what the app itself did is recorded — start and end,
   the end reason and permission status
 
@@ -653,14 +660,17 @@ source. Adding a string with a language missing **fails the build**, so none can
 
 | File | Role |
 |---|---|
-| `Sources/ddaka/main.swift` | The whole app (single file) |
+| `Sources/ddaka/main.swift` | App logic — keyboard blocking, windows, timers, cleaning-screen layout |
+| `Sources/ddaka/Themes.swift` | Cleaning-screen themes — the table of 10 scenes (where the text and button go, text colour) and loading of art and fonts (v1.3) |
 | `Package.swift` | SwiftPM manifest |
 | `Info.plist` | Bundle information |
 | `build.sh` | Universal build + `.app` packaging + code signing |
 | `release.sh` | Notarization + DMG + DMG notarization + stapling |
 | `assets/icon/` | App icon — source SVG and outputs (`AppIcon.icns` is what the build uses). Per-file notes and how to regenerate: [`assets/icon/README.md`](assets/icon/README.md#english) |
 | `assets/icon/make-icon.sh` | Regenerates the icon from the source SVG up to `AppIcon.icns` (`assets/icon/make-icon.sh <output dir>`; never overwrites the committed files) |
-| `assets/screenshot.png` | The screenshot in this README |
+| `assets/themes/` | The 10 cleaning-screen illustrations (2560×1440 JPEG). 🔒 Names and count must match the table in `Themes.swift` — `build.sh` checks it |
+| `assets/fonts/` | Gowun Dodum — a subset with only the characters the app uses, plus the SIL OFL 1.1 text |
+| `assets/screenshot.jpg` | The screenshot in this README |
 | `assets/dmg-settings.py` | Installer window layout (background, icon positions, window size) |
 | `assets/dmg-background.swift` | Script that draws the installer background (`swift ... <output dir>`) |
 | `assets/dmg-background.tiff` | The background it produces (1x + 2x, combined with `tiffutil -cathidpicheck`) |
@@ -677,3 +687,5 @@ source. Adding a string with a language missing **fails the build**, so none can
 ## License
 
 [MIT](LICENSE)
+
+The Gowun Dodum font (© 2021 The Gowun Dodum Project Authors) is under the SIL Open Font License 1.1 — [`assets/fonts/OFL-GowunDodum.txt`](assets/fonts/OFL-GowunDodum.txt)
