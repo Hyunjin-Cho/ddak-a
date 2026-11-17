@@ -56,6 +56,18 @@ let uiLanguage: UILanguage = {
     //
     // 돌아오는 값은 선언한 대로 en/ko/ja/zh-Hans/zh-Hant 로 딱 떨어지지만, 아래 hasPrefix 분기는
     // 그대로 둔다 — 번들 Info.plist 없이 도는 경우(swift run 등)엔 시스템 표기가 그대로 올 수 있다.
+    #if DEBUG
+    // 2026-11-17 (#16): 미리보기(아래 --preview)에서 언어별 배치를 보려고. 배포 빌드에는 없다.
+    if let forced = ProcessInfo.processInfo.environment["DDAKA_LANG"]?.lowercased() {
+        switch forced {
+        case "ko": return .ko
+        case "ja": return .ja
+        case "zh-hans": return .zhHans
+        case "zh-hant": return .zhHant
+        default: return .en
+        }
+    }
+    #endif
     guard let code = Bundle.main.preferredLocalizations.first?.lowercased() else { return .en }
     if code.hasPrefix("ko") { return .ko }
     if code.hasPrefix("ja") { return .ja }
@@ -91,12 +103,13 @@ enum Strings {
         "要启动 ddak-a 吗？",
         "要啟動 ddak-a 嗎？"
     )
+    // 🚨 2026-11-17 (#16) 오너 결정 B안: 하늘색 단색 → 매번 다른 그림. "하늘색"이라는 약속을 5개 언어 모두에서 뺐다.
     static let confirmBody = L(
-        "Your screen will be covered in sky blue and every keystroke will be blocked for \(totalMinutes) minutes — or until you click “Done”. Your mouse and trackpad keep working.\n\nYou can quit at any time with ⌘⇧9.",
-        "실행하면 화면이 하늘색으로 덮이고, 키보드 입력이 \(totalMinutes)분간(또는 '다 닦았어요' 버튼을 누를 때까지) 완전히 차단돼요. 마우스·트랙패드는 그대로 움직여요.\n\n언제든 ⌘⇧9 을 누르면 바로 종료돼요.",
-        "画面が水色で覆われ、キーボード入力が\(totalMinutes)分間（または「完了」ボタンを押すまで）完全にブロックされます。マウス・トラックパッドはそのまま使えます。\n\n⌘⇧9 でいつでも終了できます。",
-        "屏幕将被天蓝色覆盖，键盘输入将被完全阻止 \(totalMinutes) 分钟（或直到您点击“完成”按钮）。鼠标和触控板仍可正常使用。\n\n随时按 ⌘⇧9 即可退出。",
-        "螢幕將被天藍色覆蓋，鍵盤輸入將被完全阻擋 \(totalMinutes) 分鐘（或直到您點擊「完成」按鈕）。滑鼠和觸控板仍可正常使用。\n\n隨時按 ⌘⇧9 即可結束。"
+        "Your screen will be covered with a different picture each time, and every keystroke will be blocked for \(totalMinutes) minutes — or until you click “Done”. Your mouse and trackpad keep working.\n\nYou can quit at any time with ⌘⇧9.",
+        "실행하면 화면이 매번 다른 그림으로 덮이고, 키보드 입력이 \(totalMinutes)분간(또는 '다 닦았어요' 버튼을 누를 때까지) 완전히 차단돼요. 마우스·트랙패드는 그대로 움직여요.\n\n언제든 ⌘⇧9 을 누르면 바로 종료돼요.",
+        "画面が毎回ちがうイラストで覆われ、キーボード入力が\(totalMinutes)分間（または「完了」ボタンを押すまで）完全にブロックされます。マウス・トラックパッドはそのまま使えます。\n\n⌘⇧9 でいつでも終了できます。",
+        "屏幕每次都会被一幅不同的插画覆盖，键盘输入将被完全阻止 \(totalMinutes) 分钟（或直到您点击“完成”按钮）。鼠标和触控板仍可正常使用。\n\n随时按 ⌘⇧9 即可退出。",
+        "螢幕每次都會被一幅不同的插畫覆蓋，鍵盤輸入將被完全阻擋 \(totalMinutes) 分鐘（或直到您點擊「完成」按鈕）。滑鼠和觸控板仍可正常使用。\n\n隨時按 ⌘⇧9 即可結束。"
     )
     static let confirmStart = L("Start", "예", "開始", "开始", "開始")
     // 🚨 2026-09-23 (#8): "아니오" -> "아니요". 대답하는 말은 '아니요'가 표준이다('아니오'는
@@ -225,15 +238,8 @@ enum Strings {
     )
 }
 
-// 2026-08-12 최적화: 0.6초마다 문자열을 새로 조립하지 않도록 상태를 미리 만들어 둔다
-// 🚨 2026-09-22 오너 요청: 점이 3개까지 늘던 것을 5개까지로 바꿨다(상태 6가지).
-// dotCount 는 이 배열 길이로 나머지 연산을 하므로 개수를 여기서만 바꾸면 된다.
-// 한 바퀴는 1초 x 6 = 6초다.
-let maxCleaningDots = 5
-let cleaningTitles: [String] = {
-    let base = Strings.cleaning
-    return (0...maxCleaningDots).map { base + String(repeating: ".", count: $0) }
-}()
+// 🚨 2026-11-17 (#16) 오너 결정: 제목 뒤 점(…) 애니메이션을 없앴다. 화면이 멈추지 않았다는 신호는
+// 1초마다 줄어드는 카운트다운이 맡는다(점은 원래 "멈춘 것 같다"는 느낌을 없애려고 넣었던 것이다).
 
 // 2026-08-12 최적화: 색·폰트·문구는 모니터 수만큼 다시 만들 이유가 없어 한 번만 만들어 공유한다
 //
@@ -243,30 +249,17 @@ let cleaningTitles: [String] = {
 // - 하늘색은 의도했던 #87CEEB 로 정확히 맞춘다. 앱 아이콘도 이 값을 기준으로 만들었다.
 // - 나머지 색은 **지금 화면에 보이던 색을 그대로** sRGB 8bit 로 옮겼다(바꾸기 전과 ΔE2000 0.06 이하).
 // 🔒 hex·브랜드 색은 sRGB 값이다 — 새 색을 넣을 때도 공간이 이름에 드러나는 srgbRed: 를 쓴다.
+// 2026-11-17 (#16): 그림 테마가 들어오면서 하늘색은 "그림을 못 읽었을 때" 물러날 바탕으로만 남는다.
 let skyBlueColor = NSColor(srgbRed: 135.0 / 255, green: 206.0 / 255, blue: 235.0 / 255, alpha: 1.0) // #87CEEB
-let buttonNormalColor = NSColor.white.cgColor
-// 버튼 글자와 테두리가 같이 쓰는 남색. 종전 calibrated (0.1, 0.35, 0.5) 가 실제로 보이던 색이다.
-let buttonTextColor = NSColor(srgbRed: 29.0 / 255, green: 109.0 / 255, blue: 146.0 / 255, alpha: 1.0) // #1D6D92
-// 2026-08-12: 눌림은 색이 아니라 "그림자가 줄며 가라앉는 것"으로 표현한다.
-// 배경색은 아주 살짝만 낮춰 거드는 정도 — 크게 어둡게 하면 눌린 게 아니라 색이 변한 것처럼 보인다.
-// (2026-09-23 #9: 종전 calibratedWhite 0.96 이 실제로 보이던 색 = #F7F7F7)
-let buttonPressedColor = NSColor(srgbRed: 247.0 / 255, green: 247.0 / 255, blue: 247.0 / 255, alpha: 1.0).cgColor
-let buttonShadowOpacityResting: Float = 0.22
-let buttonShadowOpacityPressed: Float = 0.07
-// 🚨 2026-08-12: 테두리가 없으면 눌렸을 때 "면이 어두워진다"가 아니라 "덩어리 색이 변한다"로 보인다.
-// 경계선이 있어야 그 안쪽이 눌려 들어가는 것으로 읽힌다. 글자와 같은 계열의 옅은 남색.
-let buttonBorderColorResting = buttonTextColor.withAlphaComponent(0.22).cgColor
-let buttonBorderColorPressed = buttonTextColor.withAlphaComponent(0.48).cgColor
-let titleFont = NSFont.systemFont(ofSize: 48, weight: .semibold)
-let subLabelFont = NSFont.systemFont(ofSize: 16, weight: .regular)
-let countdownFont = NSFont.monospacedDigitSystemFont(ofSize: 22, weight: .regular)
-let buttonAttributedTitle = NSAttributedString(
-    string: Strings.done,
-    attributes: [
-        .foregroundColor: buttonTextColor,
-        .font: NSFont.systemFont(ofSize: 18, weight: .medium)
-    ]
-)
+// 🚨 2026-11-17 (#16) 오너: "버튼이 빨간색이라 이상하다 — 파스텔로". 파스텔 산호 + 짙은 자두색 글자(7.5:1).
+// 모든 테마에서 같은 색이다 — 랜덤으로 그림이 바뀌어도 "그 버튼"을 찾으면 된다(지각 교수 2026-11-17).
+// 눌림은 여전히 "아래 두께(그림자)가 줄며 가라앉는 것"으로 표현한다(2026-08-12 원칙).
+let buttonFillColor = NSColor(srgbRed: 0xF4 / 255.0, green: 0xB6 / 255.0, blue: 0xA4 / 255.0, alpha: 1).cgColor   // #F4B6A4
+let buttonPressedFillColor = NSColor(srgbRed: 0xEF / 255.0, green: 0xA8 / 255.0, blue: 0x95 / 255.0, alpha: 1).cgColor // #EFA895
+let buttonEdgeColor = NSColor(srgbRed: 0xD9 / 255.0, green: 0x8C / 255.0, blue: 0x78 / 255.0, alpha: 1).cgColor   // #D98C78
+let buttonTextColor = NSColor(srgbRed: 0x3A / 255.0, green: 0x2B / 255.0, blue: 0x45 / 255.0, alpha: 1)           // #3A2B45
+// 알약 속 숫자 — 알약이 늘 크림색이라 장면과 상관없이 짙은 색 하나.
+let countdownInkColor = NSColor(srgbRed: 0x2B / 255.0, green: 0x25 / 255.0, blue: 0x52 / 255.0, alpha: 1)         // #2B2552
 
 // 2026-08-12 최적화: 이벤트탭 콜백은 키 입력마다 실행되고, 느리면 macOS가 탭을 강제로 끊는다
 // (= 키보드가 순간 뚫림). 콜백 안에서는 힙 할당이 생기지 않도록 상수만 쓰고 switch로 비교한다.
@@ -299,6 +292,13 @@ final class OverlayButton: NSButton {
     // 2026-09-22: 눌림 모양에서도 같은 비율을 써야 해서 기억해 둔다
     private var cornerScale: CGFloat = 1.0
 
+    // 2026-11-17 (#16): 글자를 버튼 높이의 가운데에 그린다. 테두리 없는 버튼의 기본 셀은 글자를 위로 붙였다
+    // (미리보기 실측). 눌림·첫 클릭 동작은 셀이 아니라 이 클래스가 맡으므로 그대로다.
+    override class var cellClass: AnyClass? {
+        get { CenteredTitleButtonCell.self }
+        set {}
+    }
+
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 
     // 2026-08-12: 평상시 모양. frame을 정한 뒤에 불러야 한다(shadowPath가 bounds를 쓰므로).
@@ -309,18 +309,18 @@ final class OverlayButton: NSButton {
         wantsLayer = true
         guard let layer = layer else { return }
         cornerScale = scale
-        layer.backgroundColor = buttonNormalColor
-        layer.cornerRadius = 10 * scale
-        layer.borderWidth = 1
-        layer.borderColor = buttonBorderColorResting
+        // 2026-11-17 (#16): 알약 모양 + 아래로 4pt 비치는 두께(번짐 없는 그림자)
+        layer.backgroundColor = buttonFillColor
+        layer.cornerRadius = bounds.height / 2
+        layer.borderWidth = 0
         layer.masksToBounds = false // 그림자가 잘리지 않게
-        layer.shadowColor = NSColor.black.cgColor
-        layer.shadowOpacity = buttonShadowOpacityResting
-        layer.shadowRadius = 8 * scale
-        layer.shadowOffset = CGSize(width: 0, height: -3 * scale) // macOS는 y가 위쪽이 + → 음수가 아래
+        layer.shadowColor = buttonEdgeColor
+        layer.shadowOpacity = 1
+        layer.shadowRadius = 0
+        layer.shadowOffset = CGSize(width: 0, height: -4 * scale) // macOS는 y가 위쪽이 + → 음수가 아래
         // 경로를 직접 주면 매 프레임 알파를 훑어 그림자를 계산하지 않는다(그리기 비용 절감)
-        layer.shadowPath = CGPath(roundedRect: bounds, cornerWidth: 10 * scale,
-                                  cornerHeight: 10 * scale, transform: nil)
+        layer.shadowPath = CGPath(roundedRect: bounds, cornerWidth: bounds.height / 2,
+                                  cornerHeight: bounds.height / 2, transform: nil)
     }
 
     // 2026-08-12 추가: isBordered = false + 커스텀 배경이라 시스템 기본 눌림 효과가 없다.
@@ -336,12 +336,20 @@ final class OverlayButton: NSButton {
         // 암묵적 애니메이션을 끄고 즉시 반영 — 눌림 피드백은 늦게 오면 의미가 없다
         CATransaction.begin()
         CATransaction.setDisableActions(true)
-        layer?.backgroundColor = pressed ? buttonPressedColor : buttonNormalColor
-        layer?.borderColor = pressed ? buttonBorderColorPressed : buttonBorderColorResting
-        layer?.shadowOpacity = pressed ? buttonShadowOpacityPressed : buttonShadowOpacityResting
-        layer?.shadowRadius = (pressed ? 3 : 8) * cornerScale
-        layer?.shadowOffset = CGSize(width: 0, height: (pressed ? -1 : -3) * cornerScale)
+        layer?.backgroundColor = pressed ? buttonPressedFillColor : buttonFillColor
+        layer?.shadowOffset = CGSize(width: 0, height: (pressed ? -1 : -4) * cornerScale)
         CATransaction.commit()
+    }
+}
+
+final class CenteredTitleButtonCell: NSButtonCell {
+    override func drawTitle(_ title: NSAttributedString, withFrame frame: NSRect, in controlView: NSView) -> NSRect {
+        let size = title.size()
+        let rect = NSRect(x: frame.minX + (frame.width - size.width) / 2,
+                          y: controlView.bounds.minY + (controlView.bounds.height - size.height) / 2,
+                          width: size.width, height: size.height)
+        title.draw(in: rect)
+        return rect
     }
 }
 
@@ -382,11 +390,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var overlayWindows: [NSWindow] = []
     var eventTap: CFMachPort?
     var runLoopSource: CFRunLoopSource?
-    var dotTimer: Timer?
     var countdownTimer: Timer?
     var safetyTimer: Timer?
     var remainingSeconds = totalSeconds
-    var dotCount = 0
     var isCleaning = false
     var isFinishing = false
     var lastCountdownText = "" // 2026-08-12 최적화: 값이 안 바뀌었으면 화면을 다시 그리지 않기 위한 비교용
@@ -396,8 +402,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var tapReenableCount = 0
 
     // 🚨 2026-08-12: 모든 모니터에 같은 내용을 표시하므로 단일 필드가 아니라 배열로 관리
-    var titleFields: [NSTextField] = []
-    var countdownFields: [NSTextField] = []
+    var countdownViews: [CountdownView] = []
+    // 2026-11-17 (#16): 이번 실행의 테마. 청소를 시작할 때 한 번 고르고, 모니터가 바뀌어 화면을 다시 그려도 그대로 쓴다.
+    var theme: Theme = allThemes[0]
+    var themeArt: ThemeArt?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.regular)
@@ -529,6 +537,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func startCleaning() {
+        // 2026-11-17 (#16): 그림을 먼저 읽는다. 못 읽어도 멈추지 않는다 — 하늘색 바탕에 같은 글자·버튼을 그린다.
+        theme = pickTheme()
+        themeArt = ThemeArt.load(theme)
+
         // 화면에 종료 방법을 보여줄 수 없으면 키보드 차단 자체를 시작하지 않는다.
         // 보이지 않는 차단 상태가 되는 것보다 즉시 종료하는 편이 안전하다.
         guard createOverlayWindows() else {
@@ -553,7 +565,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         isCleaning = true
         remainingSeconds = totalSeconds
         cleaningStartedAt = .now()
-        appLog.notice("cleaning started: screens=\(self.overlayWindows.count, privacy: .public) limit=\(totalSeconds, privacy: .public)s")
+        appLog.notice("cleaning started: screens=\(self.overlayWindows.count, privacy: .public) theme=\(self.theme.id, privacy: .public) art=\(self.themeArt != nil, privacy: .public) limit=\(totalSeconds, privacy: .public)s")
         startTimers()
         startSafetyTimer()
     }
@@ -581,13 +593,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             window.level = .screenSaver
             window.isOpaque = true
             window.hasShadow = false
-            window.backgroundColor = skyBlueColor
+            window.backgroundColor = themeArt?.topColor ?? skyBlueColor
             window.ignoresMouseEvents = false
             window.collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary, .ignoresCycle]
             window.isReleasedWhenClosed = false
 
-            // 2026-08-12 최적화: 하늘색은 창 배경색(window.backgroundColor)이 이미 칠한다.
+            // 2026-08-12 최적화: 바탕색은 창 배경색(window.backgroundColor)이 이미 칠한다.
             // 여기서 레이어 배경색까지 지정하면 전체화면 크기를 한 번 더 채우는 중복 작업이 된다.
+            // (2026-11-17 #16: 그림 테마에서는 그림 맨 위 줄의 색 — 세로 모니터에서 그림 위로 이어지는 하늘이다)
             let contentView = NSView(frame: NSRect(origin: .zero, size: frame.size))
             contentView.wantsLayer = true
             window.contentView = contentView
@@ -607,71 +620,170 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         return true
     }
 
+    // 🚨 2026-11-17 (#16): 배치의 본체를 그림 테마에 맞춰 다시 짰다. 원칙은 그대로다.
+    // - 청소 화면은 "지금 막혀 있고, 이렇게 나간다"만 말한다 → 글자는 두 묶음뿐:
+    //   상황(제목·마우스 안내)은 그림 속 하늘의 빈 자리에, 나가는 법(시간·버튼·⌘⇧9)은 반투명 알약 하나에.
+    //   (지각심리 교수 2026-11-17: 위치는 테마마다 달라도 "그 알약"을 찾으면 된다. 시간은 버튼 바로 옆 —
+    //    1초마다 바뀌는 숫자가 눈을 출구로 데려온다.)
+    // - 탈출 버튼은 어느 화면에서든 보여야 하고 맨 위에 있어야 한다 → 모든 묶음을 화면 안쪽 여백으로 끌어당기고,
+    //   버튼을 가장 마지막에 얹는다.
+    // - 작은 화면(보조 모니터)에서는 비례 축소하되 하한을 둔다(2026-09-22 원칙 — 글자가 안 읽히면 안내로서 의미가 없다).
+    // 시안: ~/Documents/myProjects/ddaka-themes/r2/scene.html · ui.js (같은 계산을 그대로 옮겼다)
     func setupOverlayContent(in view: NSView, size: NSSize) {
-        let centerX = size.width / 2
-        let centerY = size.height / 2
+        let W = size.width
+        let H = size.height
+        let margin: CGFloat = 24        // 둥근 화면 모서리
+        let notchMargin: CGFloat = 48   // 위쪽 — 노치가 있는 맥북에서 제목이 가려지지 않게
+        let s = min(1.3, max(0.62, min(W / 1440, H / 900)))
+        let clamp = { (v: CGFloat, lo: CGFloat, hi: CGFloat) -> CGFloat in max(lo, min(hi, v)) }
 
-        // 🚨 2026-09-22: 화면이 작으면 배치 전체를 비례 축소한다.
-        // 고정 오프셋만 쓰던 이전 코드는 600x340pt 미만 화면에서 탈출 버튼이 화면 밖으로
-        // 나갔다(좌표 계산을 복제해 실측). 모니터를 3~4대 쓰는 구성에서 작은 보조
-        // 디스플레이가 섞여 들어오는 경우가 여기 해당한다.
-        // 버튼은 마우스로 쓸 수 있는 유일한 탈출구라, 어느 화면에서든 반드시 보여야 한다.
-        //
-        // 세로 기준 194 = 버튼 아래끝(170) + 아래 여백(24). 가로 기준 600 = 라벨 폭.
-        // 하한 0.45를 두는 이유: 더 줄이면 글자가 읽히지 않아 안내로서 의미가 없어진다.
-        // (그런 화면에서도 ⌘⇧9 와 190/195초 자동 해제는 그대로 남는다)
-        let fit = min(1.0, (size.width - 40) / 600, (centerY - 24) / 194)
-        let s = max(0.45, fit)
+        // 그림을 못 읽었으면 하늘색 바탕 + 가운데 배치로 물러난다(글자·버튼은 똑같이 그린다).
+        let t = themeArt == nil ? plainTheme : theme
 
-        // 폰트도 같은 비율로 줄인다. 배치만 줄이고 글자를 그대로 두면 서로 겹친다.
-        let scaledTitleFont = s < 1 ? NSFont.systemFont(ofSize: 48 * s, weight: .semibold) : titleFont
-        let scaledSubFont = s < 1 ? NSFont.systemFont(ofSize: 16 * s, weight: .regular) : subLabelFont
-        let scaledCountFont = s < 1
-            ? NSFont.monospacedDigitSystemFont(ofSize: 22 * s, weight: .regular) : countdownFont
+        // ── 1) 그림: 16:10 보다 넓은 화면은 꽉 채우고(아래 기준 — 위쪽 하늘이 잘린다),
+        //    그보다 좁은 화면(4:3·세로 모니터)은 폭에 맞춰 아래에 두고 위는 그림 맨 위 색으로 잇는다.
+        //    (2026-11-17: 세로 모니터에서 양옆을 자르면 주인공이 잘렸다 — 시안 실측)
+        var art = NSRect(x: 0, y: 0, width: W, height: H)
+        var narrow = false
+        if let themeArt = themeArt {
+            let aspect = themeArt.image.size.width / max(1, themeArt.image.size.height)
+            if W / H >= 1.5 {
+                let h = max(H, W / aspect)
+                art = NSRect(x: (W - h * aspect) / 2, y: 0, width: h * aspect, height: h)
+            } else {
+                narrow = true
+                art = NSRect(x: 0, y: 0, width: W, height: W / aspect)
+            }
+            let imageView = NSImageView(frame: art)
+            imageView.image = themeArt.image
+            imageView.imageScaling = .scaleAxesIndependently
+            imageView.imageFrameStyle = .none
+            view.addSubview(imageView)
+            if narrow {
+                // 그림 윗변과 이어 칠한 하늘 사이의 경계를 부드럽게 번지게 한다(경계선이 보이면 "붙인 그림"이 된다).
+                let fade = SkyFadeView(frame: NSRect(x: 0, y: art.maxY - art.height * 0.14, width: W, height: art.height * 0.14 + 1))
+                fade.color = themeArt.topColor
+                view.addSubview(fade)
+            }
+        }
+        // 그림 좌표(u, v)를 화면 좌표로. AppKit 은 아래가 0 이라 v 를 뒤집는다.
+        let point = { (p: CGPoint) -> CGPoint in
+            CGPoint(x: art.minX + p.x * art.width, y: art.minY + (1 - p.y) * art.height)
+        }
+        let k = art.height / 1200   // 시안의 viewBox 1단위가 화면에서 몇 pt 인지
 
-        let label = NSTextField(labelWithString: cleaningTitles[0])
-        label.font = scaledTitleFont
-        label.textColor = .white
-        label.alignment = .center
-        label.frame = NSRect(x: centerX - 300 * s, y: centerY + 10 * s, width: 600 * s, height: 70 * s)
-        view.addSubview(label)
-        titleFields.append(label)
+        let textShadow: NSShadow? = {
+            guard t.lightText else { return nil }
+            let sh = NSShadow()
+            sh.shadowColor = NSColor(srgbRed: 20 / 255, green: 28 / 255, blue: 60 / 255, alpha: 0.55)
+            sh.shadowBlurRadius = 10
+            sh.shadowOffset = NSSize(width: 0, height: -1)
+            return sh
+        }()
 
-        let subLabel = NSTextField(labelWithString: Strings.mouseHint)
-        subLabel.font = scaledSubFont
-        subLabel.textColor = NSColor.white.withAlphaComponent(0.85)
-        subLabel.alignment = .center
-        subLabel.frame = NSRect(x: centerX - 300 * s, y: centerY - 30 * s, width: 600 * s, height: 24 * s)
-        view.addSubview(subLabel)
+        // ── 2) 상황 묶음: 제목(한 줄 — 폭에 맞춰 줄인다) + 마우스 안내(최대 두 줄)
+        let capW = min(W - 2 * margin, max(340 * s, 760 * k))
+        var titleSize = clamp(max(66 * k, narrow ? 56 * s : 0), 32, 84) * 0.8
+        func titleString(_ size: CGFloat) -> NSAttributedString {
+            let centered = NSMutableParagraphStyle()
+            centered.alignment = .center   // 글자 꾸밈(NSAttributedString)을 쓰면 필드의 alignment 는 무시된다
+            var a: [NSAttributedString.Key: Any] = [.font: overlayFont(size: size), .foregroundColor: t.ink,
+                                                    .kern: size * 0.02, .paragraphStyle: centered]
+            if let sh = textShadow { a[.shadow] = sh }
+            return NSAttributedString(string: Strings.cleaning, attributes: a)
+        }
+        while titleString(titleSize).size().width > capW - 8, titleSize > 20 { titleSize -= 1 }
+        let title = NSTextField(labelWithAttributedString: titleString(titleSize))
+        title.alignment = .center
+        title.maximumNumberOfLines = 1
+        title.lineBreakMode = .byClipping
+        let titleH = ceil(titleString(titleSize).size().height) + 4
 
-        let countdown = NSTextField(labelWithString: formattedTime(remainingSeconds))
-        countdown.font = scaledCountFont
-        countdown.textColor = NSColor.white.withAlphaComponent(0.85)
-        countdown.alignment = .center
-        countdown.frame = NSRect(x: centerX - 150 * s, y: centerY - 80 * s, width: 300 * s, height: 30 * s)
+        let hintSize = clamp(21 * k, 15, 24)
+        var hintAttrs: [NSAttributedString.Key: Any] = [.font: overlayFont(size: hintSize), .foregroundColor: t.ink]
+        if let sh = textShadow { hintAttrs[.shadow] = sh }
+        let paragraph = NSMutableParagraphStyle()
+        paragraph.alignment = .center
+        paragraph.lineSpacing = hintSize * 0.25
+        hintAttrs[.paragraphStyle] = paragraph
+        let hintText = NSAttributedString(string: Strings.mouseHint, attributes: hintAttrs)
+        let mouseHint = NSTextField(labelWithAttributedString: hintText)
+        mouseHint.maximumNumberOfLines = 2
+        mouseHint.lineBreakMode = .byWordWrapping
+        mouseHint.preferredMaxLayoutWidth = capW
+        let hintH = ceil(hintText.boundingRect(with: NSSize(width: capW, height: 200),
+                                               options: [.usesLineFragmentOrigin]).height) + 4
+        let gap = hintSize * 0.55
+        let capH = titleH + gap + hintH
+
+        var capCenter = point(t.caption)
+        if narrow {
+            // 세로 모니터: 가운데, 그림 위로 이어지는 하늘에
+            let skyFromTop = H - art.maxY
+            capCenter = CGPoint(x: W / 2, y: H - max(margin + notchMargin + capH / 2, skyFromTop * 0.42))
+        }
+        let capX = clamp(capCenter.x - capW / 2, margin, W - margin - capW)
+        let capY = clamp(capCenter.y - capH / 2, margin, H - margin - notchMargin - capH)
+        mouseHint.frame = NSRect(x: capX, y: capY, width: capW, height: hintH)
+        title.frame = NSRect(x: capX, y: capY + hintH + gap, width: capW, height: titleH)
+        view.addSubview(title)
+        view.addSubview(mouseHint)
+
+        // ── 3) 나가는 법 묶음: 반투명 알약(시간 + 버튼) + 그 아래 ⌘⇧9 안내
+        let ss = s * 0.82
+        let countdown = CountdownView(font: countdownFontNamed(size: 26 * ss), color: countdownInkColor)
+        countdown.text = formattedTime(remainingSeconds)
+        let cd = countdown.intrinsicContentSize
+
+        let buttonTitle = NSAttributedString(string: Strings.done, attributes: [
+            .foregroundColor: buttonTextColor,
+            .font: overlayFont(size: 18 * ss)
+        ])
+        let bw = max(150 * ss, ceil(buttonTitle.size().width) + 44 * ss)
+        let bh = max(42 * ss, ceil(buttonTitle.size().height) + 22 * ss)
+        let padL = 18 * ss, padR = 6 * ss, padV = 6 * ss, rowGap = 10 * ss
+        let pillW = padL + cd.width + rowGap + bw + padR
+        let pillH = bh + 2 * padV
+
+        let hintColor = t.ink
+        let halo = NSShadow()
+        halo.shadowBlurRadius = 6
+        halo.shadowOffset = .zero
+        halo.shadowColor = t.lightText
+            ? NSColor(srgbRed: 20 / 255, green: 28 / 255, blue: 60 / 255, alpha: 0.85)
+            : NSColor(srgbRed: 1, green: 252 / 255, blue: 245 / 255, alpha: 0.95)
+        let shortcutSize = max(13, 14 * ss)
+        let shortcutText = shortcutAttributed(Strings.shortcutHint, size: shortcutSize, color: hintColor, shadow: halo)
+        let scW = ceil(shortcutText.size().width) + 12
+        let scH = ceil(shortcutText.size().height) + 4
+        let scGap = 8 * ss
+
+        let groupW = max(pillW, scW)
+        let groupH = pillH + scGap + scH
+        let anchor = point(t.sign)
+        let gx = clamp(anchor.x - groupW / 2, margin, W - margin - groupW)
+        let gy = clamp(anchor.y, margin, H - margin - groupH)
+
+        let pillX = gx + (groupW - pillW) / 2
+        let pillY = gy + scH + scGap
+        let pill = PillView(frame: NSRect(x: pillX - 6, y: pillY - 6, width: pillW + 12, height: pillH + 12))
+        view.addSubview(pill)
+
+        countdown.frame = NSRect(x: pillX + padL, y: pillY + (pillH - cd.height) / 2, width: cd.width, height: cd.height)
         view.addSubview(countdown)
-        countdownFields.append(countdown)
+        countdownViews.append(countdown)
 
-        // 🚨 2026-08-12: 탈출 단축키를 화면에 계속 띄워 둔다 — 마우스를 못 쓰는 상황의 마지막 안내
-        let shortcutLabel = NSTextField(labelWithString: Strings.shortcutHint)
-        shortcutLabel.font = scaledSubFont
-        shortcutLabel.textColor = NSColor.white.withAlphaComponent(0.7)
+        let shortcutLabel = NSTextField(labelWithAttributedString: shortcutText)
         shortcutLabel.alignment = .center
-        shortcutLabel.frame = NSRect(x: centerX - 300 * s, y: centerY - 118 * s, width: 600 * s, height: 24 * s)
+        shortcutLabel.frame = NSRect(x: gx + (groupW - scW) / 2, y: gy, width: scW, height: scH)
         view.addSubview(shortcutLabel)
 
+        // 버튼은 맨 마지막에 얹는다 — 어떤 그림·글자도 버튼 위를 덮지 않는다(첫 클릭이 버튼으로 가야 한다).
         let button = OverlayButton(title: Strings.done, target: self, action: #selector(finishButtonTapped))
-        button.frame = NSRect(x: centerX - 90 * s, y: centerY - 170 * s, width: 180 * s, height: 44 * s)
-        // 🚨 2026-08-12: 시스템 기본 버튼 배경이 하늘색 배경 위에서 옅게 렌더링돼 안 보이는 문제
-        // 방지 — 흰 배경 + 진한 텍스트로 명시적으로 대비를 줌
+        button.frame = NSRect(x: pillX + padL + cd.width + rowGap, y: pillY + padV, width: bw, height: bh)
         button.isBordered = false
-        button.attributedTitle = s < 1 ? NSAttributedString(
-            string: Strings.done,
-            attributes: [
-                .foregroundColor: buttonTextColor,
-                .font: NSFont.systemFont(ofSize: 18 * s, weight: .medium)
-            ]) : buttonAttributedTitle
-        button.applyRestingStyle(scale: s) // frame 확정 후에 호출 (그림자 경로가 bounds 기준)
+        button.attributedTitle = buttonTitle
+        button.applyRestingStyle(scale: ss) // frame 확정 후에 호출 (그림자 경로가 bounds 기준)
         view.addSubview(button)
     }
 
@@ -681,8 +793,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             window.close()
         }
         overlayWindows.removeAll()
-        titleFields.removeAll()
-        countdownFields.removeAll()
+        countdownViews.removeAll()
     }
 
     // 🚨 2026-08-12: 청소 도중 모니터를 꽂거나 빼면 새 화면이 안 덮인 채로 남는다 → 오버레이 재구성
@@ -706,32 +817,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // 2026-08-12 최적화: 표시할 값이 그대로면 화면을 다시 그릴 이유가 없다
         if text == lastCountdownText { return }
         lastCountdownText = text
-        for field in countdownFields {
-            field.stringValue = text
+        for view in countdownViews {
+            view.text = text
         }
     }
 
     // MARK: - Timers
 
     func startTimers() {
-        dotCount = 0
-
         // 🚨 2026-08-12: .common 모드로 등록 — 모달·드래그 등 다른 런루프 모드에서도 계속 돌게 함
         // 2026-08-12 최적화: tolerance를 주면 macOS가 여러 타이머의 깨우기를 묶어 처리해 전력을 아낀다.
-        // 점 애니메이션·카운트다운 모두 몇십 ms 늦어도 눈에 띄지 않는다.
-        // 🚨 2026-09-22 오너 요청: 점 하나가 늘어나는 간격을 0.6초 → 1초로. 한 바퀴는 6초다.
-        let dots = Timer(timeInterval: 1.0, repeats: true) { [weak self] _ in
-            guard let self = self else { return }
-            self.dotCount = (self.dotCount + 1) % cleaningTitles.count
-            let title = cleaningTitles[self.dotCount]
-            for field in self.titleFields {
-                field.stringValue = title
-            }
-        }
-        dots.tolerance = 0.2
-        RunLoop.main.add(dots, forMode: .common)
-        dotTimer = dots
-
+        // 카운트다운은 몇십 ms 늦어도 눈에 띄지 않는다.
+        // 2026-11-17 (#16): 점 애니메이션 타이머를 없앴다(제목은 이제 바뀌지 않는다).
         let countdown = Timer(timeInterval: 1.0, repeats: true) { [weak self] _ in
             guard let self = self else { return }
             self.remainingSeconds -= 1
@@ -747,7 +844,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func startSafetyTimer() {
-        // 🚨 안전장치(2026-08-12): dotTimer/countdownTimer가 무슨 이유로든 안 돌아도
+        // 🚨 안전장치(2026-08-12): countdownTimer가 무슨 이유로든 안 돌아도
         // 이 타이머는 독립적으로 돌아서 safetyLimitSeconds 뒤엔 무조건 풀어준다.
         // 카운트다운(180초)보다 10초 길어서 정상 동작을 가로채지 않는다.
         // (안전장치라 tolerance를 일부러 주지 않는다 — 한 번만 도는 타이머여서 전력에도 영향이 없다)
@@ -784,10 +881,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             Double(DispatchTime.now().uptimeNanoseconds - $0.uptimeNanoseconds) / 1_000_000_000
         } ?? -1
 
-        dotTimer?.invalidate()
         countdownTimer?.invalidate()
         safetyTimer?.invalidate()
-        dotTimer = nil
         countdownTimer = nil
         safetyTimer = nil
         stopEventTap()
@@ -895,6 +990,70 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         runLoopSource = nil
     }
 }
+
+#if DEBUG
+// 2026-11-17 (#16): 키보드를 막지 않고 청소 화면 배치만 PNG 로 뽑는다(디버그 빌드 전용 — 배포 빌드에는 이 길이 없다).
+// 청소 화면은 키보드를 막는 앱이라 실행해서 볼 수가 없다. 테마·언어·화면 크기마다 배치가 맞는지는 이걸로 본다.
+// 사용: DDAKA_ASSETS=assets DDAKA_LANG=ko .build/debug/ddaka --preview <폴더> [테마 id ...]
+//      결과: <폴더>/<테마>-<언어>-<가로>x<세로>.png (화면 크기 4가지)
+final class PreviewButtonBackdrop: NSView {
+    override func draw(_ dirtyRect: NSRect) {
+        let r = bounds.insetBy(dx: 0, dy: 6)
+        let edge = NSBezierPath(roundedRect: r.offsetBy(dx: 0, dy: -4 * r.height / 44), xRadius: r.height / 2, yRadius: r.height / 2)
+        NSColor(cgColor: buttonEdgeColor)?.setFill(); edge.fill()
+        let face = NSBezierPath(roundedRect: r, xRadius: r.height / 2, yRadius: r.height / 2)
+        NSColor(cgColor: buttonFillColor)?.setFill(); face.fill()
+    }
+}
+
+if let i = CommandLine.arguments.firstIndex(of: "--preview"), i + 1 < CommandLine.arguments.count {
+    _ = NSApplication.shared
+    let outDir = URL(fileURLWithPath: CommandLine.arguments[i + 1])
+    try? FileManager.default.createDirectory(at: outDir, withIntermediateDirectories: true)
+    let wanted = Set(CommandLine.arguments.dropFirst(i + 2))
+    let lang = ProcessInfo.processInfo.environment["DDAKA_LANG"] ?? "en"
+    let sizes: [NSSize] = [NSSize(width: 1440, height: 900), NSSize(width: 1920, height: 1080),
+                           NSSize(width: 800, height: 500), NSSize(width: 1080, height: 1920)]
+    for theme in allThemes + [plainTheme] where wanted.isEmpty || wanted.contains(theme.id) {
+        let previewer = AppDelegate()
+        previewer.theme = theme
+        previewer.themeArt = theme.id == "plain" ? nil : ThemeArt.load(theme)
+        previewer.remainingSeconds = 177
+        for size in sizes {
+            let view = NSView(frame: NSRect(origin: .zero, size: size))
+            view.wantsLayer = true
+            view.layer?.backgroundColor = (previewer.themeArt?.topColor ?? skyBlueColor).cgColor
+            previewer.setupOverlayContent(in: view, size: size)
+            // 창 없이 그리면 레이어 속성(버튼의 배경·두께)은 그려지지 않는다 → 미리보기에서만 같은 값으로 밑그림을 깐다.
+            for case let button as OverlayButton in view.subviews {
+                let backdrop = PreviewButtonBackdrop(frame: button.frame.insetBy(dx: 0, dy: -6))
+                view.addSubview(backdrop, positioned: .below, relativeTo: button)
+            }
+            // 배치 검사(미리보기 전용): 글자·알약·버튼이 화면 안쪽 여백 안에 있는지, 두 묶음이 겹치지 않는지.
+            let items = view.subviews.filter { !($0 is NSImageView) && !($0 is PreviewButtonBackdrop) && !($0 is SkyFadeView) }
+            let inner = NSRect(origin: .zero, size: size).insetBy(dx: 24 - 7, dy: 24 - 7)   // 알약 그림자 여유 6pt + 반올림
+            for v in items where !inner.contains(v.frame) {
+                print("⚠️ \(theme.id) \(lang) \(Int(size.width))x\(Int(size.height)): \(type(of: v)) 가 여백 밖 \(v.frame)")
+            }
+            let texts = items.compactMap { $0 as? NSTextField }
+            if texts.count >= 2, let pill = items.first(where: { $0 is PillView }) {
+                let caption = texts[0].frame.union(texts[1].frame)
+                if caption.intersects(pill.frame.insetBy(dx: 6, dy: 6)) {
+                    print("⚠️ \(theme.id) \(lang) \(Int(size.width))x\(Int(size.height)): 제목 묶음과 알약이 겹침")
+                }
+            }
+            if let last = view.subviews.last, !(last is OverlayButton) {
+                print("⚠️ \(theme.id) \(lang): 버튼이 맨 위가 아님")
+            }
+            guard let rep = view.bitmapImageRepForCachingDisplay(in: view.bounds) else { continue }
+            view.cacheDisplay(in: view.bounds, to: rep)
+            let name = "\(theme.id)-\(lang)-\(Int(size.width))x\(Int(size.height)).png"
+            try? rep.representation(using: .png, properties: [:])?.write(to: outDir.appendingPathComponent(name))
+        }
+    }
+    exit(0)
+}
+#endif
 
 let app = NSApplication.shared
 let delegate = AppDelegate()

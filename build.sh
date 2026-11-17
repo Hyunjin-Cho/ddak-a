@@ -85,6 +85,30 @@ else
     echo "   ⚠️ $ICON_SRC 를 찾지 못했어 → 기본 아이콘으로 빌드된다"
 fi
 
+# 🚨 2026-11-17 (#16): 청소 화면 테마 — 그림(assets/themes/*.jpg)과 글꼴(assets/fonts/, 고운돋움 서브셋 + OFL 원문).
+# 서명 전에 넣어야 서명에 포함된다. 앱은 번들 Resources/themes · Resources/fonts 에서 읽는다(Themes.swift resourceURL).
+# 🔒 그림 개수와 Themes.swift 의 테마 표가 어긋나면 중단한다 — 표에만 있고 그림이 없으면 그 장면이 뽑힐 때마다
+#    하늘색으로 물러나고(조용히), 그림만 있으면 영영 안 나온다. 언어 목록 대조와 같은 이유로 경고가 아니라 중단이다.
+echo "🖼  테마 그림·글꼴 넣는 중..."
+THEME_IDS="$(sed -n 's/^ *Theme(id: "\([a-z]*\)".*/\1/p' Sources/ddaka/Themes.swift | sort)"
+THEME_FILES="$(cd assets/themes && ls *.jpg 2>/dev/null | sed 's/\.jpg$//' | sort)"
+if [ -z "$THEME_IDS" ]; then
+    echo "❌ Themes.swift 에서 테마 표를 읽지 못했어 — 'Theme(id: \"...\"' 형태가 바뀌면 이 대조가 무력해진다."
+    exit 1
+fi
+if [ "$THEME_IDS" != "$THEME_FILES" ]; then
+    echo "❌ 테마 표와 그림이 어긋났어 — Sources/ddaka/Themes.swift 와 assets/themes/ 를 같이 고쳐야 한다."
+    echo "   표  : $(printf '%s\n' "$THEME_IDS" | tr '\n' ' ')"
+    echo "   그림: $(printf '%s\n' "$THEME_FILES" | tr '\n' ' ')"
+    exit 1
+fi
+for f in GowunDodum-Regular.ttf OFL-GowunDodum.txt; do
+    [ -f "assets/fonts/$f" ] || { echo "❌ assets/fonts/$f 가 없어"; exit 1; }
+done
+cp -R assets/themes "$APP_BUNDLE/Contents/Resources/themes"
+cp -R assets/fonts "$APP_BUNDLE/Contents/Resources/fonts"
+echo "   그림 $(printf '%s\n' "$THEME_IDS" | wc -l | tr -d ' ')장 · 글꼴 1종 ✓"
+
 # 🚨 2026-08-12 변경: ad-hoc 서명(--sign -)은 인증서가 없어서 재빌드마다 서명 해시가 바뀐다.
 # macOS의 권한 시스템(TCC)은 그걸 "다른 앱"으로 보기 때문에 손쉬운 사용·입력 모니터링 권한이
 # 매번 풀렸다. 정식 인증서로 서명하면 앱 신원이 고정돼 재빌드해도 권한이 유지된다.
