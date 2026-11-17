@@ -8,8 +8,8 @@
 
 **한국어** · [English](#english)
 
-> **기준일:** 2026-11-17
-> **상태:** **v1.2 공개 배포 중** — [Releases](https://github.com/Hyunjin-Cho/ddak-a/releases)에서 받을 수 있다 (앱·DMG 모두 Apple 공증 완료) · **v1.3 준비 중** — 청소 화면이 그림 테마로 바뀐다 ([#16](https://github.com/Hyunjin-Cho/ddak-a/issues/16))
+> **기준일:** 2026-11-18
+> **상태:** **v1.3 공개 배포 중** — [Releases](https://github.com/Hyunjin-Cho/ddak-a/releases)에서 받을 수 있다 (앱·DMG 모두 Apple 공증 완료)
 
 <!-- 🔒 2026-09-22 (PR #1 리뷰 F-3): 이 상태 줄과 아래 "v1.1부터는 …" 문장은 반드시 같이 움직인다.
      이 문서가 새 버전 동작을 현재형으로 안내하는데 Releases 에 그 버전이 없으면, 받아서 써 본
@@ -28,6 +28,27 @@
   <br>
   <sub>실행 중 화면 (v1.3) — 실행할 때마다 10가지 그림 중 하나가 연결된 <b>모든 모니터</b>를 덮는다</sub>
 </p>
+
+<!-- 2026-11-18 (v1.3): 앱에 들어가는 그림 10장의 미리보기. 썸네일(assets/readme/themes/, 480px)은
+     assets/themes/ 원본을 줄인 사본이라 그림을 바꾸면 같이 다시 만든다. 앱 번들에는 들어가지 않는다.
+     폭 136 = GitHub README 칸(약 830px)에 5칸이 가로 스크롤 없이 들어가는 값. -->
+
+<table align="center">
+  <tr>
+    <td align="center"><img src="assets/readme/themes/sunset.jpg" width="136" alt="노을"><br><sub>노을</sub></td>
+    <td align="center"><img src="assets/readme/themes/beach.jpg" width="136" alt="바닷가"><br><sub>바닷가</sub></td>
+    <td align="center"><img src="assets/readme/themes/busstop.jpg" width="136" alt="버스 정류장"><br><sub>버스 정류장</sub></td>
+    <td align="center"><img src="assets/readme/themes/rain.jpg" width="136" alt="비 오는 날"><br><sub>비 오는 날</sub></td>
+    <td align="center"><img src="assets/readme/themes/walk.jpg" width="136" alt="산책"><br><sub>산책</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="assets/readme/themes/autumn.jpg" width="136" alt="가을"><br><sub>가을</sub></td>
+    <td align="center"><img src="assets/readme/themes/night.jpg" width="136" alt="별똥별"><br><sub>별똥별</sub></td>
+    <td align="center"><img src="assets/readme/themes/nap.jpg" width="136" alt="낮잠"><br><sub>낮잠</sub></td>
+    <td align="center"><img src="assets/readme/themes/lookup.jpg" width="136" alt="올려다보기"><br><sub>올려다보기</sub></td>
+    <td align="center"><img src="assets/readme/themes/snow.jpg" width="136" alt="눈"><br><sub>눈</sub></td>
+  </tr>
+</table>
 
 ## 설치
 
@@ -341,6 +362,7 @@ bash release.sh
 | `assets/themes/` | 청소 화면 그림 10장 (2560×1440 JPEG). 🔒 `Themes.swift` 의 표와 개수·이름이 같아야 한다 — `build.sh` 가 대조한다 |
 | `assets/fonts/` | 고운돋움(Gowun Dodum) — 앱이 쓰는 글자만 남긴 서브셋과 SIL OFL 1.1 원문 |
 | `assets/screenshot.jpg` | README 용 실행 화면 |
+| `assets/readme/themes/` | README 용 그림 10장 미리보기 (480px 썸네일 — `assets/themes/` 를 줄인 사본, 앱에는 안 들어간다) |
 | `assets/dmg-settings.py` | DMG 설치 창 구성 (배경·아이콘 위치·창 크기) |
 | `assets/dmg-background.swift` | 설치 창 배경 그림을 그리는 스크립트 (`swift ... <출력폴더>`) |
 | `assets/dmg-background.tiff` | 위 스크립트로 만든 실제 배경 (1x·2x 두 장. `tiffutil -cathidpicheck` 로 합친다) |
@@ -376,8 +398,8 @@ bash release.sh
 
 [한국어](#korean) · **English**
 
-> **As of:** 2026-09-23
-> **Status:** **v1.2 is out** — get it from [Releases](https://github.com/Hyunjin-Cho/ddak-a/releases) (both the app and the DMG are notarized by Apple) · **v1.3 in preparation** — the cleaning screen becomes an illustrated theme ([#16](https://github.com/Hyunjin-Cho/ddak-a/issues/16))
+> **As of:** 2026-11-18
+> **Status:** **v1.3 is out** — get it from [Releases](https://github.com/Hyunjin-Cho/ddak-a/releases) (both the app and the DMG are notarized by Apple)
 
 A macOS utility that **blocks the whole keyboard** while it runs, so keys you press by accident
 while wiping your Mac's keyboard never reach the computer. **Your mouse and trackpad keep working.**
@@ -393,6 +415,25 @@ The name 닦아 (*ddak-a*) is Korean for "wipe it".
   <br>
   <sub>While running (v1.3) — each launch, one of 10 illustrations covers <b>every connected display</b></sub>
 </p>
+
+<!-- 2026-11-18 (v1.3): preview of the 10 illustrations; see the comment above the Korean table. -->
+
+<table align="center">
+  <tr>
+    <td align="center"><img src="assets/readme/themes/sunset.jpg" width="136" alt="Sunset"><br><sub>Sunset</sub></td>
+    <td align="center"><img src="assets/readme/themes/beach.jpg" width="136" alt="Beach"><br><sub>Beach</sub></td>
+    <td align="center"><img src="assets/readme/themes/busstop.jpg" width="136" alt="Bus stop"><br><sub>Bus stop</sub></td>
+    <td align="center"><img src="assets/readme/themes/rain.jpg" width="136" alt="Rainy day"><br><sub>Rainy day</sub></td>
+    <td align="center"><img src="assets/readme/themes/walk.jpg" width="136" alt="Walk"><br><sub>Walk</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="assets/readme/themes/autumn.jpg" width="136" alt="Autumn"><br><sub>Autumn</sub></td>
+    <td align="center"><img src="assets/readme/themes/night.jpg" width="136" alt="Shooting stars"><br><sub>Shooting stars</sub></td>
+    <td align="center"><img src="assets/readme/themes/nap.jpg" width="136" alt="Nap"><br><sub>Nap</sub></td>
+    <td align="center"><img src="assets/readme/themes/lookup.jpg" width="136" alt="Looking up"><br><sub>Looking up</sub></td>
+    <td align="center"><img src="assets/readme/themes/snow.jpg" width="136" alt="Snow"><br><sub>Snow</sub></td>
+  </tr>
+</table>
 
 ## Install
 
@@ -671,6 +712,7 @@ source. Adding a string with a language missing **fails the build**, so none can
 | `assets/themes/` | The 10 cleaning-screen illustrations (2560×1440 JPEG). 🔒 Names and count must match the table in `Themes.swift` — `build.sh` checks it |
 | `assets/fonts/` | Gowun Dodum — a subset with only the characters the app uses, plus the SIL OFL 1.1 text |
 | `assets/screenshot.jpg` | The screenshot in this README |
+| `assets/readme/themes/` | Preview of the 10 illustrations for this README (480 px thumbnails scaled down from `assets/themes/`; not shipped in the app) |
 | `assets/dmg-settings.py` | Installer window layout (background, icon positions, window size) |
 | `assets/dmg-background.swift` | Script that draws the installer background (`swift ... <output dir>`) |
 | `assets/dmg-background.tiff` | The background it produces (1x + 2x, combined with `tiffutil -cathidpicheck`) |
