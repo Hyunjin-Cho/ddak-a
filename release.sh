@@ -117,6 +117,8 @@ fi
 #   첫 v1.3(빌드 58)의 dSYM·공증 기록은 이 스크립트가 release-records/1.3.prev-<시각>/ 으로 옮겨 남겼다.
 # 2026-11-18 오후 (#25·#26) 두 번째 예외: 오너가 같은 날 다시 "1.3 을 지우고 1.3 으로" 결정 — 아직 홍보 전이고
 #   v1.3(빌드 66)을 받은 건 오너·Claude 확인용뿐(dmg 4회, 추측). 방법은 첫 예외와 같다. 기록은 release-records/1.3.prev-<시각>/.
+# 2026-11-18 저녁 (#31·#32) 세 번째 예외: 밤 장면 자리 · 홍콩 설정 이름을 담아 오너가 다시 "v1.3 지우고 다시 1.3"을 골랐다
+#   (빌드 73 공개 뒤 dmg 2회 — 한 번은 Claude 검증용). 방법은 같다.
 RELEASE_TAG="v${VERSION}"
 if git show-ref --verify --quiet "refs/tags/${RELEASE_TAG}"; then
     echo "❌ ${RELEASE_TAG} 태그가 이미 있어 — 이미 공개된 버전이야."
