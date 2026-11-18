@@ -1,5 +1,5 @@
 #!/bin/bash
-# 닦아 앱 아이콘을 원본 SVG 에서 AppIcon.icns 까지 다시 만든다 — 2026-09-23 (#11)
+# 닦아 앱 아이콘을 원본 그림에서 AppIcon.icns 까지 다시 만든다 — 2026-09-23 (#11) · 2026-11-18 (#21) 원본 교체
 #
 # 사용법: assets/icon/make-icon.sh <출력폴더>
 #
@@ -7,17 +7,29 @@
 #   2026-09-22 에 아이콘을 만들 때 실제로 쓴 명령(당시 작업 기록으로 확인)을 그대로 옮겼고, 2026-09-23 에
 #   다시 돌려 커밋된 네 파일(AppIcon.icns · AppIcon-1024.png · AppIcon-256.png · 검증-크기별.png)과
 #   바이트 단위로 같게 나오는 것을 확인했다.
+# 🚨 2026-11-18 (#21): 원본을 SVG(원본-소프트3D.svg, QuiverAI Arrow)에서 v1.3 테마 그림체의 일러스트
+#   (원본-테마.jpg, Seedream 5.5 생성 2048×2048)로 바꿨다. 그래서 ①②단계가 "SVG 여백 자르기 → Quick Look 렌더"에서
+#   "정사각으로 잘라 위아래 여백 줄이기"로 바뀌었다. ③~⑥(mask.swift · icns · 256 · 대조)은 그대로다.
+#   옛 SVG 는 git 기록에 있다: git show 271d58c:assets/icon/원본-소프트3D.svg
 # 🔒 2026-09-23 (#11): 커밋된 파일(이 폴더)은 덮어쓰지 않는다. 결과는 <출력폴더> 에만 쓰고, 끝에 대조만 한다.
 #   아이콘을 실제로 바꾸려면 결과(특히 검증-크기별.png)를 눈으로 확인한 뒤 직접 복사한다.
-# macOS 에 들어 있는 도구(qlmanage · sips · iconutil)와 swift(Xcode 또는 Command Line Tools)만 쓴다.
+# macOS 에 들어 있는 도구(sips · iconutil)와 swift(Xcode 또는 Command Line Tools)만 쓴다.
 set -euo pipefail
 
 ICON_DIR="$(cd "$(dirname "$0")" && pwd -P)"
-SVG="$ICON_DIR/원본-소프트3D.svg"
+SRC="$ICON_DIR/원본-테마.jpg"
+# 2026-11-18 (#21): 오너가 고른 자르기 — 2048 원본에서 한 변 1720 정사각, 가운데 (1045, 1034).
+#   그림 속 내용(강아지·고양이·키·그림자)은 폭 1524 × 높이 1164 로 가로로 길어서, 정사각으로 자르면 좌우가 먼저 준다.
+#   1720 이면 좌우 약 7%·4%, 위아래 약 16% 가 남는다(원본은 위아래 약 22%). 시안 비교는 오너 자료 폴더에 있다.
+#   sips 의 --cropOffset 은 "위 왼" 순서다. 🔒 0 0 을 주면 무시되고 가운데로 잘린다(2026-11-18 실측) — 여기 값은 0 이 아니다.
+SRC_SIZE="2048x2048"
+CROP_SIDE=1720
+CROP_TOP=174    # 1034 - 1720/2
+CROP_LEFT=185   # 1045 - 1720/2
 
 usage() {
     echo "사용법: $0 <출력폴더>"
-    echo "  원본-소프트3D.svg 에서 AppIcon.icns 까지 만들어 <출력폴더> 에 쓴다."
+    echo "  원본-테마.jpg 에서 AppIcon.icns 까지 만들어 <출력폴더> 에 쓴다."
     echo "  이 폴더(assets/icon)의 커밋된 파일은 건드리지 않고, 끝에 대조만 한다."
 }
 
@@ -29,14 +41,14 @@ case "$1" in
     -h|--help) usage; exit 0 ;;
 esac
 
-for tool in qlmanage sips iconutil swift; do
+for tool in sips iconutil swift; do
     if ! command -v "$tool" >/dev/null 2>&1; then
         echo "❌ '$tool' 을 찾지 못했어 — macOS 기본 도구와 swift(Xcode 또는 Command Line Tools)가 필요하다" >&2
         exit 1
     fi
 done
-if [ ! -f "$SVG" ]; then
-    echo "❌ 원본 SVG 가 없어: $SVG" >&2
+if [ ! -f "$SRC" ]; then
+    echo "❌ 원본 그림이 없어: $SRC" >&2
     exit 1
 fi
 
@@ -52,38 +64,27 @@ ICONSET="$WORK/AppIcon.iconset"
 rm -rf "$ICONSET"           # 지난 실행의 크기별 PNG 가 섞이지 않게
 mkdir -p "$ICONSET"
 
-echo "① 여백 잘라내기 — viewBox 를 0 0 1024 1024 로"
-# 원본 SVG 는 사방에 25.6 씩 빈 여백을 두고 있다(viewBox -25.6 -25.6 1075.2 1075.2). 그림(배경 사각형)은
-# 0~1024 에만 있고, Quick Look 은 빈 곳을 흰색으로 채운다 — 그대로 그리면 1024 렌더 가장자리에 24px 흰 띠가
-# 생기고, mask.swift 를 거치면 모서리 곡선 안쪽에 약 19px 흰 테로 남는다(2026-09-23 실측).
-TRIM_SVG="$WORK/icon-trim.svg"
-sed -e 's|viewBox="-25.6 -25.6 1075.2 1075.2"|viewBox="0 0 1024 1024"|' \
-    -e 's|width="1075.2" height="1075.2"|width="1024" height="1024"|' \
-    "$SVG" > "$TRIM_SVG"
-# 원본 SVG 를 바꿨는데 머리 모양이 다르면 sed 가 아무 일도 안 하고 조용히 지나간다 → 확인하고 멈춘다
-if grep -q '1075\.2' "$TRIM_SVG" || ! grep -q 'viewBox="0 0 1024 1024"' "$TRIM_SVG"; then
-    echo "❌ 여백을 잘라내지 못했어 — 원본 SVG 의 <svg ...> 머리가 예상(1075.2 · -25.6)과 다르다." >&2
-    echo "   새 SVG 라면 그 SVG 의 viewBox 에 맞게 이 단계를 고쳐야 한다." >&2
+echo "① 원본 크기 확인 — $SRC_SIZE"
+# 자르는 위치는 2048 원본 기준 숫자다. 원본이 바뀌어 크기가 다르면 엉뚱한 곳을 자르게 되므로 멈춘다.
+SIZE="$(sips -g pixelWidth -g pixelHeight "$SRC" | awk '/pixelWidth/ {w=$2} /pixelHeight/ {h=$2} END {print w "x" h}')"
+if [ "$SIZE" != "$SRC_SIZE" ]; then
+    echo "❌ 원본 크기가 $SRC_SIZE 가 아니라 $SIZE 다: $SRC" >&2
+    echo "   새 원본이라면 이 스크립트의 CROP_* 값을 그 그림에 맞게 고쳐야 한다." >&2
     exit 1
 fi
 
-echo "② SVG → 1024 PNG — Quick Look(qlmanage)"
-RENDER="$TRIM_SVG.png"      # qlmanage 는 원래 파일 이름 뒤에 .png 를 붙여 쓴다
-rm -f "$RENDER"
-QL_LOG="$(qlmanage -t -s 1024 -o "$WORK" "$TRIM_SVG" 2>&1)" || true
-if [ ! -s "$RENDER" ]; then
-    echo "❌ Quick Look 이 SVG 를 그리지 못했어 ($RENDER 가 없다)" >&2
-    echo "$QL_LOG" >&2
-    exit 1
-fi
-SIZE="$(sips -g pixelWidth -g pixelHeight "$RENDER" | awk '/pixelWidth/ {w=$2} /pixelHeight/ {h=$2} END {print w "x" h}')"
-if [ "$SIZE" != "1024x1024" ]; then
-    echo "❌ 렌더 크기가 1024x1024 가 아니라 $SIZE 다: $RENDER" >&2
+echo "② 정사각 자르기 — 한 변 $CROP_SIDE · 위 $CROP_TOP · 왼 $CROP_LEFT"
+CROPPED="$WORK/icon-crop.png"
+rm -f "$CROPPED"
+sips -s format png -c "$CROP_SIDE" "$CROP_SIDE" --cropOffset "$CROP_TOP" "$CROP_LEFT" "$SRC" --out "$CROPPED" >/dev/null
+SIZE="$(sips -g pixelWidth -g pixelHeight "$CROPPED" | awk '/pixelWidth/ {w=$2} /pixelHeight/ {h=$2} END {print w "x" h}')"
+if [ "$SIZE" != "${CROP_SIDE}x${CROP_SIDE}" ]; then
+    echo "❌ 자른 크기가 ${CROP_SIDE}x${CROP_SIDE} 가 아니라 $SIZE 다: $CROPPED" >&2
     exit 1
 fi
 
 echo "③ macOS 규격 입히기 — mask.swift (모서리 곡선 + 1024 안에 824)"
-swift "$ICON_DIR/mask.swift" "$RENDER" "$OUT/AppIcon-1024.png" "$OUT/검증-크기별.png"
+swift "$ICON_DIR/mask.swift" "$CROPPED" "$OUT/AppIcon-1024.png" "$OUT/검증-크기별.png"
 
 echo "④ 크기별 PNG 10장 → AppIcon.icns"
 while read -r px name; do
@@ -121,8 +122,8 @@ done
 echo ""
 echo "✅ 완료: $OUT  (macOS $(sw_vers -productVersion) · $(sw_vers -buildVersion))"
 if [ "$DIFFERENT" -gt 0 ]; then
-    echo "   원본 SVG 를 바꾸지 않았는데도 다르면 macOS 차이일 가능성이 크다 — SVG 를 그리는 Quick Look,"
-    echo "   비교 시트의 시스템 폰트, PNG 인코더는 macOS 에 딸려 있어서 버전이 바뀌면 결과가 달라질 수 있다."
+    echo "   원본 그림을 바꾸지 않았는데도 다르면 macOS 차이일 가능성이 크다 — JPEG 디코더(sips), 비교 시트의"
+    echo "   시스템 폰트, PNG 인코더는 macOS 에 딸려 있어서 버전이 바뀌면 결과가 달라질 수 있다."
     echo "   검증-크기별.png 를 눈으로 확인한 뒤에 바꿀지 정한다."
 fi
 # 2026-09-23: 복사 명령을 경로째 찍어 주지 않는다 — 저장소 경로의 '!'(ddak-a!)는 대화형 셸에 붙여 넣으면

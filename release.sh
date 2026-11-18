@@ -112,6 +112,9 @@ fi
 # 공개 여부는 v<버전> 태그로 판단한다. GitHub 는 draft 릴리스를 publish 할 때 태그를 만들므로
 # draft 단계의 재실행(예: v1.1 재공증)은 여기서 막지 않는다 — 그건 빌드 직전의 "이전 결과 옮겨 두기"가 지킨다.
 # 🔒 우회 스위치를 두지 않는다. 넘어가는 길은 Info.plist 의 버전을 올리는 것 하나뿐이다.
+# 2026-11-18 (#20·#21) 예외 한 번: v1.3 은 홍보 전이고 받은 사람이 오너뿐이라, 오너 결정으로 릴리스와 태그를
+#   지우고(GitHub·로컬) 같은 버전으로 다시 냈다. 스크립트는 그대로 두고 태그를 손으로 지워서 넘어갔다.
+#   첫 v1.3(빌드 58)의 dSYM·공증 기록은 이 스크립트가 release-records/1.3.prev-<시각>/ 으로 옮겨 남겼다.
 RELEASE_TAG="v${VERSION}"
 if git show-ref --verify --quiet "refs/tags/${RELEASE_TAG}"; then
     echo "❌ ${RELEASE_TAG} 태그가 이미 있어 — 이미 공개된 버전이야."
