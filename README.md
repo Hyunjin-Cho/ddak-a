@@ -360,8 +360,8 @@ bash release.sh
 | `Info.plist` | 번들 정보 |
 | `build.sh` | 유니버설 빌드 + `.app` 패키징 + 코드 서명 |
 | `release.sh` | 공증 + DMG 생성 + DMG 공증 + 티켓 부착 |
-| `assets/icon/` | 앱 아이콘 — 원본 SVG 와 결과물 (`AppIcon.icns` 가 빌드에 쓰입니다). 파일별 설명과 다시 만드는 법은 [`assets/icon/README.md`](assets/icon/README.md) |
-| `assets/icon/make-icon.sh` | 원본 SVG 에서 `AppIcon.icns` 까지 다시 만드는 스크립트 (`assets/icon/make-icon.sh <출력폴더>` · 커밋된 파일은 덮어쓰지 않습니다) |
+| `assets/icon/` | 앱 아이콘 — 원본 그림(테마와 같은 강아지·고양이 일러스트)과 결과물 (`AppIcon.icns` 가 빌드에 쓰입니다). 파일별 설명과 다시 만드는 법은 [`assets/icon/README.md`](assets/icon/README.md) |
+| `assets/icon/make-icon.sh` | 원본 그림을 잘라 `AppIcon.icns` 까지 다시 만드는 스크립트 (`assets/icon/make-icon.sh <출력폴더>` · 커밋된 파일은 덮어쓰지 않습니다) |
 | `assets/themes/` | 청소 화면 그림 10장 (2560×1440 JPEG). 🔒 `Themes.swift` 의 표와 개수·이름이 같아야 합니다 — `build.sh` 가 대조합니다 |
 | `assets/fonts/` | 고운돋움(Gowun Dodum) — 앱이 쓰는 글자만 남긴 서브셋과 SIL OFL 1.1 원문 |
 | `assets/screenshot.jpg` | README 용 실행 화면 |
@@ -710,8 +710,8 @@ source. Adding a string with a language missing **fails the build**, so none can
 | `Info.plist` | Bundle information |
 | `build.sh` | Universal build + `.app` packaging + code signing |
 | `release.sh` | Notarization + DMG + DMG notarization + stapling |
-| `assets/icon/` | App icon — source SVG and outputs (`AppIcon.icns` is what the build uses). Per-file notes and how to regenerate: [`assets/icon/README.md`](assets/icon/README.md#english) |
-| `assets/icon/make-icon.sh` | Regenerates the icon from the source SVG up to `AppIcon.icns` (`assets/icon/make-icon.sh <output dir>`; never overwrites the committed files) |
+| `assets/icon/` | App icon — the source illustration (the same dog and cat as the themes) and outputs (`AppIcon.icns` is what the build uses). Per-file notes and how to regenerate: [`assets/icon/README.md`](assets/icon/README.md#english) |
+| `assets/icon/make-icon.sh` | Crops the source illustration and regenerates the icon up to `AppIcon.icns` (`assets/icon/make-icon.sh <output dir>`; never overwrites the committed files) |
 | `assets/themes/` | The 10 cleaning-screen illustrations (2560×1440 JPEG). 🔒 Names and count must match the table in `Themes.swift` — `build.sh` checks it |
 | `assets/fonts/` | Gowun Dodum — a subset with only the characters the app uses, plus the SIL OFL 1.1 text |
 | `assets/screenshot.jpg` | The screenshot in this README |
