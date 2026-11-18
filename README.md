@@ -300,6 +300,7 @@ bash release.sh
 > `dist/` 로 함께 옮겨집니다. 이미 `v<버전>` 태그가 붙은(= 공개된) 버전은 아예 다시 만들지 않습니다 —
 > 다시 빌드한다고 사용자 손에 있는 바이너리와 짝이 맞는 dSYM 이 나온다는 보장이 없기 때문입니다.
 > 다시 만들어야 하면 `Info.plist` 의 버전(`CFBundleShortVersionString`)을 올립니다. (2026-09-23 · #7)
+<!-- 2026-11-18 (#20·#21) 예외 한 번: v1.3 은 홍보 전이고 받은 사람이 오너뿐이라 오너 결정으로 릴리스와 태그를 지우고 같은 버전으로 다시 냈다. 근거·경위는 release.sh 의 태그 검사 주석. -->
 
 > 앱과 DMG를 **둘 다** 공증합니다. 앱에만 티켓을 붙이면 DMG를 열 때 경고가 남고,
 > DMG에만 붙이면 앱을 꺼내 옮겼을 때 검증이 약해집니다.
@@ -649,6 +650,7 @@ bash release.sh
 > (i.e. is published) is not rebuilt at all — a rebuild is not guaranteed to produce a dSYM that matches the
 > binary people already have. To rebuild, bump the version (`CFBundleShortVersionString`) in `Info.plist`.
 > (2026-09-23 · #7)
+<!-- 2026-11-18 (#20, #21) one-off exception: v1.3 had not been announced and only the owner had downloaded it, so by the owner's decision the release and tag were deleted and the same version was released again. See the tag-check comment in release.sh. -->
 
 > **Both the app and the DMG are notarized.** Stapling only the app leaves a warning when the DMG is
 > opened; stapling only the DMG weakens verification once the app is copied out of it.

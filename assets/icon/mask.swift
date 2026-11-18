@@ -6,7 +6,8 @@ import QuartzCore
 // (2) 1024 캔버스 안에 824 크기로 넣는다 — 다른 앱 아이콘과 크기·정렬을 맞추기 위한 표준 여백
 //
 // 사용법: swift mask.swift <입력.png> <출력-1024.png> [<비교시트.png>]
-// SVG 에서 AppIcon.icns 까지 한 번에 만들려면 같은 폴더의 make-icon.sh 를 쓴다.
+// 원본 그림에서 AppIcon.icns 까지 한 번에 만들려면 같은 폴더의 make-icon.sh 를 쓴다.
+// 2026-11-18 (#21): 원본이 SVG 에서 일러스트(원본-테마.jpg)로 바뀌어 아래 안내 글·시트 제목을 고쳤다(그리는 계산은 그대로).
 //
 // 🚨 2026-09-23 (#11): 입력·출력 경로를 인자로 받게 바꿨다.
 //   종전에는 `swift mask.swift <폴더>` 로 그 폴더의 `ai-soft3d-trim.svg.png` 를 읽고
@@ -18,7 +19,7 @@ import QuartzCore
 
 let usage = """
 사용법: swift mask.swift <입력.png> <출력-1024.png> [<비교시트.png>]
-  <입력.png>       정사각 원본 — 여백 없이 꽉 찬 그림 (make-icon.sh 에서는 Quick Look 으로 그린 1024 PNG)
+  <입력.png>       정사각 원본 — 여백 없이 꽉 찬 그림 (make-icon.sh 에서는 원본 그림을 정사각으로 자른 PNG)
   <출력-1024.png>  모서리 곡선 + 표준 여백을 입힌 1024 아이콘
   <비교시트.png>   (선택) 원본과 결과를 256·128·64·32·16px 로 줄여 나란히 놓은 확인용 시트
 """
@@ -113,7 +114,7 @@ func makeSheet(_ src: CGImage, _ masked: CGImage) -> CGImage {
         .font: NSFont.systemFont(ofSize: 14, weight: .regular),
         .foregroundColor: NSColor(calibratedWhite: 0.68, alpha: 1.0)]
 
-    ("AI 원본 그대로 (정사각 · 여백 없음)" as NSString).draw(at: NSPoint(x: 40, y: 650), withAttributes: head)
+    ("원본 자른 그림 (정사각 · 여백 없음)" as NSString).draw(at: NSPoint(x: 40, y: 650), withAttributes: head)
     ("macOS 규격 적용 (모서리 곡선 + 표준 여백)" as NSString).draw(at: NSPoint(x: 40, y: 300), withAttributes: head)
 
     var x: CGFloat = 40
