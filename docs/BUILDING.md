@@ -26,6 +26,22 @@ DDAKA_SIGN_IDENTITY="Developer ID Application: ..." bash build.sh
 > 인증서 없이 ad-hoc으로 서명하면 **빌드할 때마다 앱의 신원이 바뀌어** macOS가 다른 앱으로 인식하고,
 > 손쉬운 사용·입력 모니터링 권한이 매번 풀립니다. 정식 인증서로 서명해야 권한이 유지됩니다.
 
+### 화면 확인 — 디버그 빌드 전용 (2026-11-18)
+
+청소 화면은 키보드를 막는 화면이라 실행해서 보기 어렵습니다. 디버그 빌드(`swift build`)에는 키보드를 막지 않고 확인하는 길이 두 개 있습니다. 배포 빌드에는 들어가지 않습니다.
+
+```bash
+# 청소 화면 → PNG (화면 크기 5가지: 1440×900 · 1920×1080 · 2560×1440 · 800×500 · 1080×1920)
+DDAKA_ASSETS=assets DDAKA_LANG=ko .build/debug/ddaka --preview <폴더> [장면 id ...]
+
+# 안내창 문구(권한 · 임시 경로 · 키 차단 실패)를 언어별로 출력
+DDAKA_LANG=zh-hant-hk .build/debug/ddaka --strings
+```
+
+- `DDAKA_LANG`: `en` · `ko` · `ja` · `zh-hans` · `zh-hant` · `zh-hant-hk`(번체 + 홍콩 설정 이름).
+- 2560×1440 은 그림 원본 크기입니다. 그림이 잘리지 않고 1:1 로 깔리므로 글자 자리를 검사할 때 씁니다.
+- 배치가 여백 밖으로 나가거나 글자 묶음과 알약이 겹치면 `⚠️` 줄이 찍힙니다.
+
 ## 외부 배포 (Apple 공증)
 
 > **이 절은 저장소를 직접 빌드해 배포하려는 경우를 위한 것입니다.** 앱을 쓰기만 하신다면 위 「설치」만
@@ -203,6 +219,22 @@ DDAKA_SIGN_IDENTITY="Developer ID Application: ..." bash build.sh
 > With an ad-hoc signature (no certificate) **the app's identity changes on every build**, macOS sees
 > a different app each time, and the Accessibility / Input Monitoring grants are dropped. A real
 > certificate keeps the identity — and the permissions — stable.
+
+### Checking the screens — debug builds only (2026-11-18)
+
+The cleaning screen locks the keyboard, so it is hard to look at by running the app. A debug build (`swift build`) has two ways to check it without locking anything. Neither ships in the release build.
+
+```bash
+# Cleaning screen → PNG (five sizes: 1440×900 · 1920×1080 · 2560×1440 · 800×500 · 1080×1920)
+DDAKA_ASSETS=assets DDAKA_LANG=ko .build/debug/ddaka --preview <folder> [scene id ...]
+
+# Print the dialog strings (permissions · temporary path · key-block failure) for one language
+DDAKA_LANG=zh-hant-hk .build/debug/ddaka --strings
+```
+
+- `DDAKA_LANG`: `en` · `ko` · `ja` · `zh-hans` · `zh-hant` · `zh-hant-hk` (Traditional Chinese with Hong Kong setting names).
+- 2560×1440 is the art's native size: the picture is shown 1:1 without cropping, which is what to use when checking where text lands.
+- A `⚠️` line is printed when something leaves the safe margin or the caption overlaps the button pill.
 
 ## Distributing it yourself (Apple notarization)
 
