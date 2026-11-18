@@ -367,9 +367,11 @@ final class LinkButton: NSButton {
         setButtonType(.momentaryChange)
         refusesFirstResponder = true
         attributedTitle = Self.linkTitle(title, font: font, color: .linkColor)
-        // 누르고 있는 동안만 조금 옅게 — momentaryChange 는 이 제목으로 바꿔 그린다
+        // 누르고 있는 동안의 색 — momentaryChange 는 이 제목으로 바꿔 그린다.
+        // 2026-11-18 (#26): 옅은 색을 직접 만들던 것(withAlphaComponent)을 시스템의 "눌림" 효과로 바꿨다 —
+        // 다크/라이트 전환을 시스템이 따라 맞춘다(v1.3 리뷰 참고 사항).
         attributedAlternateTitle = Self.linkTitle(title, font: font,
-                                                  color: NSColor.linkColor.withAlphaComponent(0.55))
+                                                  color: NSColor.linkColor.withSystemEffect(.pressed))
         toolTip = url.absoluteString // 주소라 번역이 필요 없다
         setAccessibilityRole(.link)
         target = self
@@ -391,9 +393,13 @@ final class LinkButton: NSButton {
         addCursorRect(bounds, cursor: .pointingHand)
     }
 
+    // 2026-11-18 (#26): 열기에 실패해도 "opened" 로 남기던 것을 결과에 따라 나눠 남긴다(v1.3 리뷰 참고 사항).
     @objc private func openLink() {
-        appLog.notice("start dialog: opened \(self.url.absoluteString, privacy: .public)")
-        NSWorkspace.shared.open(url)
+        if NSWorkspace.shared.open(url) {
+            appLog.notice("start dialog: opened \(self.url.absoluteString, privacy: .public)")
+        } else {
+            appLog.error("start dialog: could not open \(self.url.absoluteString, privacy: .public)")
+        }
     }
 }
 
@@ -502,6 +508,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let creditRow = NSView(frame: NSRect(x: 0, y: 0, width: 320, height: 18))
         credit.frame.origin = NSPoint(x: ((creditRow.bounds.width - credit.frame.width) / 2).rounded(),
                                       y: ((creditRow.bounds.height - credit.frame.height) / 2).rounded())
+        // 2026-11-18 (#26): 확인창이 칸 폭을 바꿔도 가운데에 머물게 좌우·위아래 여백이 같이 늘고 준다(v1.3 리뷰 참고 사항).
+        credit.autoresizingMask = [.minXMargin, .maxXMargin, .minYMargin, .maxYMargin]
         creditRow.addSubview(credit)
         alert.accessoryView = creditRow
 
