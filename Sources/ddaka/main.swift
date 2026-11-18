@@ -1062,7 +1062,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 // 2026-11-17 (#16): 키보드를 막지 않고 청소 화면 배치만 PNG 로 뽑는다(디버그 빌드 전용 — 배포 빌드에는 이 길이 없다).
 // 청소 화면은 키보드를 막는 앱이라 실행해서 볼 수가 없다. 테마·언어·화면 크기마다 배치가 맞는지는 이걸로 본다.
 // 사용: DDAKA_ASSETS=assets DDAKA_LANG=ko .build/debug/ddaka --preview <폴더> [테마 id ...]
-//      결과: <폴더>/<테마>-<언어>-<가로>x<세로>.png (화면 크기 4가지)
+//      결과: <폴더>/<테마>-<언어>-<가로>x<세로>.png (화면 크기 5가지)
 final class PreviewButtonBackdrop: NSView {
     override func draw(_ dirtyRect: NSRect) {
         let r = bounds.insetBy(dx: 0, dy: 6)
@@ -1079,7 +1079,8 @@ if let i = CommandLine.arguments.firstIndex(of: "--preview"), i + 1 < CommandLin
     try? FileManager.default.createDirectory(at: outDir, withIntermediateDirectories: true)
     let wanted = Set(CommandLine.arguments.dropFirst(i + 2))
     let lang = ProcessInfo.processInfo.environment["DDAKA_LANG"] ?? "en"
-    let sizes: [NSSize] = [NSSize(width: 1440, height: 900), NSSize(width: 1920, height: 1080),
+    // 2026-11-18 (#31): 2560×1440 추가 — 그림 원본 크기(1:1)이자 Studio Display 기본 크기. 오너가 이 크기로 배치를 검사한다.
+    let sizes: [NSSize] = [NSSize(width: 1440, height: 900), NSSize(width: 1920, height: 1080), NSSize(width: 2560, height: 1440),
                            NSSize(width: 800, height: 500), NSSize(width: 1080, height: 1920)]
     for theme in allThemes + [plainTheme] where wanted.isEmpty || wanted.contains(theme.id) {
         let previewer = AppDelegate()
