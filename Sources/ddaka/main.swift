@@ -92,6 +92,13 @@ func L(_ en: String, _ ko: String, _ ja: String, _ zhHans: String, _ zhHant: Str
     }
 }
 
+// 2026-11-18 (#29, Fable 5.2 리뷰 반영): 간체의 설정 이름은 macOS 27 에서 바뀌었다.
+// 애플 간체 도움말(mh43185)을 버전별로 세어 보면 15·26 은 辅助功能 · 隐私与安全性, 27 은 无障碍 · 隐私与安全
+// (이 맥 macOS 27.2.1 의 시스템 문자열 표도 27 쪽과 같다). 처음엔 27 이름으로만 바꿨더니 26 이하에서 거꾸로 틀려서 버전으로 나눈다.
+// 번체(輔助使用 · 隱私權與安全性)와 일본어는 바뀌지 않았다.
+let zhHansAccessibilityName: String = { if #available(macOS 27, *) { return "无障碍" } else { return "辅助功能" } }()
+let zhHansPrivacyName: String = { if #available(macOS 27, *) { return "隐私与安全" } else { return "隐私与安全性" } }()
+
 enum Strings {
     static let totalMinutes = totalSeconds / 60
 
@@ -141,7 +148,7 @@ enum Strings {
         "macOS is running ddak-a from a temporary copy. In this state, Accessibility and Input Monitoring stay off no matter how many times you turn them on.\n\nClick OK to quit ddak-a. Then drag ddak-a into the Applications folder in Finder and open it from there.",
         "지금 닦아가 임시 복사본에서 실행되고 있어요. 이 상태에서는 손쉬운 사용·입력 모니터링을 아무리 켜도 계속 꺼진 채로 남아요.\n\n‘확인’을 누르면 닦아가 종료돼요. 그다음 Finder 에서 닦아를 ‘응용 프로그램’ 폴더로 끌어다 놓고, 거기서 실행해 주세요.",
         "macOS が ddak-a を一時的なコピーから実行しています。この状態では、アクセシビリティと入力監視を何度オンにしてもオフのままになります。\n\n「OK」を押すと ddak-a が終了します。その後、Finder で ddak-a を「アプリケーション」フォルダにドラッグして、そこから起動してください。",
-        "macOS 正在从临时副本运行 ddak-a。在这种状态下，无论开启多少次无障碍和输入监控，它们都会保持关闭。\n\n点击“好”后 ddak-a 会退出。然后请在访达中将 ddak-a 拖到“应用程序”文件夹，并从那里启动。",
+        "macOS 正在从临时副本运行 ddak-a。在这种状态下，无论开启多少次\(zhHansAccessibilityName)和输入监控，它们都会保持关闭。\n\n点击“好”后 ddak-a 会退出。然后请在访达中将 ddak-a 拖到“应用程序”文件夹，并从那里启动。",
         "macOS 正從暫存副本執行 ddak-a。在這種狀態下，無論開啟多少次輔助使用和輸入監控，都會維持關閉。\n\n按「好」後 ddak-a 會結束。接著請在 Finder 中將 ddak-a 拖到「應用程式」檔案夾，並從那裡啟動。"
     )
 
@@ -160,7 +167,7 @@ enum Strings {
             "Open System Settings › Privacy & Security and turn on ddak-a for:\n\n\(list)\n\nThen launch ddak-a again.",
             "시스템 설정 > 개인정보 보호 및 보안에서 아래 항목의 '닦아(ddak-a)'를 켜 주세요.\n\n\(list)\n\n켠 다음 닦아를 다시 실행하면 돼요.",
             "「システム設定 › プライバシーとセキュリティ」で、以下の項目の ddak-a をオンにしてください。\n\n\(list)\n\nオンにしたら ddak-a をもう一度起動してください。",
-            "请在“系统设置 › 隐私与安全”中为以下项目启用 ddak-a：\n\n\(list)\n\n启用后请重新启动 ddak-a。",
+            "请在“系统设置 › \(zhHansPrivacyName)”中为以下项目启用 ddak-a：\n\n\(list)\n\n启用后请重新启动 ddak-a。",
             "請在「系統設定 › 隱私權與安全性」中為以下項目啟用 ddak-a：\n\n\(list)\n\n啟用後請重新啟動 ddak-a。"
         )
     }
@@ -168,7 +175,7 @@ enum Strings {
         "• Accessibility",
         "• 손쉬운 사용 (Accessibility)",
         "• アクセシビリティ",
-        "• 无障碍",
+        "• \(zhHansAccessibilityName)",
         "• 輔助使用"
     )
     static let permissionInputMonitoring = L(
@@ -185,13 +192,12 @@ enum Strings {
         "打开输入监控",
         "打開輸入監控"
     )
-    // 2026-11-18 (#29): 간체의 "손쉬운 사용"·"개인정보 보호 및 보안"을 macOS 27 설정 화면 이름(无障碍 · 隐私与安全)으로 —
-    // 시스템 문자열 표(AccessibilitySettingsExtension · SecurityPrivacyExtension)에서 확인. 옛 이름은 辅助功能 · 隐私与安全性.
+    // 2026-11-18 (#29): 간체의 설정 이름은 macOS 버전에 따라 다르다 — 위의 zhHansAccessibilityName · zhHansPrivacyName.
     static let openAccessibility = L(
         "Open Accessibility",
         "손쉬운 사용 열기",
         "アクセシビリティを開く",
-        "打开无障碍",
+        "打开\(zhHansAccessibilityName)",
         "打開輔助使用"
     )
     static let close = L("Close", "닫기", "閉じる", "关闭", "關閉")
@@ -208,12 +214,14 @@ enum Strings {
         "Turn on both Accessibility and Input Monitoring for ddak-a in System Settings › Privacy & Security, then launch it again.",
         "시스템 설정 > 개인정보 보호 및 보안에서 손쉬운 사용과 입력 모니터링 둘 다 '닦아'를 켠 다음 다시 실행해 주세요.",
         "「システム設定 › プライバシーとセキュリティ」でアクセシビリティと入力監視の両方をオンにしてから、もう一度起動してください。",
-        "请在“系统设置 › 隐私与安全”中同时启用无障碍和输入监控，然后重新启动。",
+        "请在“系统设置 › \(zhHansPrivacyName)”中同时启用\(zhHansAccessibilityName)和输入监控，然后重新启动。",
         "請在「系統設定 › 隱私權與安全性」中同時啟用輔助使用和輸入監控，然後重新啟動。"
     )
     static let ok = L("OK", "확인", "OK", "好", "好")
 
     // 오버레이 화면
+    // 🔒 2026-11-18 (#25): 청소 화면에 overlayFont 로 그리는 문구를 늘리면 assets/fonts/check-overlay-glyphs.swift 의
+    // keys 에도 넣는다 — 안 넣으면 글자 검사 밖이라, 서브셋에 없는 글자가 조용히 맥 글꼴로 섞여 보인다.
     // 🚨 2026-09-23 (#8): "청소중" -> "청소 중". '중'은 의존 명사라 띄어 쓴다.
     static let cleaning = L(
         "Cleaning keyboard",

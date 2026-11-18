@@ -110,9 +110,18 @@ FONT_LICENSES="OFL-GowunDodum.txt OFL-KleeOne.txt OFL-LXGWWenKai.txt OFL-LXGWWen
 for f in $FONT_FILES $FONT_LICENSES; do
     [ -f "assets/fonts/$f" ] || { echo "❌ assets/fonts/$f 가 없어"; exit 1; }
 done
-for f in $FONT_FILES; do
-    grep -q "\"$f\"" Sources/ddaka/Themes.swift || { echo "❌ $f 가 Themes.swift 의 bundledFontFiles 에 없어 — 두 목록을 같이 고쳐야 한다"; exit 1; }
-done
+# 양쪽 목록 대조(2026-11-18 리뷰) — 한쪽에만 있으면 번들에 안 들어가거나 등록이 안 돼서, 그 언어만 조용히 예비 글꼴로 물러난다.
+SWIFT_FONTS="$(sed -n 's/^let bundledFontFiles = \[\(.*\)\]$/\1/p' Sources/ddaka/Themes.swift | tr -d '" ' | tr ',' '\n' | sort)"
+if [ -z "$SWIFT_FONTS" ]; then
+    echo "❌ Themes.swift 에서 bundledFontFiles 를 읽지 못했어 — 'let bundledFontFiles = [...]' 한 줄 형태가 바뀌면 이 대조가 무력해진다."
+    exit 1
+fi
+if [ "$SWIFT_FONTS" != "$(printf '%s\n' $FONT_FILES | sort)" ]; then
+    echo "❌ 글꼴 목록이 어긋났어 — build.sh 의 FONT_FILES 와 Themes.swift 의 bundledFontFiles 를 같이 고쳐야 한다."
+    echo "   build.sh  : $(printf '%s ' $FONT_FILES)"
+    echo "   Themes    : $(printf '%s\n' "$SWIFT_FONTS" | tr '\n' ' ')"
+    exit 1
+fi
 # 🔒 청소 화면 문구의 글자가 언어별 서브셋에 다 있는지 — 빠지면 그 글자만 맥 글꼴로 섞여 보이므로 경고가 아니라 중단.
 swift assets/fonts/check-overlay-glyphs.swift Sources/ddaka/main.swift assets/fonts || exit 1
 cp -R assets/themes "$APP_BUNDLE/Contents/Resources/themes"

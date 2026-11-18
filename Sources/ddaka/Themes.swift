@@ -114,6 +114,8 @@ let bundledFontsRegistered: Bool = {
     var allRegistered = true
     for file in bundledFontFiles {
         guard let url = resourceURL("fonts", file), CTFontManagerRegisterFontsForURL(url as CFURL, .process, nil) else {
+            // 실패해도 화면은 예비 글꼴로 정상이라 눈으로는 모른다 → 원인을 찾을 단서로 한 줄 남긴다(2026-11-18 리뷰).
+            appLog.error("fonts: could not register \(file, privacy: .public)")
             allRegistered = false
             continue
         }
@@ -123,9 +125,9 @@ let bundledFontsRegistered: Bool = {
 
 func overlayFont(size: CGFloat) -> NSFont {
     _ = bundledFontsRegistered
-    let (name, fallback): (String, String)
+    let (name, fallback): (String, String?)
     switch uiLanguage {
-    case .en, .ko: (name, fallback) = ("GowunDodum-Regular", "GowunDodum-Regular")
+    case .en, .ko: (name, fallback) = ("GowunDodum-Regular", nil)
     case .ja: (name, fallback) = ("KleeOne-Regular", "HiraMaruProN-W4")
     case .zhHans: (name, fallback) = ("DdakaKaiSC-Regular", "PingFangSC-Regular")
     case .zhHant: (name, fallback) = ("LXGWWenKaiTC-Regular", "PingFangTC-Regular")
@@ -133,7 +135,8 @@ func overlayFont(size: CGFloat) -> NSFont {
     if let font = NSFont(name: name, size: size) {
         return uiLanguage == .ja ? proportionalKana(font) : font
     }
-    return NSFont(name: fallback, size: size) ?? NSFont.systemFont(ofSize: size, weight: .medium)
+    if let fallback = fallback, let font = NSFont(name: fallback, size: size) { return font }
+    return NSFont.systemFont(ofSize: size, weight: .medium)
 }
 
 /// 2026-11-18 (#25): Klee One 의 가나는 전각 폭이라 글자 사이가 듬성해 보인다(비교 시안 B) →

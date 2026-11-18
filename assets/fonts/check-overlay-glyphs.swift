@@ -22,7 +22,14 @@ let fontFor = [
     "zh-Hans": "DdakaKaiSC-Regular.ttf",
     "zh-Hant": "LXGWWenKaiTC-Regular.ttf",
 ]
-let keys = ["cleaning", "mouseHint", "done", "shortcutHint"]
+// 앱이 NSFont(name:) 으로 찾는 PostScript 이름 — 파일은 맞는데 이름이 다르면 앱은 조용히 예비 글꼴로 물러난다(2026-11-18 리뷰).
+let postScriptNameFor = [
+    "GowunDodum-Regular.ttf": "GowunDodum-Regular",
+    "KleeOne-Regular.ttf": "KleeOne-Regular",
+    "DdakaKaiSC-Regular.ttf": "DdakaKaiSC-Regular",
+    "LXGWWenKaiTC-Regular.ttf": "LXGWWenKaiTC-Regular",
+]
+let keys = ["cleaning", "mouseHint", "done", "shortcutHint"]   // 🔒 main.swift 「오버레이 화면」 주석과 짝
 
 func fail(_ msg: String) -> Never {
     FileHandle.standardError.write(("❌ " + msg + "\n").data(using: .utf8)!)
@@ -34,7 +41,8 @@ guard args.count >= 3, let source = try? String(contentsOfFile: args[1], encodin
     fail("쓰는 법: swift check-overlay-glyphs.swift <main.swift> <글꼴 폴더 | --print 언어>")
 }
 
-/// `static let <key> = L(` 뒤의 문자열 5개를 읽는다. 따옴표 안의 \" 와 \\ 만 풀어 준다(문구에 다른 이스케이프는 없다).
+/// `static let <key> = L(` 뒤의 문자열 5개를 읽는다. 따옴표 안의 \" 와 \\ 만 풀어 준다.
+/// 그 밖의 이스케이프(\u{…} · \( … ) 등)는 글자를 잘못 읽어 "통과했는데 실제론 다른" 결과가 나오므로 실패로 끝낸다(2026-11-18 리뷰).
 func strings(for key: String) -> [String] {
     guard let start = source.range(of: "static let \(key) = L(") else { fail("main.swift 에서 \(key) = L( 를 못 찾았어") }
     var out: [String] = []
@@ -45,7 +53,12 @@ func strings(for key: String) -> [String] {
         while true {
             guard j < source.endIndex else { fail("\(key) 의 문자열이 닫히지 않았어") }
             let ch = source[j]
-            if escaped { s.append(ch); escaped = false }
+            if escaped {
+                guard ch == "\"" || ch == "\\" else {
+                    fail("\(key) 문자열에 이 검사가 읽지 못하는 이스케이프(\\\(ch))가 있어 — 청소 화면 문구는 글자를 직접 적어 줘")
+                }
+                s.append(ch); escaped = false
+            }
             else if ch == "\\" { escaped = true }
             else if ch == "\"" { break }
             else { s.append(ch) }
@@ -84,6 +97,11 @@ for lang in langs {
         fail("\(file) 를 글꼴로 읽지 못했어")
     }
     let font = CTFontCreateWithFontDescriptor(desc, 20, nil)
+    let psName = CTFontCopyPostScriptName(font) as String
+    if psName != postScriptNameFor[file] {
+        problems += 1
+        print("❌ \(lang): \(file) 의 PostScript 이름이 \(psName) — 앱(Themes.swift overlayFont)은 \(postScriptNameFor[file] ?? "?") 으로 찾는다")
+    }
     var missing: [Character] = []
     for c in uniqueChars(textByLang[lang] ?? "") {
         var units = Array(String(c).utf16)
@@ -98,5 +116,5 @@ for lang in langs {
     }
 }
 if problems > 0 {
-    fail("청소 화면 문구에 서브셋에 없는 글자가 있어 — assets/fonts/make-subsets.sh 로 서브셋을 다시 만들어 줘 (assets/fonts/README.md)")
+    fail("청소 화면 글꼴 검사 실패 — 위 ❌ 줄을 봐 줘. 글자가 빠졌으면 assets/fonts/make-subsets.sh 로 서브셋을 다시 만들고, 이름이 다르면 Themes.swift 와 맞춰 줘 (assets/fonts/README.md)")
 }
