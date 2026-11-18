@@ -143,6 +143,7 @@ bash release.sh
 | 파일 | 역할 |
 |---|---|
 | `README.md` | 소개 · 설치 · 사용법 |
+| `README.ja.md` · `README.zh-Hans.md` · `README.zh-Hant.md` | `README.md` 의 일본어 · 중국어 간체 · 중국어 번체판 (2026-11-18). `README.md` 를 고치면 같이 고칩니다 |
 | `docs/BUILDING.md` | 이 문서 — 빌드 · 배포 · 구조 (2026-11-18 README 에서 옮김, #23) |
 | `Sources/ddaka/main.swift` | 앱 로직 — 키보드 차단 · 창 · 타이머 · 청소 화면 배치 |
 | `Sources/ddaka/Themes.swift` | 청소 화면 테마 — 장면 10개의 표(글자·버튼 자리, 글자색) · 그림·글꼴 읽기 (v1.3) |
@@ -319,6 +320,7 @@ Apple's guide: [Notarizing macOS software before distribution](https://developer
 | File | Role |
 |---|---|
 | `README.md` | Overview, install and usage |
+| `README.ja.md` · `README.zh-Hans.md` · `README.zh-Hant.md` | Japanese, Simplified Chinese and Traditional Chinese versions of `README.md` (2026-11-18). Update them whenever `README.md` changes |
 | `docs/BUILDING.md` | This document — build, release and layout (moved out of the README on 2026-11-18, #23) |
 | `Sources/ddaka/main.swift` | App logic — keyboard blocking, windows, timers, cleaning-screen layout |
 | `Sources/ddaka/Themes.swift` | Cleaning-screen themes — the table of 10 scenes (where the text and button go, text colour) and loading of art and fonts (v1.3) |

@@ -6,7 +6,7 @@
 
 # 닦아 (ddak-a)
 
-**한국어** · [English](#english)
+**한국어** · [English](#english) · [日本語](README.ja.md) · [简体中文](README.zh-Hans.md) · [繁體中文](README.zh-Hant.md)
 
 > **기준일:** 2026-11-18
 > **상태:** **v1.3 공개 배포 중** — [Releases](https://github.com/Hyunjin-Cho/ddak-a/releases)에서 받을 수 있습니다 (앱·DMG 모두 Apple 공증 완료)
@@ -251,7 +251,7 @@ v1.2부터 닦아는 청소가 **어떻게 끝났는지**를 macOS 로그에 남
 
 # ddak-a (닦아) — English
 
-[한국어](#korean) · **English**
+[한국어](#korean) · **English** · [日本語](README.ja.md) · [简体中文](README.zh-Hans.md) · [繁體中文](README.zh-Hant.md)
 
 > **As of:** 2026-11-18
 > **Status:** **v1.3 is out** — get it from [Releases](https://github.com/Hyunjin-Cho/ddak-a/releases) (both the app and the DMG are notarized by Apple)
