@@ -26,6 +26,22 @@ DDAKA_SIGN_IDENTITY="Developer ID Application: ..." bash build.sh
 > 인증서 없이 ad-hoc으로 서명하면 **빌드할 때마다 앱의 신원이 바뀌어** macOS가 다른 앱으로 인식하고,
 > 손쉬운 사용·입력 모니터링 권한이 매번 풀립니다. 정식 인증서로 서명해야 권한이 유지됩니다.
 
+### 화면 확인 — 디버그 빌드 전용 (2026-11-18)
+
+청소 화면은 키보드를 막는 화면이라 실행해서 보기 어렵습니다. 디버그 빌드(`swift build`)에는 키보드를 막지 않고 확인하는 길이 두 개 있습니다. 배포 빌드에는 들어가지 않습니다.
+
+```bash
+# 청소 화면 → PNG (화면 크기 5가지: 1440×900 · 1920×1080 · 2560×1440 · 800×500 · 1080×1920)
+DDAKA_ASSETS=assets DDAKA_LANG=ko .build/debug/ddaka --preview <폴더> [장면 id ...]
+
+# 안내창 문구(권한 · 임시 경로 · 키 차단 실패)를 언어별로 출력
+DDAKA_LANG=zh-hant-hk .build/debug/ddaka --strings
+```
+
+- `DDAKA_LANG`: `en` · `ko` · `ja` · `zh-hans` · `zh-hant` · `zh-hant-hk`(번체 + 홍콩 설정 이름).
+- 2560×1440 은 그림 원본 크기입니다. 그림이 잘리지 않고 1:1 로 깔리므로 글자 자리를 검사할 때 씁니다.
+- 배치가 여백 밖으로 나가거나 글자 묶음과 알약이 겹치면 `⚠️` 줄이 찍힙니다.
+
 ## 외부 배포 (Apple 공증)
 
 > **이 절은 저장소를 직접 빌드해 배포하려는 경우를 위한 것입니다.** 앱을 쓰기만 하신다면 위 「설치」만
@@ -119,7 +135,7 @@ bash release.sh
 > `dist/` 로 함께 옮겨집니다. 이미 `v<버전>` 태그가 붙은(= 공개된) 버전은 아예 다시 만들지 않습니다 —
 > 다시 빌드한다고 사용자 손에 있는 바이너리와 짝이 맞는 dSYM 이 나온다는 보장이 없기 때문입니다.
 > 다시 만들어야 하면 `Info.plist` 의 버전(`CFBundleShortVersionString`)을 올립니다. (2026-09-23 · #7)
-<!-- 2026-11-18 (#20·#21) 예외 한 번: v1.3 은 홍보 전이고 받은 사람이 오너뿐이라 오너 결정으로 릴리스와 태그를 지우고 같은 버전으로 다시 냈다. 같은 날 오후(#25·#26) 오너 결정으로 한 번 더(두 번째 예외). 근거·경위는 release.sh 의 태그 검사 주석. -->
+<!-- 2026-11-18 (#20·#21) 예외 한 번: v1.3 은 홍보 전이고 받은 사람이 오너뿐이라 오너 결정으로 릴리스와 태그를 지우고 같은 버전으로 다시 냈다. 같은 날 오후(#25·#26) 오너 결정으로 한 번 더(두 번째 예외), 저녁(#31·#32)에 또 한 번(세 번째 예외). 근거·경위는 release.sh 의 태그 검사 주석. -->
 
 > 앱과 DMG를 **둘 다** 공증합니다. 앱에만 티켓을 붙이면 DMG를 열 때 경고가 남고,
 > DMG에만 붙이면 앱을 꺼내 옮겼을 때 검증이 약해집니다.
@@ -203,6 +219,22 @@ DDAKA_SIGN_IDENTITY="Developer ID Application: ..." bash build.sh
 > With an ad-hoc signature (no certificate) **the app's identity changes on every build**, macOS sees
 > a different app each time, and the Accessibility / Input Monitoring grants are dropped. A real
 > certificate keeps the identity — and the permissions — stable.
+
+### Checking the screens — debug builds only (2026-11-18)
+
+The cleaning screen locks the keyboard, so it is hard to look at by running the app. A debug build (`swift build`) has two ways to check it without locking anything. Neither ships in the release build.
+
+```bash
+# Cleaning screen → PNG (five sizes: 1440×900 · 1920×1080 · 2560×1440 · 800×500 · 1080×1920)
+DDAKA_ASSETS=assets DDAKA_LANG=ko .build/debug/ddaka --preview <folder> [scene id ...]
+
+# Print the dialog strings (permissions · temporary path · key-block failure) for one language
+DDAKA_LANG=zh-hant-hk .build/debug/ddaka --strings
+```
+
+- `DDAKA_LANG`: `en` · `ko` · `ja` · `zh-hans` · `zh-hant` · `zh-hant-hk` (Traditional Chinese with Hong Kong setting names).
+- 2560×1440 is the art's native size: the picture is shown 1:1 without cropping, which is what to use when checking where text lands.
+- A `⚠️` line is printed when something leaves the safe margin or the caption overlaps the button pill.
 
 ## Distributing it yourself (Apple notarization)
 
@@ -296,7 +328,7 @@ bash release.sh
 > (i.e. is published) is not rebuilt at all — a rebuild is not guaranteed to produce a dSYM that matches the
 > binary people already have. To rebuild, bump the version (`CFBundleShortVersionString`) in `Info.plist`.
 > (2026-09-23 · #7)
-<!-- 2026-11-18 (#20, #21) one-off exception: v1.3 had not been announced and only the owner had downloaded it, so by the owner's decision the release and tag were deleted and the same version was released again. The owner decided to do it once more that afternoon (#25, #26; second exception). See the tag-check comment in release.sh. -->
+<!-- 2026-11-18 (#20, #21) one-off exception: v1.3 had not been announced and only the owner had downloaded it, so by the owner's decision the release and tag were deleted and the same version was released again. The owner decided to do it once more that afternoon (#25, #26; second exception) and again that evening (#31, #32; third exception). See the tag-check comment in release.sh. -->
 
 > **Both the app and the DMG are notarized.** Stapling only the app leaves a warning when the DMG is
 > opened; stapling only the DMG weakens verification once the app is copied out of it.

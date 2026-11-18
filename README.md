@@ -214,6 +214,8 @@ v1.2부터 닦아는 청소가 **어떻게 끝났는지**를 macOS 로그에 남
 | 繁體中文 (대만·홍콩·마카오) | 중국어 번체 |
 | 지원 언어가 목록에 하나도 없을 때 | 영어 |
 
+번체 중국어 중 언어를 홍콩·마카오로 둔 경우에는, 안내에 나오는 macOS 설정 이름을 홍콩 표기(私隱與保安 · 輸入監察)로 보여 줍니다.
+
 문구는 `.lproj` 리소스가 아니라 소스 안 `L()` 함수에 5개 언어를 나란히 적는 방식입니다.
 문구를 추가할 때 한 언어라도 빠뜨리면 **빌드가 실패**하므로 누락될 수 없습니다.
 
@@ -412,6 +414,8 @@ is second, you get Korean.
 | 简体中文 (mainland China, Singapore) | Simplified Chinese |
 | 繁體中文 (Taiwan, Hong Kong, Macau) | Traditional Chinese |
 | None of the supported languages in the list | English |
+
+Traditional Chinese users whose language is set to Hong Kong or Macau see the macOS setting names in the app's instructions in their Hong Kong form (私隱與保安 · 輸入監察).
 
 Strings are not `.lproj` resources; all five languages sit side by side in an `L()` call in the
 source. Adding a string with a language missing **fails the build**, so none can be forgotten.

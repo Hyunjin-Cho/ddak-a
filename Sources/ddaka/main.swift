@@ -63,7 +63,7 @@ let uiLanguage: UILanguage = {
         case "ko": return .ko
         case "ja": return .ja
         case "zh-hans": return .zhHans
-        case "zh-hant": return .zhHant
+        case "zh-hant", "zh-hant-hk": return .zhHant   // zh-hant-hk = 홍콩 설정 이름 시험용(#32, 아래 zhHantIsHongKong)
         default: return .en
         }
     }
@@ -95,9 +95,27 @@ func L(_ en: String, _ ko: String, _ ja: String, _ zhHans: String, _ zhHant: Str
 // 2026-11-18 (#29, Fable 5.2 리뷰 반영): 간체의 설정 이름은 macOS 27 에서 바뀌었다.
 // 애플 간체 도움말(mh43185)을 버전별로 세어 보면 15·26 은 辅助功能 · 隐私与安全性, 27 은 无障碍 · 隐私与安全
 // (이 맥 macOS 27.2.1 의 시스템 문자열 표도 27 쪽과 같다). 처음엔 27 이름으로만 바꿨더니 26 이하에서 거꾸로 틀려서 버전으로 나눈다.
-// 번체(輔助使用 · 隱私權與安全性)와 일본어는 바뀌지 않았다.
+// 번체(輔助使用 · 隱私權與安全性)와 일본어는 바뀌지 않았다. 번체의 홍콩 표기는 아래 #32.
 let zhHansAccessibilityName: String = { if #available(macOS 27, *) { return "无障碍" } else { return "辅助功能" } }()
 let zhHansPrivacyName: String = { if #available(macOS 27, *) { return "隐私与安全" } else { return "隐私与安全性" } }()
+
+// 2026-11-18 (#32): 번체 안에서도 홍콩(zh_HK)은 설정 이름이 대만(zh_TW)과 다르다 — 개인정보 보호 및 보안 = 私隱與保安(대만 隱私權與安全性),
+// 입력 모니터링 = 輸入監察(대만 輸入監控), "열기" = 開啟(대만 打開 — 워크플로 "Open App" 도 홍콩은 開啟App). 輔助使用 · 系統設定 은 같다.
+// 근거: 이 맥(27.2.1)의 시스템 문자열 표 · 애플 홍콩판 Mac 사용 설명서(mh43185, 26 · 27).
+// 앱 언어는 둘 다 zh-Hant 로 고르므로(실측: zh-HK · zh-Hant-HK · zh-MO → zh-Hant) 사용자 언어 목록의 **첫 번체 항목**이 홍콩·마카오인지로 가른다.
+// 마카오는 macOS 에 따로 번역이 없어 홍콩 쪽으로 둔다(추측 — 확인 못 함).
+let zhHantIsHongKong: Bool = {
+    #if DEBUG
+    if let forced = ProcessInfo.processInfo.environment["DDAKA_LANG"]?.lowercased() { return forced == "zh-hant-hk" }
+    #endif
+    let traditional = ["zh-hant", "zh-tw", "zh-hk", "zh-mo"]
+    guard let first = Locale.preferredLanguages.lazy.map({ $0.lowercased() })
+            .first(where: { code in traditional.contains(where: { code.hasPrefix($0) }) }) else { return false }
+    return ["zh-hk", "zh-mo", "zh-hant-hk", "zh-hant-mo"].contains(where: { first.hasPrefix($0) })
+}()
+let zhHantPrivacyName = zhHantIsHongKong ? "私隱與保安" : "隱私權與安全性"
+let zhHantInputMonitoringName = zhHantIsHongKong ? "輸入監察" : "輸入監控"
+let zhHantOpenVerb = zhHantIsHongKong ? "開啟" : "打開"
 
 enum Strings {
     static let totalMinutes = totalSeconds / 60
@@ -149,7 +167,7 @@ enum Strings {
         "지금 닦아가 임시 복사본에서 실행되고 있어요. 이 상태에서는 손쉬운 사용·입력 모니터링을 아무리 켜도 계속 꺼진 채로 남아요.\n\n‘확인’을 누르면 닦아가 종료돼요. 그다음 Finder 에서 닦아를 ‘응용 프로그램’ 폴더로 끌어다 놓고, 거기서 실행해 주세요.",
         "macOS が ddak-a を一時的なコピーから実行しています。この状態では、アクセシビリティと入力監視を何度オンにしてもオフのままになります。\n\n「OK」を押すと ddak-a が終了します。その後、Finder で ddak-a を「アプリケーション」フォルダにドラッグして、そこから起動してください。",
         "macOS 正在从临时副本运行 ddak-a。在这种状态下，无论开启多少次\(zhHansAccessibilityName)和输入监控，它们都会保持关闭。\n\n点击“好”后 ddak-a 会退出。然后请在访达中将 ddak-a 拖到“应用程序”文件夹，并从那里启动。",
-        "macOS 正從暫存副本執行 ddak-a。在這種狀態下，無論開啟多少次輔助使用和輸入監控，都會維持關閉。\n\n按「好」後 ddak-a 會結束。接著請在 Finder 中將 ddak-a 拖到「應用程式」檔案夾，並從那裡啟動。"
+        "macOS 正從暫存副本執行 ddak-a。在這種狀態下，無論開啟多少次輔助使用和\(zhHantInputMonitoringName)，都會維持關閉。\n\n按「好」後 ddak-a 會結束。接著請在 Finder 中將 ddak-a 拖到「應用程式」檔案夾，並從那裡啟動。"
     )
 
     // 권한 안내
@@ -168,7 +186,7 @@ enum Strings {
             "시스템 설정 > 개인정보 보호 및 보안에서 아래 항목의 '닦아(ddak-a)'를 켜 주세요.\n\n\(list)\n\n켠 다음 닦아를 다시 실행하면 돼요.",
             "「システム設定 › プライバシーとセキュリティ」で、以下の項目の ddak-a をオンにしてください。\n\n\(list)\n\nオンにしたら ddak-a をもう一度起動してください。",
             "请在“系统设置 › \(zhHansPrivacyName)”中为以下项目启用 ddak-a：\n\n\(list)\n\n启用后请重新启动 ddak-a。",
-            "請在「系統設定 › 隱私權與安全性」中為以下項目啟用 ddak-a：\n\n\(list)\n\n啟用後請重新啟動 ddak-a。"
+            "請在「系統設定 › \(zhHantPrivacyName)」中為以下項目啟用 ddak-a：\n\n\(list)\n\n啟用後請重新啟動 ddak-a。"
         )
     }
     static let permissionAccessibility = L(
@@ -183,14 +201,14 @@ enum Strings {
         "• 입력 모니터링 (Input Monitoring)",
         "• 入力監視",
         "• 输入监控",
-        "• 輸入監控"
+        "• \(zhHantInputMonitoringName)"
     )
     static let openInputMonitoring = L(
         "Open Input Monitoring",
         "입력 모니터링 열기",
         "入力監視を開く",
         "打开输入监控",
-        "打開輸入監控"
+        "\(zhHantOpenVerb)\(zhHantInputMonitoringName)"
     )
     // 2026-11-18 (#29): 간체의 설정 이름은 macOS 버전에 따라 다르다 — 위의 zhHansAccessibilityName · zhHansPrivacyName.
     static let openAccessibility = L(
@@ -198,7 +216,7 @@ enum Strings {
         "손쉬운 사용 열기",
         "アクセシビリティを開く",
         "打开\(zhHansAccessibilityName)",
-        "打開輔助使用"
+        "\(zhHantOpenVerb)輔助使用"
     )
     static let close = L("Close", "닫기", "閉じる", "关闭", "關閉")
 
@@ -215,7 +233,7 @@ enum Strings {
         "시스템 설정 > 개인정보 보호 및 보안에서 손쉬운 사용과 입력 모니터링 둘 다 '닦아'를 켠 다음 다시 실행해 주세요.",
         "「システム設定 › プライバシーとセキュリティ」でアクセシビリティと入力監視の両方をオンにしてから、もう一度起動してください。",
         "请在“系统设置 › \(zhHansPrivacyName)”中同时启用\(zhHansAccessibilityName)和输入监控，然后重新启动。",
-        "請在「系統設定 › 隱私權與安全性」中同時啟用輔助使用和輸入監控，然後重新啟動。"
+        "請在「系統設定 › \(zhHantPrivacyName)」中同時啟用輔助使用和\(zhHantInputMonitoringName)，然後重新啟動。"
     )
     static let ok = L("OK", "확인", "OK", "好", "好")
 
@@ -1062,7 +1080,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 // 2026-11-17 (#16): 키보드를 막지 않고 청소 화면 배치만 PNG 로 뽑는다(디버그 빌드 전용 — 배포 빌드에는 이 길이 없다).
 // 청소 화면은 키보드를 막는 앱이라 실행해서 볼 수가 없다. 테마·언어·화면 크기마다 배치가 맞는지는 이걸로 본다.
 // 사용: DDAKA_ASSETS=assets DDAKA_LANG=ko .build/debug/ddaka --preview <폴더> [테마 id ...]
-//      결과: <폴더>/<테마>-<언어>-<가로>x<세로>.png (화면 크기 4가지)
+//      결과: <폴더>/<테마>-<언어>-<가로>x<세로>.png (화면 크기 5가지)
 final class PreviewButtonBackdrop: NSView {
     override func draw(_ dirtyRect: NSRect) {
         let r = bounds.insetBy(dx: 0, dy: 6)
@@ -1073,13 +1091,26 @@ final class PreviewButtonBackdrop: NSView {
     }
 }
 
+// 2026-11-18 (#32): 안내창 문구(권한 · 임시 경로 · 키 차단 실패)를 언어별로 찍어 본다 — 청소 화면 미리보기에는 이 글이 안 나온다.
+// 사용: DDAKA_LANG=zh-hant-hk .build/debug/ddaka --strings   (DDAKA_LANG 없이 -AppleLanguages "(zh-Hant-HK)" 로 실제 판별도 볼 수 있다)
+if CommandLine.arguments.contains("--strings") {
+    print("uiLanguage=\(uiLanguage) zhHantIsHongKong=\(zhHantIsHongKong) preferredLanguages=\(Locale.preferredLanguages)")
+    print("zhHant: \(zhHantPrivacyName) · \(zhHantInputMonitoringName) · \(zhHantOpenVerb) | zhHans: \(zhHansPrivacyName) · \(zhHansAccessibilityName)")
+    for text in [Strings.translocatedBody, Strings.permissionBody("• A"), Strings.permissionAccessibility, Strings.permissionInputMonitoring,
+                 Strings.openAccessibility, Strings.openInputMonitoring, Strings.tapFailedBody] {
+        print("---\n\(text)")
+    }
+    exit(0)
+}
+
 if let i = CommandLine.arguments.firstIndex(of: "--preview"), i + 1 < CommandLine.arguments.count {
     _ = NSApplication.shared
     let outDir = URL(fileURLWithPath: CommandLine.arguments[i + 1])
     try? FileManager.default.createDirectory(at: outDir, withIntermediateDirectories: true)
     let wanted = Set(CommandLine.arguments.dropFirst(i + 2))
     let lang = ProcessInfo.processInfo.environment["DDAKA_LANG"] ?? "en"
-    let sizes: [NSSize] = [NSSize(width: 1440, height: 900), NSSize(width: 1920, height: 1080),
+    // 2026-11-18 (#31): 2560×1440 추가 — 그림 원본 크기(1:1)이자 Studio Display 기본 크기. 오너가 이 크기로 배치를 검사한다.
+    let sizes: [NSSize] = [NSSize(width: 1440, height: 900), NSSize(width: 1920, height: 1080), NSSize(width: 2560, height: 1440),
                            NSSize(width: 800, height: 500), NSSize(width: 1080, height: 1920)]
     for theme in allThemes + [plainTheme] where wanted.isEmpty || wanted.contains(theme.id) {
         let previewer = AppDelegate()
