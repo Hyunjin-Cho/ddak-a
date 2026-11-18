@@ -234,7 +234,12 @@ v1.2부터 닦아는 청소가 **어떻게 끝났는지**를 macOS 로그에 남
 
 [MIT](LICENSE)
 
-글꼴 고운돋움(Gowun Dodum, © 2021 The Gowun Dodum Project Authors)은 SIL Open Font License 1.1 을 따릅니다 — [`assets/fonts/OFL-GowunDodum.txt`](assets/fonts/OFL-GowunDodum.txt)
+청소 화면 글꼴은 모두 SIL Open Font License 1.1 을 따르며, 앱에는 화면에 나오는 글자만 남긴 서브셋이 들어갑니다. 출처와 다시 만드는 법은 [`assets/fonts/README.md`](assets/fonts/README.md)에 있습니다.
+
+- 한국어·영어 — 고운돋움(Gowun Dodum, © 2021 The Gowun Dodum Project Authors) — [`OFL-GowunDodum.txt`](assets/fonts/OFL-GowunDodum.txt)
+- 일본어 — Klee One(© 2020 The Klee Project Authors) — [`OFL-KleeOne.txt`](assets/fonts/OFL-KleeOne.txt)
+- 중국어 간체 — LXGW WenKai(霞鹜文楷, © 2021-2026 LXGW)를 바탕으로 한 서브셋. 원본의 예약된 글꼴 이름 때문에 앱 안에서는 "Ddaka Kai SC" 라는 이름을 씁니다 — [`OFL-LXGWWenKai.txt`](assets/fonts/OFL-LXGWWenKai.txt)
+- 중국어 번체 — LXGW WenKai TC(霞鶩文楷 TC, © 2024 The LXGW WenKai Project Authors) — [`OFL-LXGWWenKaiTC.txt`](assets/fonts/OFL-LXGWWenKaiTC.txt)
 
 ---
 
@@ -428,4 +433,9 @@ source. Adding a string with a language missing **fails the build**, so none can
 
 [MIT](LICENSE)
 
-The Gowun Dodum font (© 2021 The Gowun Dodum Project Authors) is under the SIL Open Font License 1.1 — [`assets/fonts/OFL-GowunDodum.txt`](assets/fonts/OFL-GowunDodum.txt)
+The cleaning-screen fonts are all under the SIL Open Font License 1.1. The app ships subsets with only the characters the screen shows. Sources and how to rebuild them are in [`assets/fonts/README.md`](assets/fonts/README.md#english).
+
+- Korean and English — Gowun Dodum (© 2021 The Gowun Dodum Project Authors) — [`OFL-GowunDodum.txt`](assets/fonts/OFL-GowunDodum.txt)
+- Japanese — Klee One (© 2020 The Klee Project Authors) — [`OFL-KleeOne.txt`](assets/fonts/OFL-KleeOne.txt)
+- Simplified Chinese — a subset based on LXGW WenKai (霞鹜文楷, © 2021-2026 LXGW). Because the original declares Reserved Font Names, it is named "Ddaka Kai SC" inside the app — [`OFL-LXGWWenKai.txt`](assets/fonts/OFL-LXGWWenKai.txt)
+- Traditional Chinese — LXGW WenKai TC (霞鶩文楷 TC, © 2024 The LXGW WenKai Project Authors) — [`OFL-LXGWWenKaiTC.txt`](assets/fonts/OFL-LXGWWenKaiTC.txt)

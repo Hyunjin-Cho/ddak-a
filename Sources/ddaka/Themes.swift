@@ -103,23 +103,51 @@ struct ThemeArt {
 
 /// 2026-11-17 오너: 고운돋움(Gowun Dodum, SIL OFL 1.1 — `fonts/OFL-GowunDodum.txt`).
 /// 쓰는 글자만 남긴 서브셋(KS X 1001 한글 2,350자 + 라틴)이라 1.2MB 다. 이 앱 프로세스에만 등록한다.
-/// 고운돋움에 없는 언어는 맥에 들어 있는 비슷한 결의 글꼴로 짝을 맞춘다: 일본어 = 히라기노 둥근 고딕, 중국어 = 핑팡.
-/// 어느 것이든 못 찾으면 시스템 글꼴로 물러난다 — 글자가 안 보이는 일은 없다.
+/// 2026-11-18 (#25) 오너: 일본어·중국어도 고운돋움과 결이 맞게 — 비교 시안에서 일 B′ · 중 B 를 골랐다.
+///   일 = Klee One(+ palt) · 간 = Ddaka Kai SC(LXGW WenKai 서브셋 — 예약된 글꼴 이름 때문에 이름만 바꿈) · 번 = LXGW WenKai TC.
+///   셋 다 SIL OFL 1.1, 청소 화면 문구 글자만 남긴 서브셋이다(`assets/fonts/README.md` · `make-subsets.sh`).
+///   예전 짝(히라기노 둥근 고딕 · 핑팡)은 넣은 글꼴을 못 찾을 때의 대비로 남긴다. 그것도 없으면 시스템 글꼴 — 글자가 안 보이는 일은 없다.
+/// 🔒 언어 ↔ 글꼴 짝을 바꾸면 `assets/fonts/check-overlay-glyphs.swift` 의 표도 같이 바꾼다(빌드 때 글자 검사가 그 표를 본다).
+let bundledFontFiles = ["GowunDodum-Regular.ttf", "KleeOne-Regular.ttf", "DdakaKaiSC-Regular.ttf", "LXGWWenKaiTC-Regular.ttf"]
+
 let bundledFontsRegistered: Bool = {
-    guard let url = resourceURL("fonts", "GowunDodum-Regular.ttf") else { return false }
-    return CTFontManagerRegisterFontsForURL(url as CFURL, .process, nil)
+    var allRegistered = true
+    for file in bundledFontFiles {
+        guard let url = resourceURL("fonts", file), CTFontManagerRegisterFontsForURL(url as CFURL, .process, nil) else {
+            // 실패해도 화면은 예비 글꼴로 정상이라 눈으로는 모른다 → 원인을 찾을 단서로 한 줄 남긴다(2026-11-18 리뷰).
+            appLog.error("fonts: could not register \(file, privacy: .public)")
+            allRegistered = false
+            continue
+        }
+    }
+    return allRegistered
 }()
 
 func overlayFont(size: CGFloat) -> NSFont {
     _ = bundledFontsRegistered
-    let name: String
+    let (name, fallback): (String, String?)
     switch uiLanguage {
-    case .en, .ko: name = "GowunDodum-Regular"
-    case .ja: name = "HiraMaruProN-W4"
-    case .zhHans: name = "PingFangSC-Regular"
-    case .zhHant: name = "PingFangTC-Regular"
+    case .en, .ko: (name, fallback) = ("GowunDodum-Regular", nil)
+    case .ja: (name, fallback) = ("KleeOne-Regular", "HiraMaruProN-W4")
+    case .zhHans: (name, fallback) = ("DdakaKaiSC-Regular", "PingFangSC-Regular")
+    case .zhHant: (name, fallback) = ("LXGWWenKaiTC-Regular", "PingFangTC-Regular")
     }
-    return NSFont(name: name, size: size) ?? NSFont.systemFont(ofSize: size, weight: .medium)
+    if let font = NSFont(name: name, size: size) {
+        return uiLanguage == .ja ? proportionalKana(font) : font
+    }
+    if let fallback = fallback, let font = NSFont(name: fallback, size: size) { return font }
+    return NSFont.systemFont(ofSize: size, weight: .medium)
+}
+
+/// 2026-11-18 (#25): Klee One 의 가나는 전각 폭이라 글자 사이가 듬성해 보인다(비교 시안 B) →
+/// OpenType `palt`(가나를 비례 폭으로)를 켠다(비교 시안 B′). 기능이 없는 글꼴이면 CoreText 가 조용히 무시한다.
+private func proportionalKana(_ font: NSFont) -> NSFont {
+    let palt: [NSFontDescriptor.FeatureKey: Any] = [
+        NSFontDescriptor.FeatureKey(rawValue: kCTFontOpenTypeFeatureTag as String): "palt",
+        NSFontDescriptor.FeatureKey(rawValue: kCTFontOpenTypeFeatureValue as String): 1,
+    ]
+    let descriptor = font.fontDescriptor.addingAttributes([.featureSettings: [palt]])
+    return NSFont(descriptor: descriptor, size: font.pointSize) ?? font
 }
 
 /// 숫자는 언어와 상관없이 고운돋움(없으면 시스템 고정폭 숫자).

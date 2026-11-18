@@ -119,7 +119,7 @@ bash release.sh
 > `dist/` 로 함께 옮겨집니다. 이미 `v<버전>` 태그가 붙은(= 공개된) 버전은 아예 다시 만들지 않습니다 —
 > 다시 빌드한다고 사용자 손에 있는 바이너리와 짝이 맞는 dSYM 이 나온다는 보장이 없기 때문입니다.
 > 다시 만들어야 하면 `Info.plist` 의 버전(`CFBundleShortVersionString`)을 올립니다. (2026-09-23 · #7)
-<!-- 2026-11-18 (#20·#21) 예외 한 번: v1.3 은 홍보 전이고 받은 사람이 오너뿐이라 오너 결정으로 릴리스와 태그를 지우고 같은 버전으로 다시 냈다. 근거·경위는 release.sh 의 태그 검사 주석. -->
+<!-- 2026-11-18 (#20·#21) 예외 한 번: v1.3 은 홍보 전이고 받은 사람이 오너뿐이라 오너 결정으로 릴리스와 태그를 지우고 같은 버전으로 다시 냈다. 같은 날 오후(#25·#26) 오너 결정으로 한 번 더(두 번째 예외). 근거·경위는 release.sh 의 태그 검사 주석. -->
 
 > 앱과 DMG를 **둘 다** 공증합니다. 앱에만 티켓을 붙이면 DMG를 열 때 경고가 남고,
 > DMG에만 붙이면 앱을 꺼내 옮겼을 때 검증이 약해집니다.
@@ -153,7 +153,8 @@ bash release.sh
 | `assets/icon/` | 앱 아이콘 — 원본 그림(테마와 같은 강아지·고양이 일러스트)과 결과물 (`AppIcon.icns` 가 빌드에 쓰입니다). 파일별 설명과 다시 만드는 법은 [`assets/icon/README.md`](../assets/icon/README.md) |
 | `assets/icon/make-icon.sh` | 원본 그림을 잘라 `AppIcon.icns` 까지 다시 만드는 스크립트 (`assets/icon/make-icon.sh <출력폴더>` · 커밋된 파일은 덮어쓰지 않습니다) |
 | `assets/themes/` | 청소 화면 그림 10장 (2560×1440 JPEG). 🔒 `Themes.swift` 의 표와 개수·이름이 같아야 합니다 — `build.sh` 가 대조합니다 |
-| `assets/fonts/` | 고운돋움(Gowun Dodum) — 앱이 쓰는 글자만 남긴 서브셋과 SIL OFL 1.1 원문 |
+| `assets/fonts/` | 청소 화면 글꼴 4종(한·영 고운돋움 · 일 Klee One · 간 Ddaka Kai SC = LXGW WenKai 서브셋 · 번 LXGW WenKai TC) — 앱이 쓰는 글자만 남긴 서브셋과 각 SIL OFL 1.1 원문. 출처·SHA-256·다시 만드는 법은 [`assets/fonts/README.md`](../assets/fonts/README.md) (2026-11-18) |
+| `assets/fonts/make-subsets.sh` · `check-overlay-glyphs.swift` | 일·중 서브셋 만들기 · 청소 화면 문구의 글자가 서브셋에 다 있는지 검사(`build.sh` 가 빌드 때 돌리고, 빠지면 멈춥니다). 둘 다 앱에는 들어가지 않습니다 |
 | `assets/screenshot.jpg` | README 용 실행 화면 |
 | `assets/readme/themes/` | README 용 그림 10장 미리보기 (480px 썸네일 — `assets/themes/` 를 줄인 사본, 앱에는 들어가지 않습니다) |
 | `assets/dmg-settings.py` | DMG 설치 창 구성 (배경·아이콘 위치·창 크기) |
@@ -294,7 +295,7 @@ bash release.sh
 > (i.e. is published) is not rebuilt at all — a rebuild is not guaranteed to produce a dSYM that matches the
 > binary people already have. To rebuild, bump the version (`CFBundleShortVersionString`) in `Info.plist`.
 > (2026-09-23 · #7)
-<!-- 2026-11-18 (#20, #21) one-off exception: v1.3 had not been announced and only the owner had downloaded it, so by the owner's decision the release and tag were deleted and the same version was released again. See the tag-check comment in release.sh. -->
+<!-- 2026-11-18 (#20, #21) one-off exception: v1.3 had not been announced and only the owner had downloaded it, so by the owner's decision the release and tag were deleted and the same version was released again. The owner decided to do it once more that afternoon (#25, #26; second exception). See the tag-check comment in release.sh. -->
 
 > **Both the app and the DMG are notarized.** Stapling only the app leaves a warning when the DMG is
 > opened; stapling only the DMG weakens verification once the app is copied out of it.
@@ -328,7 +329,8 @@ Apple's guide: [Notarizing macOS software before distribution](https://developer
 | `assets/icon/` | App icon — the source illustration (the same dog and cat as the themes) and outputs (`AppIcon.icns` is what the build uses). Per-file notes and how to regenerate: [`assets/icon/README.md`](../assets/icon/README.md#english) |
 | `assets/icon/make-icon.sh` | Crops the source illustration and regenerates the icon up to `AppIcon.icns` (`assets/icon/make-icon.sh <output dir>`; never overwrites the committed files) |
 | `assets/themes/` | The 10 cleaning-screen illustrations (2560×1440 JPEG). 🔒 Names and count must match the table in `Themes.swift` — `build.sh` checks it |
-| `assets/fonts/` | Gowun Dodum — a subset with only the characters the app uses, plus the SIL OFL 1.1 text |
+| `assets/fonts/` | The four cleaning-screen fonts (Korean/English Gowun Dodum · Japanese Klee One · Simplified Chinese Ddaka Kai SC = an LXGW WenKai subset · Traditional Chinese LXGW WenKai TC) — subsets with only the characters the app uses, plus each SIL OFL 1.1 text. Sources, SHA-256 and how to rebuild: [`assets/fonts/README.md`](../assets/fonts/README.md#english) (2026-11-18) |
+| `assets/fonts/make-subsets.sh` · `check-overlay-glyphs.swift` | Builds the Japanese/Chinese subsets · checks that every character of the cleaning-screen strings is in its subset (`build.sh` runs it and stops if one is missing). Neither ships in the app |
 | `assets/screenshot.jpg` | The screenshot in this README |
 | `assets/readme/themes/` | Preview of the 10 illustrations for this README (480 px thumbnails scaled down from `assets/themes/`; not shipped in the app) |
 | `assets/dmg-settings.py` | Installer window layout (background, icon positions, window size) |
