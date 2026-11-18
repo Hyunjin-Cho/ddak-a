@@ -353,6 +353,50 @@ final class CenteredTitleButtonCell: NSButtonCell {
     }
 }
 
+// 2026-11-18 (#20): 실행 확인창의 주소 줄. 누르면 기본 브라우저로 저장소 페이지를 연다.
+// 종전에는 복사만 되는 글자였다(실물 확인 — 손쉬운 사용 역할이 AXStaticText 였다).
+// - 키보드 초점은 받지 않는다: 확인창의 Return = "예" · Esc 동작을 그대로 두려는 것.
+// - 확인창이 떠 있는 동안 브라우저가 열려도 확인창은 닫히지 않고, 키보드는 아직 막히기 전이다.
+final class LinkButton: NSButton {
+    private let url: URL
+
+    init(title: String, url: URL, font: NSFont) {
+        self.url = url
+        super.init(frame: .zero)
+        isBordered = false
+        setButtonType(.momentaryChange)
+        refusesFirstResponder = true
+        attributedTitle = Self.linkTitle(title, font: font, color: .linkColor)
+        // 누르고 있는 동안만 조금 옅게 — momentaryChange 는 이 제목으로 바꿔 그린다
+        attributedAlternateTitle = Self.linkTitle(title, font: font,
+                                                  color: NSColor.linkColor.withAlphaComponent(0.55))
+        toolTip = url.absoluteString // 주소라 번역이 필요 없다
+        setAccessibilityRole(.link)
+        target = self
+        action = #selector(openLink)
+        sizeToFit()
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
+
+    private static func linkTitle(_ text: String, font: NSFont, color: NSColor) -> NSAttributedString {
+        NSAttributedString(string: text, attributes: [
+            .font: font,
+            .foregroundColor: color,
+            .underlineStyle: NSUnderlineStyle.single.rawValue,
+        ])
+    }
+
+    override func resetCursorRects() {
+        addCursorRect(bounds, cursor: .pointingHand)
+    }
+
+    @objc private func openLink() {
+        appLog.notice("start dialog: opened \(self.url.absoluteString, privacy: .public)")
+        NSWorkspace.shared.open(url)
+    }
+}
+
 // MARK: - 임시 경로(App Translocation) 감지
 //
 // 🚨 2026-09-22 신설. 브라우저로 받은 앱을 Finder 로 끌어다 옮기지 않고 그대로 실행하면,
@@ -445,16 +489,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // 말해야 하는 화면이라, 다른 정보가 탈출 안내와 시선을 나눠 갖게 하면 안 된다.
         // 이 확인창은 아직 키보드가 막히기 전이라 사람이 여유롭게 읽을 수 있다.
         // 주소는 고유명사라 번역이 필요 없어서 L() 을 쓰지 않는다.
-        let credit = NSTextField(labelWithString: "github.com/Hyunjin-Cho")
         // 2026-09-22: 처음엔 11pt·tertiary 였는데 실물에서 너무 흐려 있는지도 모르고 지나갔다.
         // 12pt 로 키우고 색은 오너가 실물을 보고 본문과 같은 labelColor 로 확정했다
         // (중간 단계인 secondary 도 후보였으나 여전히 약하다는 판단).
-        credit.font = NSFont.systemFont(ofSize: 12, weight: .regular)
-        credit.textColor = .labelColor
-        credit.alignment = .center
-        credit.isSelectable = true // 주소를 복사할 수 있게 (클릭으로 열리지는 않는다)
-        credit.frame = NSRect(x: 0, y: 0, width: 320, height: 18)
-        alert.accessoryView = credit
+        // 2026-11-18 (#20): 오너 — 앱 안의 홍보가 약하다. 복사만 되던 글자를 누르면 열리는 링크로 바꾸고,
+        // 가리키는 곳을 프로필에서 저장소(받기·업데이트·설명이 있는 곳)로 옮겼다. 색은 링크라는 표시로
+        // labelColor 대신 시스템 링크색 + 밑줄(다크 모드에서도 시스템이 맞춘다). 크기 12pt 는 그대로.
+        let credit = LinkButton(title: "github.com/Hyunjin-Cho/ddak-a",
+                                url: URL(string: "https://github.com/Hyunjin-Cho/ddak-a")!,
+                                font: NSFont.systemFont(ofSize: 12, weight: .regular))
+        // 확인창 폭에 맞춘 칸 가운데에 글자 크기만큼만 둔다 — 손가락 커서가 빈 곳에서 뜨지 않게.
+        let creditRow = NSView(frame: NSRect(x: 0, y: 0, width: 320, height: 18))
+        credit.frame.origin = NSPoint(x: ((creditRow.bounds.width - credit.frame.width) / 2).rounded(),
+                                      y: ((creditRow.bounds.height - credit.frame.height) / 2).rounded())
+        creditRow.addSubview(credit)
+        alert.accessoryView = creditRow
 
         NSApp.activate(ignoringOtherApps: true)
         let response = alert.runModal()
