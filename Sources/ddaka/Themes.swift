@@ -1,4 +1,5 @@
 import Cocoa
+import CoreImage
 import CoreText
 
 // MARK: - 청소 화면 테마 (#16, 2026-11-17)
@@ -20,6 +21,22 @@ struct Theme {
     let sign: CGPoint      // (u, v)
     let ink: NSColor       // 제목·안내 글자색 (sRGB)
     let lightText: Bool    // 어두운 그림이라 글자를 밝게 쓰는 장면(밤)
+    var sky: SkyExtension = .standard   // 세로·좁은 화면에서 그림 위 빈 하늘을 채우는 방식 (#34)
+}
+
+/// 2026-11-20 (#34) 오너 결정(C안): 세로·좁은 화면에서 그림 위 빈 하늘을 단색 대신 **그림 자체를 흐려 잇는다**(새로 그리지 않는다).
+/// 예전엔 그림 맨 위 8줄 평균색 단색이었는데, 낮잠은 노란 올리브, 올려다보기는 회색(맨 위 줄에 털이 섞임)이 나왔다.
+/// 시안 비교(9:16 · 4:3, 10장면): 꽉 채워 흐리기만 쓰면 지평선 장면에서 하늘 위에 흐린 땅 띠가 뜨고,
+/// 뒤집어 잇기만 쓰면 위 가장자리에 걸친 것(머리·나무줄기·구름)이 세로 기둥이 된다 → 장면마다 고른다.
+enum SkyExtension {
+    /// 그림 위쪽 `top`(그림 높이 대비)을 위아래로 뒤집어 빈 하늘 자리에 폭 그대로 늘여 붙이고,
+    /// 이음매 `near` → 화면 맨 위 `far` 로 갈수록 더 흐린다(흐림 σ = 화면 폭 × 값).
+    /// 이음매에서 그림 윗줄과 윗줄이 맞닿아 경계가 안 보이고, 왼쪽 색은 왼쪽 위로 이어진다.
+    case mirror(top: CGFloat, near: CGFloat, far: CGFloat)
+    /// 그림을 화면 전체에 꽉 차게(가운데 기준) 키워 크게 흐린 것을 바탕으로 쓴다(흐림 σ = 화면 폭 × 값).
+    case cover(blur: CGFloat)
+
+    static let standard = SkyExtension.mirror(top: 0.35, near: 0.03, far: 0.10)
 }
 
 private func ink(_ hex: UInt32) -> NSColor {
@@ -34,9 +51,13 @@ private func uv(_ x: CGFloat, _ y: CGFloat) -> CGPoint {
 // 2026-11-17: 글자색은 색채 교수 의견(장면당 짙은 잉크 한 색, 작은 글씨 7:1 이상)으로 시안에서 정했다.
 let allThemes: [Theme] = [
     Theme(id: "sunset",  caption: uv(1380, 420), sign: uv(1650, 1165), ink: ink(0x2B2552), lightText: false),
-    Theme(id: "beach",   caption: uv(460, 300),  sign: uv(1650, 1165), ink: ink(0x0F3B3C), lightText: false),
+    // 2026-11-20 (#34): 바닷가는 위 35% 를 뒤집으면 큰 구름이 흰 기둥처럼 늘어난다 → 위 15% 만, 더 세게 흐린다.
+    Theme(id: "beach",   caption: uv(460, 300),  sign: uv(1650, 1165), ink: ink(0x0F3B3C), lightText: false,
+          sky: .mirror(top: 0.15, near: 0.06, far: 0.22)),
     Theme(id: "busstop", caption: uv(1300, 250), sign: uv(1620, 1190), ink: ink(0x163240), lightText: false),
-    Theme(id: "rain",    caption: uv(1560, 200), sign: uv(1650, 1165), ink: ink(0x22403A), lightText: false),
+    // 2026-11-20 (#34): 비 오는 날·올려다보기는 위 가장자리에 나무줄기·머리가 걸쳐 있어 뒤집어 늘이면 세로 기둥이 된다 → 꽉 채워 흐리기.
+    Theme(id: "rain",    caption: uv(1560, 200), sign: uv(1650, 1165), ink: ink(0x22403A), lightText: false,
+          sky: .cover(blur: 0.10)),
     Theme(id: "walk",    caption: uv(560, 250),  sign: uv(1650, 1165), ink: ink(0x1E3550), lightText: false),
     Theme(id: "autumn",  caption: uv(520, 230),  sign: uv(300, 1165),  ink: ink(0x1E3550), lightText: false),
     // 2026-11-18 (#31) 오너 지정 — 그림 격자(왼→오 0~10, 아래→위 0~10)로 글자 묶음 가운데 = (8, 7.6), 알약 가운데 = (3, 1).
@@ -45,9 +66,13 @@ let allThemes: [Theme] = [
     //   오른쪽으로 비키는 건 안 된다 — 글자 묶음 폭(capW)이 오른쪽 여백에 막혀 (8, 8) 이 이미 한계 근처다.
     //   sign 은 묶음 "아래 끝" 기준이라, 2560×1440 에서 알약 가운데가 아래 10% 에 오도록 아래 끝을 5.44% 에 둔다
     //   (알약 가운데 = 아래 끝 + 65.7pt = 화면의 4.56% · 화면이 작으면 알약이 조금 더 위로: 1440×900 약 11%).
-    Theme(id: "night",   caption: uv(1600, 288), sign: uv(533, 1135), ink: ink(0xFFF6E6), lightText: true),
+    // 2026-11-20 (#34): 밤은 위 35% 를 뒤집으면 언덕 빛·별똥별 꼬리가 글자 뒤로 올라와 흰 글자 명암비가 1.6~2.0:1 로 떨어졌다
+    //   (예전 단색 4.0:1) → 위 10% 만(어두운 하늘), 더 세게 흐림: 9:16 제목 뒤 중앙 4.3 · 최저 3.1:1(옅은 빛기둥이 지나는 곳 — 글자 그림자가 받친다).
+    Theme(id: "night",   caption: uv(1600, 288), sign: uv(533, 1135), ink: ink(0xFFF6E6), lightText: true,
+          sky: .mirror(top: 0.10, near: 0.06, far: 0.22)),
     Theme(id: "nap",     caption: uv(520, 170),  sign: uv(1650, 1165), ink: ink(0x23402F), lightText: false),
-    Theme(id: "lookup",  caption: uv(960, 560),  sign: uv(960, 1180),  ink: ink(0x1E3A5C), lightText: false),
+    Theme(id: "lookup",  caption: uv(960, 560),  sign: uv(960, 1180),  ink: ink(0x1E3A5C), lightText: false,
+          sky: .cover(blur: 0.10)),
     Theme(id: "snow",    caption: uv(520, 230),  sign: uv(1650, 1165), ink: ink(0x33405A), lightText: false),
 ]
 
@@ -81,10 +106,11 @@ func resourceURL(_ subdir: String, _ name: String) -> URL? {
     return url
 }
 
-/// 그림과, 세로·좁은 화면에서 그림 위쪽을 이어 칠할 하늘색(그림 맨 위 줄의 평균색).
+/// 그림과, 그림 맨 위 줄의 평균색(창 바탕색 · 흐린 하늘을 못 만들었을 때 세로 화면 위쪽을 칠하는 색).
 /// 🔒 못 읽으면 nil — 부르는 쪽은 예전 하늘색 단색으로 물러나고 글자·버튼은 그대로 그린다.
 struct ThemeArt {
     let image: NSImage
+    let cgImage: CGImage   // 2026-11-20 (#34): 세로 화면의 흐린 하늘을 만들 원본
     let topColor: NSColor
 
     static func load(_ theme: Theme) -> ThemeArt? {
@@ -101,7 +127,7 @@ struct ThemeArt {
             ctx.draw(strip, in: CGRect(x: 0, y: 0, width: 1, height: 1))
         }
         let top = NSColor(srgbRed: CGFloat(px[0]) / 255, green: CGFloat(px[1]) / 255, blue: CGFloat(px[2]) / 255, alpha: 1)
-        return ThemeArt(image: image, topColor: top)
+        return ThemeArt(image: image, cgImage: cg, topColor: top)
     }
 }
 
@@ -243,9 +269,67 @@ final class PillView: NSView {
 }
 
 /// 세로·좁은 화면에서 그림 윗변 → 이어 칠한 하늘로 번지는 띠(아래 투명 → 위 하늘색).
+/// 2026-11-20 (#34): 이제는 흐린 하늘(`makeSkyExtension`)을 못 만들었을 때만 쓴다(예전 단색 방식으로 물러나기).
 final class SkyFadeView: NSView {
     var color: NSColor = .clear
     override func draw(_ dirtyRect: NSRect) {
         NSGradient(starting: color.withAlphaComponent(0), ending: color)?.draw(in: bounds, angle: 90)
     }
+}
+
+// MARK: - 세로·좁은 화면의 흐린 하늘 (#34, 2026-11-20)
+
+/// 흐림은 sRGB(감마) 공간에서 한다 — 오너가 고른 시안(PIL)과 같은 번짐. 선형 공간이면 밝은 해·구름이 더 크게 번진다.
+private let skyContext = CIContext(options: [.workingColorSpace: CGColorSpace(name: CGColorSpace.sRGB)!])
+
+/// 그림 위 빈 하늘을 채울 그림을 만든다 — 화면 맨 위부터 그림 윗변 아래 `band`(pt)까지.
+/// 맨 아래 `band` 는 아래로 갈수록 투명해져 선명한 그림으로 번진다(예전 SkyFadeView 와 같은 14% 띠).
+/// 흐린 그림이라 폭 480px 로 작게 만들어 화면 크기로 키워 그린다 — 계산이 가볍고 키워도 티가 안 난다.
+/// 🔒 실패하면 nil — 부르는 쪽은 예전 단색 + 번짐 띠로 물러난다.
+func makeSkyExtension(_ art: CGImage, style: SkyExtension, screen: CGSize, band: CGFloat) -> CGImage? {
+    let ww: CGFloat = 480
+    let k = ww / screen.width                       // pt → 작업 px
+    let hh = (screen.height * k).rounded()
+    let imgW = CGFloat(art.width), imgH = CGFloat(art.height)
+    let sx = ww / imgW
+    let ah = imgH * sx                              // 작업 캔버스에서 그림 높이 (Core Image 는 아래가 0 — 그림은 [0, ah])
+    let bandPx = band * k
+    guard hh > ah + 1 else { return nil }
+    let canvas = CGRect(x: 0, y: 0, width: ww, height: hh)
+    let src = CIImage(cgImage: art)
+    func blur(_ img: CIImage, _ fraction: CGFloat) -> CIImage {
+        img.clampedToExtent().applyingGaussianBlur(sigma: Double(fraction * ww)).cropped(to: canvas)
+    }
+    func ramp(black p0: CGPoint, white p1: CGPoint) -> CIImage? {
+        // 세로 그라데이션 마스크 p0 검정 → p1 흰색(끝점 밖은 끝 색 그대로)
+        CIFilter(name: "CILinearGradient", parameters: [
+            "inputPoint0": CIVector(cgPoint: p0), "inputPoint1": CIVector(cgPoint: p1),
+            "inputColor0": CIColor(red: 0, green: 0, blue: 0), "inputColor1": CIColor(red: 1, green: 1, blue: 1),
+        ])?.outputImage?.cropped(to: canvas)
+    }
+
+    var sky: CIImage
+    switch style {
+    case let .mirror(top, near, far):
+        // 그림 위쪽 top 을 뒤집어 [ah, hh] 에 폭 그대로 늘인다 — 그림 맨 윗줄이 이음매(ah)에, top 지점이 화면 맨 위(hh)에.
+        let sy = (hh - ah) / (top * imgH)
+        let flipped = src.cropped(to: CGRect(x: 0, y: imgH * (1 - top), width: imgW, height: imgH * top))
+            .transformed(by: CGAffineTransform(a: sx, b: 0, c: 0, d: -sy, tx: 0, ty: ah + imgH * sy))
+        // 아래는 그림 그대로 둬야 이음매 근처 흐림이 그림 색을 끌어온다(빈 곳의 검정·투명이 번져 들지 않게).
+        let ext = flipped.composited(over: src.transformed(by: CGAffineTransform(scaleX: sx, y: sx)))
+        guard let mask = ramp(black: CGPoint(x: 0, y: hh), white: CGPoint(x: 0, y: ah)) else { return nil }
+        sky = blur(ext, near).applyingFilter("CIBlendWithMask", parameters: [
+            kCIInputBackgroundImageKey: blur(ext, far), kCIInputMaskImageKey: mask])   // 이음매(흰색) near → 맨 위(검정) far
+    case let .cover(amount):
+        let sc = max(ww / imgW, hh / imgH)
+        let cover = src.transformed(by: CGAffineTransform(scaleX: sc, y: sc))
+            .transformed(by: CGAffineTransform(translationX: (ww - imgW * sc) / 2, y: (hh - imgH * sc) / 2))
+        sky = blur(cover, amount)
+    }
+    // 맨 아래 band: 그림 윗변(ah)에서 불투명 → band 아래 끝에서 투명
+    guard let fade = ramp(black: CGPoint(x: 0, y: ah - bandPx), white: CGPoint(x: 0, y: ah)) else { return nil }
+    sky = sky.applyingFilter("CIBlendWithMask", parameters: [
+        kCIInputBackgroundImageKey: CIImage.empty(), kCIInputMaskImageKey: fade])
+    let out = CGRect(x: 0, y: (ah - bandPx).rounded(.down), width: ww, height: hh - (ah - bandPx).rounded(.down))
+    return skyContext.createCGImage(sky, from: out, format: .RGBA8, colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!)
 }

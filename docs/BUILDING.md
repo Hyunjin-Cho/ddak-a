@@ -31,7 +31,7 @@ DDAKA_SIGN_IDENTITY="Developer ID Application: ..." bash build.sh
 청소 화면은 키보드를 막는 화면이라 실행해서 보기 어렵습니다. 디버그 빌드(`swift build`)에는 키보드를 막지 않고 확인하는 길이 두 개 있습니다. 배포 빌드에는 들어가지 않습니다.
 
 ```bash
-# 청소 화면 → PNG (화면 크기 5가지: 1440×900 · 1920×1080 · 2560×1440 · 800×500 · 1080×1920)
+# 청소 화면 → PNG (화면 크기 6가지: 1440×900 · 1920×1080 · 2560×1440 · 800×500 · 1080×1920 · 1024×768 — 4:3 은 2026-11-20 추가)
 DDAKA_ASSETS=assets DDAKA_LANG=ko .build/debug/ddaka --preview <폴더> [장면 id ...]
 
 # 안내창 문구(권한 · 임시 경로 · 키 차단 실패)를 언어별로 출력
@@ -225,7 +225,7 @@ DDAKA_SIGN_IDENTITY="Developer ID Application: ..." bash build.sh
 The cleaning screen locks the keyboard, so it is hard to look at by running the app. A debug build (`swift build`) has two ways to check it without locking anything. Neither ships in the release build.
 
 ```bash
-# Cleaning screen → PNG (five sizes: 1440×900 · 1920×1080 · 2560×1440 · 800×500 · 1080×1920)
+# Cleaning screen → PNG (six sizes: 1440×900 · 1920×1080 · 2560×1440 · 800×500 · 1080×1920 · 1024×768 — 4:3 added 2026-11-20)
 DDAKA_ASSETS=assets DDAKA_LANG=ko .build/debug/ddaka --preview <folder> [scene id ...]
 
 # Print the dialog strings (permissions · temporary path · key-block failure) for one language

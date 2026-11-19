@@ -685,7 +685,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
             // 2026-08-12 최적화: 바탕색은 창 배경색(window.backgroundColor)이 이미 칠한다.
             // 여기서 레이어 배경색까지 지정하면 전체화면 크기를 한 번 더 채우는 중복 작업이 된다.
-            // (2026-11-17 #16: 그림 테마에서는 그림 맨 위 줄의 색 — 세로 모니터에서 그림 위로 이어지는 하늘이다)
+            // (2026-11-17 #16: 그림 테마에서는 그림 맨 위 줄의 색 — 2026-11-20 #34 부터 세로 모니터의 위쪽은 흐린 그림이 덮는다)
             let contentView = NSView(frame: NSRect(origin: .zero, size: frame.size))
             contentView.wantsLayer = true
             window.contentView = contentView
@@ -726,8 +726,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let t = themeArt == nil ? plainTheme : theme
 
         // ── 1) 그림: 16:10 보다 넓은 화면은 꽉 채우고(아래 기준 — 위쪽 하늘이 잘린다),
-        //    그보다 좁은 화면(4:3·세로 모니터)은 폭에 맞춰 아래에 두고 위는 그림 맨 위 색으로 잇는다.
+        //    그보다 좁은 화면(4:3·세로 모니터)은 폭에 맞춰 아래에 두고 위는 그림을 흐려 잇는다(장면별 `Theme.sky`).
         //    (2026-11-17: 세로 모니터에서 양옆을 자르면 주인공이 잘렸다 — 시안 실측)
+        //    (2026-11-20 #34: 위쪽을 그림 맨 위 색 단색으로 칠하던 것을 흐린 그림으로 바꿨다 — 낮잠이 노란 올리브, 올려다보기가 회색이 됐다)
         var art = NSRect(x: 0, y: 0, width: W, height: H)
         var narrow = false
         if let themeArt = themeArt {
@@ -745,10 +746,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             imageView.imageFrameStyle = .none
             view.addSubview(imageView)
             if narrow {
-                // 그림 윗변과 이어 칠한 하늘 사이의 경계를 부드럽게 번지게 한다(경계선이 보이면 "붙인 그림"이 된다).
-                let fade = SkyFadeView(frame: NSRect(x: 0, y: art.maxY - art.height * 0.14, width: W, height: art.height * 0.14 + 1))
-                fade.color = themeArt.topColor
-                view.addSubview(fade)
+                // 그림 윗변과 위쪽 하늘 사이의 경계를 부드럽게 번지게 한다(경계선이 보이면 "붙인 그림"이 된다) — 그림 높이의 14%.
+                let band = art.height * 0.14
+                if let sky = makeSkyExtension(themeArt.cgImage, style: theme.sky, screen: size, band: band) {
+                    let skyFrame = NSRect(x: 0, y: art.maxY - band, width: W, height: H - (art.maxY - band))
+                    let skyView = NSImageView(frame: skyFrame)
+                    skyView.image = NSImage(cgImage: sky, size: skyFrame.size)
+                    skyView.imageScaling = .scaleAxesIndependently
+                    skyView.imageFrameStyle = .none
+                    view.addSubview(skyView)
+                } else {
+                    // 흐린 하늘을 못 만들면 예전처럼 그림 맨 위 색 단색 + 번짐 띠
+                    let fade = SkyFadeView(frame: NSRect(x: 0, y: art.maxY - band, width: W, height: band + 1))
+                    fade.color = themeArt.topColor
+                    view.addSubview(fade)
+                }
             }
         }
         // 그림 좌표(u, v)를 화면 좌표로. AppKit 은 아래가 0 이라 v 를 뒤집는다.
@@ -1080,7 +1092,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 // 2026-11-17 (#16): 키보드를 막지 않고 청소 화면 배치만 PNG 로 뽑는다(디버그 빌드 전용 — 배포 빌드에는 이 길이 없다).
 // 청소 화면은 키보드를 막는 앱이라 실행해서 볼 수가 없다. 테마·언어·화면 크기마다 배치가 맞는지는 이걸로 본다.
 // 사용: DDAKA_ASSETS=assets DDAKA_LANG=ko .build/debug/ddaka --preview <폴더> [테마 id ...]
-//      결과: <폴더>/<테마>-<언어>-<가로>x<세로>.png (화면 크기 5가지)
+//      결과: <폴더>/<테마>-<언어>-<가로>x<세로>.png (화면 크기 6가지)
 final class PreviewButtonBackdrop: NSView {
     override func draw(_ dirtyRect: NSRect) {
         let r = bounds.insetBy(dx: 0, dy: 6)
@@ -1110,8 +1122,9 @@ if let i = CommandLine.arguments.firstIndex(of: "--preview"), i + 1 < CommandLin
     let wanted = Set(CommandLine.arguments.dropFirst(i + 2))
     let lang = ProcessInfo.processInfo.environment["DDAKA_LANG"] ?? "en"
     // 2026-11-18 (#31): 2560×1440 추가 — 그림 원본 크기(1:1)이자 Studio Display 기본 크기. 오너가 이 크기로 배치를 검사한다.
+    // 2026-11-20 (#34): 1024×768(4:3) 추가 — 세로 모니터 말고도 위쪽을 흐린 그림으로 잇는 좁은 화면(Sidecar·옛 모니터).
     let sizes: [NSSize] = [NSSize(width: 1440, height: 900), NSSize(width: 1920, height: 1080), NSSize(width: 2560, height: 1440),
-                           NSSize(width: 800, height: 500), NSSize(width: 1080, height: 1920)]
+                           NSSize(width: 800, height: 500), NSSize(width: 1080, height: 1920), NSSize(width: 1024, height: 768)]
     for theme in allThemes + [plainTheme] where wanted.isEmpty || wanted.contains(theme.id) {
         let previewer = AppDelegate()
         previewer.theme = theme
