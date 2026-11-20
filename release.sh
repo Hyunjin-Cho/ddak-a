@@ -3,14 +3,14 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
-APP_NAME="ddak-a"
+APP_NAME="ddaka"
 APP_BUNDLE="${APP_NAME}.app"
 BINARY_PATH="$APP_BUNDLE/Contents/MacOS/$APP_NAME"
 VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' Info.plist)"
 # 🚨 2026-09-22 (v1.1): 볼륨 이름에 버전을 넣는다. 같은 이름의 볼륨이 이미 마운트돼 있으면
-# macOS 는 뒤에 번호를 붙여("닦아 ddak-a 1") 따로 띄우는데, 그러면 사용자가 옛 창에서 드래그하고도
+# macOS 는 뒤에 번호를 붙여("닦아 ddaka 1") 따로 띄우는데, 그러면 사용자가 옛 창에서 드래그하고도
 # 새 버전을 설치했다고 믿게 된다. 이름이 다르면 두 창이 눈으로 구분된다.
-VOLUME_NAME="닦아 ddak-a ${VERSION}"
+VOLUME_NAME="닦아 ddaka ${VERSION}"
 DIST_DIR="dist"
 # 🚨 2026-09-22 (v1.1): 공증 로그와 dSYM 은 .build/ 밖에 둔다.
 # .build/ 는 `swift package clean` 한 번에 통째로 날아간다. 크래시 리포트에서 함수 이름을 보려면
@@ -296,7 +296,7 @@ fi
 # 사전 검사를 다 통과한 뒤에 옮긴다 — 검사에서 멈출 실행이 기록을 흩트리지 않게.
 # 🔒 지우지 않는다 — 옮기기만 한다. 폴더 이름에 시각을 붙여 여러 번 돌려도 서로 덮지 않는다.
 #    dist 에서 옮기는 것은 그 안의 dist/ 에 따로 둔다. 기록 폴더에도 같은 이름의 체크섬 사본
-#    (ddak-a-<버전>.dmg.sha256)이 있어서, 한 폴더에 섞으면 mv 가 그걸 말없이 덮어쓴다.
+#    (ddaka-<버전>.dmg.sha256)이 있어서, 한 폴더에 섞으면 mv 가 그걸 말없이 덮어쓴다.
 PREV_RECORDS=""
 if [ -e "$RELEASE_RECORDS" ] || [ -e "$FINAL_DMG" ] || [ -e "${FINAL_DMG}.sha256" ]; then
     PREV_RECORDS="release-records/${VERSION}.prev-$(date +%Y%m%d-%H%M%S)"
@@ -373,7 +373,7 @@ SOURCE_RECORDED_AT="$(date '+%Y-%m-%dT%H:%M:%S%z' | sed -E 's/([+-][0-9][0-9])([
 SOURCE_RECORD="$RELEASE_RECORDS/source.txt"
 mkdir -p "$RELEASE_RECORDS"
 {
-    echo "# 닦아(ddak-a) 배포본의 소스 기록 — release.sh 가 빌드 직후에 남긴다."
+    echo "# 닦아(ddaka) 배포본의 소스 기록 — release.sh 가 빌드 직후에 남긴다."
     echo "# dirty: no 면 'git checkout <commit>' 으로 이 빌드의 소스를 그대로 다시 볼 수 있다."
     echo "version: $VERSION"
     echo "commit: $SOURCE_COMMIT"

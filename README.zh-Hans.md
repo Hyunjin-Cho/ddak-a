@@ -1,32 +1,32 @@
 <p align="center">
-  <img src="assets/icon/AppIcon-256.png" width="128" alt="ddak-a 应用图标">
+  <img src="assets/icon/AppIcon-256.png" width="128" alt="ddaka 应用图标">
 </p>
 
-# ddak-a（닦아）
+# ddaka（닦아）
 
 [한국어](README.md#korean) · [English](README.md#english) · [日本語](README.ja.md) · **简体中文** · [繁體中文](README.zh-Hant.md)
 
 > **基准日期：** 2026-11-18
-> **状态：** **v1.3 已发布** — 可在 [Releases](https://github.com/Hyunjin-Cho/ddak-a/releases) 下载（应用和 DMG 均已通过 Apple 公证）
+> **状态：** **v1.3 已发布** — 可在 [Releases](https://github.com/Hyunjin-Cho/ddaka/releases) 下载（应用和 DMG 均已通过 Apple 公证）
 
 <!-- 2026-11-18 (#27): README.md(한국어·영어)의 중국어 간체판. README.md 를 고치면 이 파일도 같이 고친다.
      상태 줄 규칙은 README.md 맨 위 주석과 같다(새 버전 동작을 적는 문장과 상태 줄은 같이 움직인다).
      메뉴·설정 이름(快捷指令 · 打开App · 快捷指令详细信息 · 添加键盘快捷键 · 无障碍快捷键 · 关于本机 ·
      无障碍 · 输入监控)은 macOS 27.0 · 단축어 10.0 의 시스템 문자열 표에서 확인했다.
      无障碍 은 macOS 27 에서 바뀐 이름이고 26 이하는 辅助功能 이다(애플 간체 도움말 mh43185 버전별 대조 · #29) → 처음 나오는 곳과 요구 사항에 둘 다 적는다.
-     앱 문구(要启动 ddak-a 吗？ · 开始 · 完成)는 Sources/ddaka/main.swift 의 간체 그대로. -->
+     앱 문구(要启动 ddaka 吗？ · 开始 · 完成)는 Sources/ddaka/main.swift 의 간체 그대로. -->
 
 这是一款 macOS 实用工具：运行期间会**完全屏蔽整个键盘**，这样在擦拭 Mac 键盘时即使不小心按到按键，
 输入也不会传到电脑上。**鼠标和触控板照常可用。**
 
-名字 닦아（*ddak-a*）在韩语里是"擦一擦"的意思。
+名字 닦아（*ddaka*）在韩语里是"擦一擦"的意思。
 
 <p align="center">
   <b>macOS 12（Monterey）或更高版本</b> · <b>同时支持 Intel 与 Apple 芯片</b>
 </p>
 
 <p align="center">
-  <img src="assets/screenshot.jpg" width="680" alt="ddak-a 运行时的画面">
+  <img src="assets/screenshot.jpg" width="680" alt="ddaka 运行时的画面">
   <br>
   <sub>运行时的画面（v1.3）— 每次启动都会从 10 幅插画中选一幅，覆盖已连接的<b>所有显示器</b></sub>
 </p>
@@ -50,7 +50,7 @@
 
 ## 安装
 
-1. 从 [Releases](https://github.com/Hyunjin-Cho/ddak-a/releases) 下载 `.dmg`
+1. 从 [Releases](https://github.com/Hyunjin-Cho/ddaka/releases) 下载 `.dmg`
 2. 在打开的窗口中，**把 `닦아` 拖到 `Applications` 文件夹**
 3. 从"应用程序"文件夹启动
 
@@ -67,7 +67,7 @@
 
 ## 工作方式
 
-1. 启动 → 弹出"要启动 ddak-a 吗？"确认
+1. 启动 → 弹出"要启动 ddaka 吗？"确认
 2. 检查权限 — **无障碍** + **输入监控**（缺少时应用会自己请求）
 3. 用全屏插画覆盖已连接的**所有显示器**并开始倒计时 — 每次启动都会从 10 个场景中随机选一个（v1.3）
 4. 以下任一情况先发生即结束
@@ -77,7 +77,7 @@
 
 ## 用一个快捷键启动和退出（可选）
 
-给 macOS 自带的**快捷指令** App 设置一个键盘快捷键，就能不点图标直接启动 ddak-a。
+给 macOS 自带的**快捷指令** App 设置一个键盘快捷键，就能不点图标直接启动 ddaka。
 把这个键设为 **⌘⇧9**，启动键和退出键就是同一个 — **只要记住 ⌘⇧9 就够了。**
 
 1. 在**快捷指令**中点击 **＋**，新建一个快捷指令
@@ -86,7 +86,7 @@
 
 这样一来：**⌘⇧9** → 确认窗口中点 **开始** → 开始清洁；清洁中按 **⌘⇧9** → 退出。
 
-- 清洁中按下的 ⌘⇧9 会先被 ddak-a 收到，所以快捷指令不会再次启动 ddak-a
+- 清洁中按下的 ⌘⇧9 会先被 ddaka 收到，所以快捷指令不会再次启动 ddaka
   （已在 macOS 27.0・快捷指令 10.0 上通过运行日志确认。快捷指令 App 从 macOS 12 起就有，但更早的版本未经确认）
 - 用其他键也可以启动，但**退出键始终是 ⌘⇧9**
 
@@ -118,8 +118,8 @@
 
 ## 遇到问题时（日志）
 
-从 v1.2 起，ddak-a 会把**每次清洁是怎么结束的**写入 macOS 日志。如果键盘解除得晚了，或者看起来不对劲，
-请在终端中运行下面的命令，并把输出附在 [Issue](https://github.com/Hyunjin-Cho/ddak-a/issues) 里。
+从 v1.2 起，ddaka 会把**每次清洁是怎么结束的**写入 macOS 日志。如果键盘解除得晚了，或者看起来不对劲，
+请在终端中运行下面的命令，并把输出附在 [Issue](https://github.com/Hyunjin-Cho/ddaka/issues) 里。
 
 ```bash
 /usr/bin/log show --last 1h --predicate 'subsystem == "com.vismotive.ddaka"'

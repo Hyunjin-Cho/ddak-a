@@ -6,7 +6,7 @@ cd "$(dirname "$0")"
 echo "🔨 유니버설(Intel+Apple Silicon) 빌드 중..."
 swift build -c release --arch arm64 --arch x86_64
 
-APP_NAME="ddak-a"
+APP_NAME="ddaka"
 APP_BUNDLE="${APP_NAME}.app"
 
 echo "📦 ${APP_BUNDLE} 번들 만드는 중..."
@@ -27,9 +27,9 @@ if [ ! -f "$BIN_PATH" ]; then
 fi
 echo "   산출물: $BIN_PATH"
 
-cp "$BIN_PATH" "$APP_BUNDLE/Contents/MacOS/ddak-a"
+cp "$BIN_PATH" "$APP_BUNDLE/Contents/MacOS/ddaka"
 cp Info.plist "$APP_BUNDLE/Contents/Info.plist"
-chmod +x "$APP_BUNDLE/Contents/MacOS/ddak-a"
+chmod +x "$APP_BUNDLE/Contents/MacOS/ddaka"
 
 # 🚨 2026-09-22 (리뷰 F-5): 표시 버전(CFBundleShortVersionString)은 소스 Info.plist 값을 그대로 쓰고,
 # 빌드 번호(CFBundleVersion)만 커밋 수로 자동 부여한다. 둘 다 1.0 으로 고정돼 있으면
@@ -151,6 +151,6 @@ echo "✅ 완료: $APP_BUNDLE"
 # 🚨 2026-09-22: lipo 의 -verify_arch 는 usage 표기(`-verify_arch <arch> ...`)와 달리
 # 아키텍처를 하나만 받는다. 두 개를 주면 두 번째를 입력 파일로 해석해
 # "requires exactly one input file" 로 실패한다(실측). 그래서 한 번에 하나씩 확인한다.
-lipo "$APP_BUNDLE/Contents/MacOS/ddak-a" -verify_arch arm64
-lipo "$APP_BUNDLE/Contents/MacOS/ddak-a" -verify_arch x86_64
-file "$APP_BUNDLE/Contents/MacOS/ddak-a"
+lipo "$APP_BUNDLE/Contents/MacOS/ddaka" -verify_arch arm64
+lipo "$APP_BUNDLE/Contents/MacOS/ddaka" -verify_arch x86_64
+file "$APP_BUNDLE/Contents/MacOS/ddaka"

@@ -4,12 +4,12 @@
 
 <a id="korean"></a>
 
-# 닦아 (ddak-a)
+# 닦아 (ddaka)
 
 **한국어** · [English](#english) · [日本語](README.ja.md) · [简体中文](README.zh-Hans.md) · [繁體中文](README.zh-Hant.md)
 
 > **기준일:** 2026-11-18
-> **상태:** **v1.3 공개 배포 중** — [Releases](https://github.com/Hyunjin-Cho/ddak-a/releases)에서 받을 수 있습니다 (앱·DMG 모두 Apple 공증 완료)
+> **상태:** **v1.3 공개 배포 중** — [Releases](https://github.com/Hyunjin-Cho/ddaka/releases)에서 받을 수 있습니다 (앱·DMG 모두 Apple 공증 완료)
 
 <!-- 🔒 2026-09-22 (PR #1 리뷰 F-3): 이 상태 줄과 아래 "v1.1부터는 …" 문장은 반드시 같이 움직인다.
      이 문서가 새 버전 동작을 현재형으로 안내하는데 Releases 에 그 버전이 없으면, 받아서 써 본
@@ -55,7 +55,7 @@
 
 ## 설치
 
-1. [Releases](https://github.com/Hyunjin-Cho/ddak-a/releases)에서 `.dmg`를 받습니다
+1. [Releases](https://github.com/Hyunjin-Cho/ddaka/releases)에서 `.dmg`를 받습니다
 2. 열리는 창에서 **`닦아`를 `Applications` 폴더로 드래그**합니다
 3. 응용 프로그램 폴더에서 실행합니다
 
@@ -120,7 +120,7 @@ macOS에 기본으로 들어 있는 **단축어** 앱에 키보드 단축키를 
 
 macOS 기본 앱 '단축어' 검색 (보라색배경 아이콘)
 1) 플러스(+) 눌러서 새 단축어를 만들면 아래 무엇을 추가할 지 물어봅니다.
-2) 아래 챗에서 "ddak-a 앱 열기" 혹은 "ddak a 앱 열기" 로 입력하면 찾아줍니다. (닦아가 설치되어 있어야 합니다.)
+2) 아래 챗에서 "ddaka 앱 열기" 로 입력하면 찾아줍니다. (닦아가 설치되어 있어야 합니다.)
 3) 2번까지 완료 됐다면, 단축키 클릭 후 상단에 있는 edit 클릭.
 4) 그러면 새로운 창이 열리는데 그 새로운 창 우측 상단에 세부사항(ⓘ) 클릭.
 5) 거기 아래 '키보드 단축키 추가' 에서 ⌘⇧9 를 눌러 주세요. 실제로 단축키에선 ⌘⇧( 이렇게 보입니다.
@@ -178,7 +178,7 @@ macOS 기본 앱 '단축어' 검색 (보라색배경 아이콘)
 <!-- 2026-09-23 (#10) 신설. 종료 이유 값은 main.swift 의 FinishReason 과 짝이다 — 한쪽만 바꾸지 말 것. -->
 
 v1.2부터 닦아는 청소가 **어떻게 끝났는지**를 macOS 로그에 남깁니다. 키보드가 늦게 풀렸거나
-이상하게 끝났다면, 터미널에서 아래를 실행해 결과를 [이슈](https://github.com/Hyunjin-Cho/ddak-a/issues)에
+이상하게 끝났다면, 터미널에서 아래를 실행해 결과를 [이슈](https://github.com/Hyunjin-Cho/ddaka/issues)에
 붙여 주시면 원인을 빨리 찾을 수 있습니다.
 
 ```bash
@@ -248,27 +248,27 @@ v1.2부터 닦아는 청소가 **어떻게 끝났는지**를 macOS 로그에 남
 <a id="english"></a>
 
 <p align="center">
-  <img src="assets/icon/AppIcon-256.png" width="128" alt="ddak-a app icon">
+  <img src="assets/icon/AppIcon-256.png" width="128" alt="ddaka app icon">
 </p>
 
-# ddak-a (닦아) — English
+# ddaka (닦아) — English
 
 [한국어](#korean) · **English** · [日本語](README.ja.md) · [简体中文](README.zh-Hans.md) · [繁體中文](README.zh-Hant.md)
 
 > **As of:** 2026-11-18
-> **Status:** **v1.3 is out** — get it from [Releases](https://github.com/Hyunjin-Cho/ddak-a/releases) (both the app and the DMG are notarized by Apple)
+> **Status:** **v1.3 is out** — get it from [Releases](https://github.com/Hyunjin-Cho/ddaka/releases) (both the app and the DMG are notarized by Apple)
 
 A macOS utility that **blocks the whole keyboard** while it runs, so keys you press by accident
 while wiping your Mac's keyboard never reach the computer. **Your mouse and trackpad keep working.**
 
-The name 닦아 (*ddak-a*) is Korean for "wipe it".
+The name 닦아 (*ddaka*) is Korean for "wipe it".
 
 <p align="center">
   <b>macOS 12 (Monterey) or later</b> · <b>Intel and Apple Silicon</b>
 </p>
 
 <p align="center">
-  <img src="assets/screenshot.jpg" width="680" alt="ddak-a while running">
+  <img src="assets/screenshot.jpg" width="680" alt="ddaka while running">
   <br>
   <sub>While running (v1.3) — each launch, one of 10 illustrations covers <b>every connected display</b></sub>
 </p>
@@ -294,7 +294,7 @@ The name 닦아 (*ddak-a*) is Korean for "wipe it".
 
 ## Install
 
-1. Download the `.dmg` from [Releases](https://github.com/Hyunjin-Cho/ddak-a/releases)
+1. Download the `.dmg` from [Releases](https://github.com/Hyunjin-Cho/ddaka/releases)
 2. In the window that opens, **drag `닦아` onto the `Applications` folder**
 3. Launch it from your Applications folder
 
@@ -314,7 +314,7 @@ On first launch it asks for **Accessibility** and **Input Monitoring**. It needs
 
 ## How it works
 
-1. Launch → "Start ddak-a?" confirmation
+1. Launch → "Start ddaka?" confirmation
 2. Permission check — **Accessibility** + **Input Monitoring** (the app requests them itself if missing)
 3. Covers **every connected display** with a full-screen illustration and starts the countdown — a different one of 10 scenes is picked at random each launch (v1.3)
 4. It ends on whichever comes first:
@@ -329,7 +329,7 @@ On first launch it asks for **Accessibility** and **Input Monitoring**. It needs
      Evidence and the reason the app itself doesn't listen for a global shortcut: see the comment in the
      Korean section above. Menu names verified in Shortcuts 10.0 on macOS 27.0 (the app's own string tables). -->
 
-Give the built-in **Shortcuts** app a keyboard shortcut and you can start ddak-a without clicking its icon.
+Give the built-in **Shortcuts** app a keyboard shortcut and you can start ddaka without clicking its icon.
 Make that shortcut **⌘⇧9** and the start key and the quit key become the same — **⌘⇧9 is all you need to remember.**
 
 1. In **Shortcuts**, click **＋** to make a new shortcut
@@ -338,7 +338,7 @@ Make that shortcut **⌘⇧9** and the start key and the quit key become the sam
 
 Now **⌘⇧9** → **Start** in the confirmation → cleaning starts; **⌘⇧9** while cleaning → it quits.
 
-- A ⌘⇧9 pressed during cleaning reaches ddak-a first, so Shortcuts never launches it again
+- A ⌘⇧9 pressed during cleaning reaches ddaka first, so Shortcuts never launches it again
   (confirmed from the run logs on macOS 27.0 with Shortcuts 10.0. Shortcuts has shipped since macOS 12, but
   earlier versions have not been verified)
 - Any other key can start it too, but **the quit key is always ⌘⇧9**
@@ -379,9 +379,9 @@ independent mechanisms are layered on top of each other.
 
 ## If something goes wrong (logs)
 
-Since v1.2, ddak-a writes **how each cleaning session ended** to the macOS log. If the keyboard was
+Since v1.2, ddaka writes **how each cleaning session ended** to the macOS log. If the keyboard was
 released late or something looked wrong, run this in Terminal and attach the output to an
-[issue](https://github.com/Hyunjin-Cho/ddak-a/issues):
+[issue](https://github.com/Hyunjin-Cho/ddaka/issues):
 
 ```bash
 /usr/bin/log show --last 1h --predicate 'subsystem == "com.vismotive.ddaka"'

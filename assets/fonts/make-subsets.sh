@@ -65,7 +65,7 @@ NAME_IDS = {1, 3, 4, 6, 16, 17, 18, 21, 22, 25}   # 사용자에게 보이는 �
 name.names = [r for r in name.names if r.nameID not in NAME_IDS]
 new = {
     1: "Ddaka Kai SC",
-    3: f"Ddaka Kai SC Regular; ddak-a subset {datetime.date.today().isoformat()}",   # 출처는 이름 자리가 아니라 설명(name 10)에
+    3: f"Ddaka Kai SC Regular; ddaka subset {datetime.date.today().isoformat()}",   # 출처는 이름 자리가 아니라 설명(name 10)에
     4: "Ddaka Kai SC Regular",
     6: "DdakaKaiSC-Regular",
     16: "Ddaka Kai SC",
@@ -74,7 +74,7 @@ new = {
 for nid, value in new.items():
     name.setName(value, nid, 3, 1, 0x409)   # Windows · 영어
     name.setName(value, nid, 1, 0, 0)       # Mac · 영어
-desc = ("Subset of LXGW WenKai 1.530 (SIL OFL 1.1) with only the characters ddak-a shows. "
+desc = ("Subset of LXGW WenKai 1.530 (SIL OFL 1.1) with only the characters ddaka shows. "
         "Renamed because the original declares Reserved Font Names.")
 name.names = [r for r in name.names if r.nameID != 10]
 name.setName(desc, 10, 3, 1, 0x409)

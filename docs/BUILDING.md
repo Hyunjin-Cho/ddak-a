@@ -122,7 +122,7 @@ bash release.sh
 > 🔒 **`.dmg` 와 `.dmg.sha256` 을 함께 릴리스에 올립니다**(또는 릴리스 노트에 해시를 적습니다).
 > 체크섬은 "받은 파일이 우리가 올린 그 파일인지" 사용자가 직접 대조하라고 만드는 값인데,
 > `dist/` 도 `release-records/` 도 저장소에 올라가지 않으므로 **올려두지 않으면 우리만 보는 값**이
-> 되어 아무 일도 하지 못합니다. 받은 쪽에서는 `shasum -c ddak-a-<버전>.dmg.sha256` 로 확인합니다.
+> 되어 아무 일도 하지 못합니다. 받은 쪽에서는 `shasum -c ddaka-<버전>.dmg.sha256` 로 확인합니다.
 > (2026-09-22 · PR #1 리뷰 F-4)
 
 > `release-records/<버전>/` 에는 소스 기록(`source.txt` — 커밋·브랜치·빌드 번호·dirty 여부)·dSYM·
@@ -195,7 +195,7 @@ bash release.sh
 
 <a id="english"></a>
 
-# ddak-a — Building and releasing
+# ddaka — Building and releasing
 
 [한국어](#korean) · **English**
 
@@ -315,7 +315,7 @@ bash release.sh
 > 🔒 **Upload the `.dmg` and the `.dmg.sha256` together** (or put the hash in the release notes). The
 > checksum exists so people can verify that what they downloaded is what you uploaded — but neither
 > `dist/` nor `release-records/` is committed, so if you do not upload it the value is one only you can
-> see. On the receiving end: `shasum -c ddak-a-<version>.dmg.sha256`.
+> see. On the receiving end: `shasum -c ddaka-<version>.dmg.sha256`.
 
 > `release-records/<version>/` keeps the source record (`source.txt` — commit, branch, build number, dirty
 > or not), the dSYM, the notarization logs and the checksum. It lives outside `.build/` so that a single
