@@ -823,6 +823,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let capY = clamp(capCenter.y - capH / 2, margin, H - margin - notchMargin - capH)
         mouseHint.frame = NSRect(x: capX, y: capY, width: capW, height: hintH)
         title.frame = NSRect(x: capX, y: capY + hintH + gap, width: capW, height: titleH)
+        // 2026-11-20 (#34): 별을 흩뿌리는 장면(밤) — 흐린 하늘 위·글자 아래. 글자 둘레는 비운다(글자 옆 별이 따옴표처럼 읽혔다).
+        if narrow, let themeArt = themeArt, let starPatch = theme.sky.stars {
+            let layerFrame = NSRect(x: 0, y: art.maxY, width: W, height: H - art.maxY)
+            let clear = title.frame.union(mouseHint.frame).insetBy(dx: -hintSize, dy: -hintSize * 0.6)
+                .offsetBy(dx: 0, dy: -art.maxY)
+            let scale = view.window?.backingScaleFactor ?? NSScreen.main?.backingScaleFactor ?? 2
+            if let stars = makeStarLayer(themeArt.cgImage, patch: starPatch, size: layerFrame.size, scale: scale,
+                                         artWidth: art.width, fadeBand: art.height * 0.14, clear: clear) {
+                let starView = NSImageView(frame: layerFrame)
+                starView.image = NSImage(cgImage: stars, size: layerFrame.size)
+                starView.imageScaling = .scaleAxesIndependently
+                starView.imageFrameStyle = .none
+                view.addSubview(starView)
+            }
+        }
         view.addSubview(title)
         view.addSubview(mouseHint)
 

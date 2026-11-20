@@ -28,15 +28,26 @@ struct Theme {
 /// 예전엔 그림 맨 위 8줄 평균색 단색이었는데, 낮잠은 노란 올리브, 올려다보기는 회색(맨 위 줄에 털이 섞임)이 나왔다.
 /// 시안 비교(9:16 · 4:3, 10장면): 꽉 채워 흐리기만 쓰면 지평선 장면에서 하늘 위에 흐린 땅 띠가 뜨고,
 /// 뒤집어 잇기만 쓰면 위 가장자리에 걸친 것(머리·나무줄기·구름)이 세로 기둥이 된다 → 장면마다 고른다.
-enum SkyExtension {
-    /// 그림 위쪽 `top`(그림 높이 대비)을 위아래로 뒤집어 빈 하늘 자리에 폭 그대로 늘여 붙이고,
-    /// 이음매 `near` → 화면 맨 위 `far` 로 갈수록 더 흐린다(흐림 σ = 화면 폭 × 값).
-    /// 이음매에서 그림 윗줄과 윗줄이 맞닿아 경계가 안 보이고, 왼쪽 색은 왼쪽 위로 이어진다.
-    case mirror(top: CGFloat, near: CGFloat, far: CGFloat)
-    /// 그림을 화면 전체에 꽉 차게(가운데 기준) 키워 크게 흐린 것을 바탕으로 쓴다(흐림 σ = 화면 폭 × 값).
-    case cover(blur: CGFloat)
+/// 같은 날 오너 2차 지시(장면별 돌리기·절반 반복·조각 따오기·별)로 재료를 만드는 법을 나눠 적게 했다.
+struct SkyExtension {
+    /// 빈 하늘 자리(화면 폭 × 그림 윗변 위)에 깔 재료.
+    enum Source {
+        /// 그림 위쪽 `fraction`(그림 높이 대비)을 폭 그대로 늘인다. `flip` 이면 위아래를 뒤집어 그림 맨 윗줄이 이음매에 온다(경계가 안 보인다).
+        case top(CGFloat, flip: Bool)
+        /// 그림의 한 조각(u, v, 폭, 높이 — 그림 대비, v 는 위에서부터)을 비율 그대로 빈 하늘에 꽉 채운다(가운데 기준).
+        case patch(CGRect)
+        /// 그림을 화면 전체에 꽉 차게(가운데 기준) 키운다 — 돌리기·반복·섞기는 쓰지 않는다.
+        case wholeScreen
+    }
+    var source: Source
+    var near: CGFloat            // 이음매의 흐림 σ (화면 폭 대비)
+    var far: CGFloat             // 화면 맨 위의 흐림 σ — 그 사이는 위로 갈수록 더 흐리게
+    var turn = 0                 // +1 시계 90° · −1 반시계 90° — 만든 재료를 돌려 다시 빈 하늘 크기로
+    var echo = false             // 재료의 아래 절반(이음매 쪽)을 180° 돌려 위 절반에 한 번 더
+    var seam: CGFloat = 0        // 이음매 위 이 비율만큼 '위아래 뒤집은 그림 위 15%'로 섞는다(돌리거나 그대로 늘인 재료의 경계 줄 없애기)
+    var stars: CGRect? = nil     // 이 조각(Source.patch 와 같은 꼴)의 작은 별만 떼어 하늘에 흩뿌린다 — 흐리지 않고 화면 해상도로
 
-    static let standard = SkyExtension.mirror(top: 0.35, near: 0.03, far: 0.10)
+    static let standard = SkyExtension(source: .top(0.35, flip: true), near: 0.03, far: 0.10)
 }
 
 private func ink(_ hex: UInt32) -> NSColor {
@@ -52,13 +63,21 @@ private func uv(_ x: CGFloat, _ y: CGFloat) -> CGPoint {
 let allThemes: [Theme] = [
     Theme(id: "sunset",  caption: uv(1380, 420), sign: uv(1650, 1165), ink: ink(0x2B2552), lightText: false),
     // 2026-11-20 (#34): 바닷가는 위 35% 를 뒤집으면 큰 구름이 흰 기둥처럼 늘어난다 → 위 15% 만, 더 세게 흐린다.
+    //   오너 2차: 그래도 남는 세로 구름 줄을 가로로 — 만든 재료만 반시계 90° 돌린다(아래 끝이 그림 윗줄과 다르니 이음매를 섞는다).
     Theme(id: "beach",   caption: uv(460, 300),  sign: uv(1650, 1165), ink: ink(0x0F3B3C), lightText: false,
-          sky: .mirror(top: 0.15, near: 0.06, far: 0.22)),
-    Theme(id: "busstop", caption: uv(1300, 250), sign: uv(1620, 1190), ink: ink(0x163240), lightText: false),
-    // 2026-11-20 (#34): 비 오는 날·올려다보기는 위 가장자리에 나무줄기·머리가 걸쳐 있어 뒤집어 늘이면 세로 기둥이 된다 → 꽉 채워 흐리기.
+          sky: SkyExtension(source: .top(0.15, flip: true), near: 0.06, far: 0.22, turn: -1, seam: 0.3)),
+    // 2026-11-20 (#34) 오너 2차: 뒤집은 정류장 지붕이 왼쪽 위 초록 얼룩으로 보였다("180도 돌아간 게 느껴진다")
+    //   → 재료의 아래 절반(하늘)만 180° 돌려 위 절반에 한 번 더 — 하늘이 이어지는 느낌.
+    Theme(id: "busstop", caption: uv(1300, 250), sign: uv(1620, 1190), ink: ink(0x163240), lightText: false,
+          sky: SkyExtension(source: .top(0.35, flip: true), near: 0.03, far: 0.10, echo: true)),
+    // 2026-11-20 (#34): 비 오는 날은 위 가장자리에 나무줄기가 걸쳐 있어 뒤집어 늘이면 세로 기둥이 된다 → 꽉 채워 흐리기.
+    //   오너: 그림 위에 나무 윗부분이 없어 어떻게 이을지 애매 — 나중에 다시 정한다(지금은 임시).
     Theme(id: "rain",    caption: uv(1560, 200), sign: uv(1650, 1165), ink: ink(0x22403A), lightText: false,
-          sky: .cover(blur: 0.10)),
-    Theme(id: "walk",    caption: uv(560, 250),  sign: uv(1650, 1165), ink: ink(0x1E3550), lightText: false),
+          sky: SkyExtension(source: .wholeScreen, near: 0.10, far: 0.10)),
+    // 2026-11-20 (#34) 오너 2차: 뒤집으면 오른쪽 노을빛이 오른쪽 위 구석에 떨어져 동떨어져 보였다 → 재료를 시계 90° 돌려
+    //   노을빛이 그림 오른쪽 노을 바로 위(이음매 오른쪽)에 오게 한다. 아래 끝이 그림 윗줄과 달라 이음매를 섞는다.
+    Theme(id: "walk",    caption: uv(560, 250),  sign: uv(1650, 1165), ink: ink(0x1E3550), lightText: false,
+          sky: SkyExtension(source: .top(0.35, flip: true), near: 0.03, far: 0.10, turn: 1, seam: 0.3)),
     Theme(id: "autumn",  caption: uv(520, 230),  sign: uv(300, 1165),  ink: ink(0x1E3550), lightText: false),
     // 2026-11-18 (#31) 오너 지정 — 그림 격자(왼→오 0~10, 아래→위 0~10)로 글자 묶음 가운데 = (8, 7.6), 알약 가운데 = (3, 1).
     //   예전 자리(1080, 115 · 1120, 1180)는 글자가 큰 별똥별 꼬리 두 줄 위에 걸렸다(2560×1440 미리보기 50장 검사).
@@ -66,13 +85,19 @@ let allThemes: [Theme] = [
     //   오른쪽으로 비키는 건 안 된다 — 글자 묶음 폭(capW)이 오른쪽 여백에 막혀 (8, 8) 이 이미 한계 근처다.
     //   sign 은 묶음 "아래 끝" 기준이라, 2560×1440 에서 알약 가운데가 아래 10% 에 오도록 아래 끝을 5.44% 에 둔다
     //   (알약 가운데 = 아래 끝 + 65.7pt = 화면의 4.56% · 화면이 작으면 알약이 조금 더 위로: 1440×900 약 11%).
-    // 2026-11-20 (#34): 밤은 위 35% 를 뒤집으면 언덕 빛·별똥별 꼬리가 글자 뒤로 올라와 흰 글자 명암비가 1.6~2.0:1 로 떨어졌다
-    //   (예전 단색 4.0:1) → 위 10% 만(어두운 하늘), 더 세게 흐림: 9:16 제목 뒤 중앙 4.3 · 최저 3.1:1(옅은 빛기둥이 지나는 곳 — 글자 그림자가 받친다).
+    // 2026-11-20 (#34): 밤은 위를 뒤집으면 언덕 빛·별똥별 꼬리가 글자 뒤로 올라와 흰 글자 명암비가 1.6~2.0:1 로 떨어졌다(예전 단색 4.0:1).
+    //   오너 2차: 별똥별은 빼고 밤하늘과 그 안의 작은 별만으로 → 오른쪽 위 밤하늘 조각(별똥별·비눗방울 없음)을 통째로 키워 흐린 바탕 +
+    //   같은 조각의 작은 별만 떼어 흩뿌림. 9:16 제목 뒤 명암비 중앙 6.1:1.
     Theme(id: "night",   caption: uv(1600, 288), sign: uv(533, 1135), ink: ink(0xFFF6E6), lightText: true,
-          sky: .mirror(top: 0.10, near: 0.06, far: 0.22)),
-    Theme(id: "nap",     caption: uv(520, 170),  sign: uv(1650, 1165), ink: ink(0x23402F), lightText: false),
+          sky: SkyExtension(source: .patch(CGRect(x: 0.82, y: 0, width: 0.18, height: 0.17)), near: 0.03, far: 0.10,
+                            stars: CGRect(x: 0.82, y: 0, width: 0.18, height: 0.17))),
+    // 2026-11-20 (#34) 오너 2차: 강아지가 안 걸리는 위 30% 를 뒤집지 않고 그대로 위로 늘여 흐린다(위가 밝은 빛, 이음매 쪽이 풀).
+    //   아래 끝(그림 30% 줄)이 그림 윗줄과 달라 이음매를 섞는다.
+    Theme(id: "nap",     caption: uv(520, 170),  sign: uv(1650, 1165), ink: ink(0x23402F), lightText: false,
+          sky: SkyExtension(source: .top(0.30, flip: false), near: 0.03, far: 0.10, seam: 0.3)),
+    // 2026-11-20 (#34) 오너 2차: 꽉 채워 흐리면 큰 해와 털 덩어리가 보였다 → "하늘과 구름이 보여야" — 오른쪽 구름과 그 위 하늘 조각으로 채운다.
     Theme(id: "lookup",  caption: uv(960, 560),  sign: uv(960, 1180),  ink: ink(0x1E3A5C), lightText: false,
-          sky: .cover(blur: 0.10)),
+          sky: SkyExtension(source: .patch(CGRect(x: 0.58, y: 0.44, width: 0.18, height: 0.30)), near: 0.015, far: 0.05)),
     Theme(id: "snow",    caption: uv(520, 230),  sign: uv(1650, 1165), ink: ink(0x33405A), lightText: false),
 ]
 
@@ -284,7 +309,7 @@ private let skyContext = CIContext(options: [.workingColorSpace: CGColorSpace(na
 
 /// 그림 위 빈 하늘을 채울 그림을 만든다 — 화면 맨 위부터 그림 윗변 아래 `band`(pt)까지.
 /// 맨 아래 `band` 는 아래로 갈수록 투명해져 선명한 그림으로 번진다(예전 SkyFadeView 와 같은 14% 띠).
-/// 흐린 그림이라 폭 480px 로 작게 만들어 화면 크기로 키워 그린다 — 계산이 가볍고 키워도 티가 안 난다.
+/// 흐린 그림이라 폭 480px 로 작게 만들어 화면 크기로 키워 그린다 — 계산이 가볍고 키워도 티가 안 난다(별은 따로 — `makeStarLayer`).
 /// 🔒 실패하면 nil — 부르는 쪽은 예전 단색 + 번짐 띠로 물러난다.
 func makeSkyExtension(_ art: CGImage, style: SkyExtension, screen: CGSize, band: CGFloat) -> CGImage? {
     let ww: CGFloat = 480
@@ -292,11 +317,14 @@ func makeSkyExtension(_ art: CGImage, style: SkyExtension, screen: CGSize, band:
     let hh = (screen.height * k).rounded()
     let imgW = CGFloat(art.width), imgH = CGFloat(art.height)
     let sx = ww / imgW
-    let ah = imgH * sx                              // 작업 캔버스에서 그림 높이 (Core Image 는 아래가 0 — 그림은 [0, ah])
+    let ah = imgH * sx                              // 작업 캔버스에서 그림 높이 (Core Image 는 아래가 0 — 그림은 [0, ah], 빈 하늘은 [ah, hh])
+    let sh = hh - ah
     let bandPx = band * k
-    guard hh > ah + 1 else { return nil }
+    guard sh > 1 else { return nil }
     let canvas = CGRect(x: 0, y: 0, width: ww, height: hh)
+    let skyRect = CGRect(x: 0, y: ah, width: ww, height: sh)
     let src = CIImage(cgImage: art)
+    let artPlaced = src.transformed(by: CGAffineTransform(scaleX: sx, y: sx))
     func blur(_ img: CIImage, _ fraction: CGFloat) -> CIImage {
         img.clampedToExtent().applyingGaussianBlur(sigma: Double(fraction * ww)).cropped(to: canvas)
     }
@@ -307,24 +335,65 @@ func makeSkyExtension(_ art: CGImage, style: SkyExtension, screen: CGSize, band:
             "inputColor0": CIColor(red: 0, green: 0, blue: 0), "inputColor1": CIColor(red: 1, green: 1, blue: 1),
         ])?.outputImage?.cropped(to: canvas)
     }
+    /// 그림 위쪽 띠를 빈 하늘 자리에 폭 그대로 늘인다 — flip 이면 맨 윗줄이 이음매(ah)에, 아니면 맨 위(hh)에.
+    func topBand(_ f: CGFloat, flip: Bool) -> CIImage {
+        let sy = sh / (f * imgH)
+        let band = src.cropped(to: CGRect(x: 0, y: imgH * (1 - f), width: imgW, height: imgH * f))
+        let t = flip ? CGAffineTransform(a: sx, b: 0, c: 0, d: -sy, tx: 0, ty: ah + imgH * sy)
+                     : CGAffineTransform(a: sx, b: 0, c: 0, d: sy, tx: 0, ty: ah - imgH * (1 - f) * sy)
+        return band.transformed(by: t).cropped(to: skyRect)
+    }
 
     var sky: CIImage
-    switch style {
-    case let .mirror(top, near, far):
-        // 그림 위쪽 top 을 뒤집어 [ah, hh] 에 폭 그대로 늘인다 — 그림 맨 윗줄이 이음매(ah)에, top 지점이 화면 맨 위(hh)에.
-        let sy = (hh - ah) / (top * imgH)
-        let flipped = src.cropped(to: CGRect(x: 0, y: imgH * (1 - top), width: imgW, height: imgH * top))
-            .transformed(by: CGAffineTransform(a: sx, b: 0, c: 0, d: -sy, tx: 0, ty: ah + imgH * sy))
-        // 아래는 그림 그대로 둬야 이음매 근처 흐림이 그림 색을 끌어온다(빈 곳의 검정·투명이 번져 들지 않게).
-        let ext = flipped.composited(over: src.transformed(by: CGAffineTransform(scaleX: sx, y: sx)))
-        guard let mask = ramp(black: CGPoint(x: 0, y: hh), white: CGPoint(x: 0, y: ah)) else { return nil }
-        sky = blur(ext, near).applyingFilter("CIBlendWithMask", parameters: [
-            kCIInputBackgroundImageKey: blur(ext, far), kCIInputMaskImageKey: mask])   // 이음매(흰색) near → 맨 위(검정) far
-    case let .cover(amount):
+    if case .wholeScreen = style.source {
+        // 그림을 화면 전체에 꽉 차게(가운데 기준) 키워 흐린다.
         let sc = max(ww / imgW, hh / imgH)
         let cover = src.transformed(by: CGAffineTransform(scaleX: sc, y: sc))
             .transformed(by: CGAffineTransform(translationX: (ww - imgW * sc) / 2, y: (hh - imgH * sc) / 2))
-        sky = blur(cover, amount)
+        sky = blur(cover, style.near)
+    } else {
+        // ① 재료
+        var mat: CIImage
+        switch style.source {
+        case let .top(f, flip):
+            mat = topBand(f, flip: flip)
+        case let .patch(r):
+            let pr = CGRect(x: r.minX * imgW, y: imgH * (1 - r.minY - r.height), width: r.width * imgW, height: r.height * imgH)
+            let c = max(ww / pr.width, sh / pr.height)
+            mat = src.cropped(to: pr)
+                .transformed(by: CGAffineTransform(translationX: -pr.minX, y: -pr.minY))
+                .transformed(by: CGAffineTransform(scaleX: c, y: c))
+                .transformed(by: CGAffineTransform(translationX: (ww - pr.width * c) / 2, y: ah + (sh - pr.height * c) / 2))
+                .cropped(to: skyRect)
+        case .wholeScreen:
+            return nil   // 위에서 처리
+        }
+        // ② 아래 절반(이음매 쪽)을 180° 돌려 위 절반에: (x, y) → (ww − x, 2·ah + sh − y)
+        if style.echo {
+            let lower = mat.cropped(to: CGRect(x: 0, y: ah, width: ww, height: sh / 2))
+            let upper = lower.transformed(by: CGAffineTransform(a: -1, b: 0, c: 0, d: -1, tx: ww, ty: 2 * ah + sh))
+            mat = upper.composited(over: lower).cropped(to: skyRect)
+        }
+        // ③ 90° 돌려 다시 빈 하늘 크기로(가로세로 비율은 늘여 맞춘다). Core Image 는 위가 +y 라 시계 방향이 −90°.
+        if style.turn != 0 {
+            let r = mat.transformed(by: CGAffineTransform(translationX: 0, y: -ah))
+                .transformed(by: CGAffineTransform(rotationAngle: style.turn > 0 ? -.pi / 2 : .pi / 2))
+            let e = r.extent
+            mat = r.transformed(by: CGAffineTransform(translationX: -e.minX, y: -e.minY))
+                .transformed(by: CGAffineTransform(scaleX: ww / e.width, y: sh / e.height))
+                .transformed(by: CGAffineTransform(translationX: 0, y: ah))
+                .cropped(to: skyRect)
+        }
+        // ④ 이음매 위 seam 만큼은 '뒤집은 그림 위 15%'(그림 윗줄과 정확히 이어짐)로 섞는다.
+        if style.seam > 0, let m = ramp(black: CGPoint(x: 0, y: ah + sh * style.seam), white: CGPoint(x: 0, y: ah)) {
+            mat = topBand(0.15, flip: true).applyingFilter("CIBlendWithMask", parameters: [
+                kCIInputBackgroundImageKey: mat, kCIInputMaskImageKey: m]).cropped(to: skyRect)
+        }
+        // ⑤ 아래는 그림 그대로 둬야 이음매 근처 흐림이 그림 색을 끌어온다(빈 곳의 검정·투명이 번져 들지 않게).
+        let ext = mat.composited(over: artPlaced)
+        guard let mask = ramp(black: CGPoint(x: 0, y: hh), white: CGPoint(x: 0, y: ah)) else { return nil }
+        sky = blur(ext, style.near).applyingFilter("CIBlendWithMask", parameters: [
+            kCIInputBackgroundImageKey: blur(ext, style.far), kCIInputMaskImageKey: mask])   // 이음매(흰색) near → 맨 위(검정) far
     }
     // 맨 아래 band: 그림 윗변(ah)에서 불투명 → band 아래 끝에서 투명
     guard let fade = ramp(black: CGPoint(x: 0, y: ah - bandPx), white: CGPoint(x: 0, y: ah)) else { return nil }
@@ -332,4 +401,93 @@ func makeSkyExtension(_ art: CGImage, style: SkyExtension, screen: CGSize, band:
         kCIInputBackgroundImageKey: CIImage.empty(), kCIInputMaskImageKey: fade])
     let out = CGRect(x: 0, y: (ah - bandPx).rounded(.down), width: ww, height: hh - (ah - bandPx).rounded(.down))
     return skyContext.createCGImage(sky, from: out, format: .RGBA8, colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!)
+}
+
+/// 2026-11-20 (#34) 오너: 밤 장면 위쪽은 "밤과 그 안의 작은 별" — 그림 조각에서 작은 별(밝기의 잔결 = 원본 − 흐린 원본)만 떼어
+/// 빈 하늘에 칸마다 무작위로 뒤집고 밀어서 흩뿌린다(거울 반복은 별 네 개짜리 무늬가 바둑판처럼 보였다). 새로 그리지 않는다.
+/// - size: 별 레이어 크기(pt, 그림 윗변부터 화면 맨 위까지) · scale: 화면 배율(Retina 2) · artWidth: 그림 폭(pt)
+/// - fadeBand: 이음매 위 이 높이(pt)에서 별이 0 → 1 로 나타난다 · clear: 별을 두지 않을 자리(pt, 레이어 좌표 — 제목·안내 글자)
+///   (글자 바로 옆 별은 따옴표처럼 읽혔다 — 4:3 시안 "키보드' 청소 중")
+/// 칸 배치는 고정 씨앗이라 매번 같다. 🔒 실패하면 nil — 별 없이 흐린 하늘만 나온다.
+func makeStarLayer(_ art: CGImage, patch r: CGRect, size: CGSize, scale: CGFloat, artWidth: CGFloat,
+                   fadeBand: CGFloat, clear: CGRect?) -> CGImage? {
+    let s = artWidth * scale / CGFloat(art.width)               // 그림 px → 화면 px
+    let srcRect = CGRect(x: r.minX * CGFloat(art.width), y: r.minY * CGFloat(art.height),
+                         width: r.width * CGFloat(art.width), height: r.height * CGFloat(art.height)).integral
+    guard let crop = art.cropping(to: srcRect) else { return nil }   // CGImage 자르기는 위가 0
+    let pw = max(1, Int((srcRect.width * s).rounded())), ph = max(1, Int((srcRect.height * s).rounded()))
+    let space = CGColorSpace(name: CGColorSpace.sRGB)!
+    let info = CGImageAlphaInfo.premultipliedLast.rawValue
+    // 조각(화면 배율)과 그 흐린 판을 같은 크기 비트맵으로
+    func pixels(_ img: CGImage) -> [UInt8]? {
+        var buf = [UInt8](repeating: 0, count: pw * ph * 4)
+        guard let ctx = CGContext(data: &buf, width: pw, height: ph, bitsPerComponent: 8, bytesPerRow: pw * 4,
+                                  space: space, bitmapInfo: info) else { return nil }
+        ctx.interpolationQuality = .high
+        ctx.draw(img, in: CGRect(x: 0, y: 0, width: pw, height: ph))
+        return buf
+    }
+    guard let sharp = pixels(crop) else { return nil }
+    let ci = CIImage(cgImage: crop).transformed(by: CGAffineTransform(scaleX: CGFloat(pw) / CGFloat(crop.width),
+                                                                      y: CGFloat(ph) / CGFloat(crop.height)))
+    let soft = ci.clampedToExtent().applyingGaussianBlur(sigma: Double(0.004 * size.width * scale))
+        .cropped(to: CGRect(x: 0, y: 0, width: pw, height: ph))
+    guard let softCG = skyContext.createCGImage(soft, from: soft.extent, format: .RGBA8, colorSpace: space),
+          let blurred = pixels(softCG) else { return nil }
+    // 잔결 → 흰 별(미리 곱한 알파). 시안은 밝기에 잔결을 더했다 — 밤 바탕(약 66)에서 '덮어 그리기'로 같은 밝기가 되게 1.35배.
+    var star = [UInt8](repeating: 0, count: pw * ph * 4)
+    for i in stride(from: 0, to: pw * ph * 4, by: 4) {
+        var d = 0
+        for c in 0..<3 { d = max(d, Int(sharp[i + c]) - Int(blurred[i + c])) }
+        let a = UInt8(min(255, Double(d) * 1.35))
+        star[i] = a; star[i + 1] = a; star[i + 2] = a; star[i + 3] = a
+    }
+    guard let starProvider = CGDataProvider(data: Data(star) as CFData),
+          let starImg = CGImage(width: pw, height: ph, bitsPerComponent: 8, bitsPerPixel: 32, bytesPerRow: pw * 4,
+                                space: space, bitmapInfo: CGBitmapInfo(rawValue: info), provider: starProvider,
+                                decode: nil, shouldInterpolate: false, intent: .defaultIntent) else { return nil }
+    let W = Int((size.width * scale).rounded()), H = Int((size.height * scale).rounded())
+    guard W > 0, H > 0, let ctx = CGContext(data: nil, width: W, height: H, bitsPerComponent: 8, bytesPerRow: 0,
+                                            space: space, bitmapInfo: info) else { return nil }
+    var seed: UInt64 = 7
+    func next() -> UInt64 {   // SplitMix64 — 고정 씨앗
+        seed &+= 0x9E37_79B9_7F4A_7C15
+        var z = seed
+        z = (z ^ (z >> 30)) &* 0xBF58_476D_1CE4_E5B9
+        z = (z ^ (z >> 27)) &* 0x94D0_49BB_1331_11EB
+        return z ^ (z >> 31)
+    }
+    var top = H
+    while top > 0 {                                   // 위 칸부터(그림과 같은 순서)
+        var left = 0
+        while left < W {
+            let cell = CGRect(x: left, y: top - ph, width: pw, height: ph)
+            let flipX = next() & 1 == 1, flipY = next() & 1 == 1
+            let dx = CGFloat(next() % UInt64(pw)), dy = CGFloat(next() % UInt64(ph))
+            ctx.saveGState()
+            ctx.clip(to: cell)
+            for i in 0..<2 { for j in 0..<2 {          // 칸 안에서 밀기(돌려 붙이기) = 네 장
+                let rect = CGRect(x: cell.minX + dx - CGFloat(i * pw), y: cell.minY + dy - CGFloat(j * ph),
+                                  width: CGFloat(pw), height: CGFloat(ph))
+                ctx.saveGState()
+                ctx.translateBy(x: rect.midX, y: rect.midY)
+                ctx.scaleBy(x: flipX ? -1 : 1, y: flipY ? -1 : 1)
+                ctx.draw(starImg, in: CGRect(x: -rect.width / 2, y: -rect.height / 2, width: rect.width, height: rect.height))
+                ctx.restoreGState()
+            } }
+            ctx.restoreGState()
+            left += pw
+        }
+        top -= ph
+    }
+    // 이음매 쪽은 지운다(그림 윗변의 별과 겹치지 않게): 아래 끝 1 → fadeBand 위 0 으로 지우기
+    ctx.setBlendMode(.destinationOut)
+    if let g = CGGradient(colorsSpace: space, colors: [CGColor(gray: 0, alpha: 1), CGColor(gray: 0, alpha: 0)] as CFArray, locations: [0, 1]) {
+        ctx.drawLinearGradient(g, start: .zero, end: CGPoint(x: 0, y: fadeBand * scale), options: [])
+    }
+    if let c = clear {
+        ctx.setFillColor(CGColor(gray: 0, alpha: 1))
+        ctx.fill(CGRect(x: c.minX * scale, y: c.minY * scale, width: c.width * scale, height: c.height * scale))
+    }
+    return ctx.makeImage()
 }
