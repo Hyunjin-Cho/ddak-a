@@ -59,7 +59,9 @@ $PY - "$TMP/DdakaKaiSC-Regular.ttf" <<'PYEOF'
 import sys, datetime
 from fontTools.ttLib import TTFont
 path = sys.argv[1]
-f = TTFont(path, recalcTimestamp=False)   # 다시 만들어도 같은 바이트가 나오게(수정 시각을 새로 찍지 않음)
+f = TTFont(path, recalcTimestamp=False)   # 수정 시각(head)은 새로 찍지 않는다
+# 2026-11-20 (#39): 예전 주석은 "다시 만들어도 같은 바이트"였지만, 아래 name 3 에 만든 날짜가 들어가서
+#   날이 바뀌면 이 파일(간체)만 바이트가 달라진다 — 글리프는 같다. 일본어·번체는 이름을 안 바꿔 그대로다.
 name = f["name"]
 NAME_IDS = {1, 3, 4, 6, 16, 17, 18, 21, 22, 25}   # 사용자에게 보이는 글꼴 이름 자리 (OFL 3항)
 name.names = [r for r in name.names if r.nameID not in NAME_IDS]

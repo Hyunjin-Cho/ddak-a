@@ -725,8 +725,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // 그림을 못 읽었으면 하늘색 바탕 + 가운데 배치로 물러난다(글자·버튼은 똑같이 그린다).
         let t = themeArt == nil ? plainTheme : theme
 
-        // ── 1) 그림: 16:10 보다 넓은 화면은 꽉 채우고(아래 기준 — 위쪽 하늘이 잘린다),
-        //    그보다 좁은 화면(4:3·세로 모니터)은 폭에 맞춰 아래에 두고 위는 그림을 흐려 잇는다(장면별 `Theme.sky`).
+        // ── 1) 그림: 3:2 와 그보다 넓은 화면(16:10 · 16:9 · 울트라와이드)은 꽉 채우고(아래 기준 — 위쪽 하늘이 잘린다),
+        //    그보다 좁은 화면(Sidecar · 4:3 · 세로 모니터)은 폭에 맞춰 아래에 두고 위는 그림을 흐려 잇는다(장면별 `Theme.sky`).
+        //    (2026-11-20 #39: 이 주석은 "16:10 보다 넓은 화면"이라고 적혀 있었지만 경계는 처음부터 아래 3:2(1.5)였다)
         //    (2026-11-17: 세로 모니터에서 양옆을 자르면 주인공이 잘렸다 — 시안 실측)
         //    (2026-11-20 #34: 위쪽을 그림 맨 위 색 단색으로 칠하던 것을 흐린 그림으로 바꿨다 — 낮잠이 노란 올리브, 올려다보기가 회색이 됐다)
         var art = NSRect(x: 0, y: 0, width: W, height: H)
@@ -1106,7 +1107,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 // 2026-11-17 (#16): 키보드를 막지 않고 청소 화면 배치만 PNG 로 뽑는다(디버그 빌드 전용 — 배포 빌드에는 이 길이 없다).
 // 청소 화면은 키보드를 막는 앱이라 실행해서 볼 수가 없다. 테마·언어·화면 크기마다 배치가 맞는지는 이걸로 본다.
 // 사용: DDAKA_ASSETS=assets DDAKA_LANG=ko .build/debug/ddaka --preview <폴더> [테마 id ...]
-//      결과: <폴더>/<테마>-<언어>-<가로>x<세로>.png (화면 크기 6가지)
+//      결과: <폴더>/<테마>-<언어>-<가로>x<세로>.png (화면 크기는 아래 `sizes`)
 final class PreviewButtonBackdrop: NSView {
     override func draw(_ dirtyRect: NSRect) {
         let r = bounds.insetBy(dx: 0, dy: 6)
@@ -1137,8 +1138,11 @@ if let i = CommandLine.arguments.firstIndex(of: "--preview"), i + 1 < CommandLin
     let lang = ProcessInfo.processInfo.environment["DDAKA_LANG"] ?? "en"
     // 2026-11-18 (#31): 2560×1440 추가 — 그림 원본 크기(1:1)이자 Studio Display 기본 크기. 오너가 이 크기로 배치를 검사한다.
     // 2026-11-20 (#34): 1024×768(4:3) 추가 — 세로 모니터 말고도 위쪽을 흐린 그림으로 잇는 좁은 화면(Sidecar·옛 모니터).
+    // 2026-11-20 (#39): 1194×834(1.43 — 11인치 iPad 2388×1668 의 절반 · Sidecar 가 이 크기인지는 확인 못 함) 추가 —
+    //   3:2 바로 아래 구간이라 위쪽 하늘이 얇다(16:9 그림이면 화면 높이의 19.5% · 9:16 은 68%, 4:3 은 25%).
     let sizes: [NSSize] = [NSSize(width: 1440, height: 900), NSSize(width: 1920, height: 1080), NSSize(width: 2560, height: 1440),
-                           NSSize(width: 800, height: 500), NSSize(width: 1080, height: 1920), NSSize(width: 1024, height: 768)]
+                           NSSize(width: 800, height: 500), NSSize(width: 1080, height: 1920), NSSize(width: 1024, height: 768),
+                           NSSize(width: 1194, height: 834)]
     for theme in allThemes + [plainTheme] where wanted.isEmpty || wanted.contains(theme.id) {
         let previewer = AppDelegate()
         previewer.theme = theme

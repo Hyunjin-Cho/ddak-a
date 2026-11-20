@@ -8,13 +8,15 @@
 
 **한국어** · [English](#english) · [日本語](README.ja.md) · [简体中文](README.zh-Hans.md) · [繁體中文](README.zh-Hant.md)
 
-> **기준일:** 2026-11-18
-> **상태:** **v1.3 공개 배포 중** — [Releases](https://github.com/Hyunjin-Cho/ddaka/releases)에서 받을 수 있습니다 (앱·DMG 모두 Apple 공증 완료)
+> **기준일:** 2026-11-20
+> **상태:** **새 버전 준비 중** — 영어 이름을 ddaka로 바꾸면서 예전 파일(v1.3)은 내려 두었습니다. 지금은 받을 수 있는 앱이 없고, 새 버전이 나오면 [Releases](https://github.com/Hyunjin-Cho/ddaka/releases)에 올라옵니다 (앱·DMG 모두 Apple 공증)
 
 <!-- 🔒 2026-09-22 (PR #1 리뷰 F-3): 이 상태 줄과 아래 "v1.1부터는 …" 문장은 반드시 같이 움직인다.
      이 문서가 새 버전 동작을 현재형으로 안내하는데 Releases 에 그 버전이 없으면, 받아서 써 본
      사람에게는 "설명대로 안 된다"가 된다. 다음 버전을 준비할 때도 같은 순서로 — 릴리스 전까지는
-     상태 줄에 "· vX.Y 준비 중"을 붙여 두고, 올리는 날 떼고 올린다. -->
+     상태 줄에 "· vX.Y 준비 중"을 붙여 두고, 올리는 날 떼고 올린다.
+     2026-11-20 (#36 · #39): 이름을 ddaka 로 바꾸며 v1.3 파일을 내려 두어 지금은 받을 앱이 없다 → 상태 줄을 "새 버전 준비 중"으로 바꿨다
+     (버전 번호는 오너가 정한다 — v1.3 태그가 이미 있어 release.sh 는 1.3 을 다시 못 낸다). 새 버전을 올리는 날 "vX.Y 공개 배포 중"으로 되돌린다. -->
 
 <!-- 2026-11-18 오너: 한국어 설명은 존댓말(~습니다)로 쓴다 — 반말(~다) 문장을 바꿨다. 내용은 그대로다.
      홍보 글은 반말이어도 되지만 README 설명은 안 된다. 새 문장도 같은 말투로. -->
@@ -255,8 +257,8 @@ v1.2부터 닦아는 청소가 **어떻게 끝났는지**를 macOS 로그에 남
 
 [한국어](#korean) · **English** · [日本語](README.ja.md) · [简体中文](README.zh-Hans.md) · [繁體中文](README.zh-Hant.md)
 
-> **As of:** 2026-11-18
-> **Status:** **v1.3 is out** — get it from [Releases](https://github.com/Hyunjin-Cho/ddaka/releases) (both the app and the DMG are notarized by Apple)
+> **As of:** 2026-11-20
+> **Status:** **A new version is on the way** — the v1.3 files were taken down when the English name changed to ddaka. There is no app to download right now; the new version will be posted on [Releases](https://github.com/Hyunjin-Cho/ddaka/releases) (both the app and the DMG notarized by Apple)
 
 A macOS utility that **blocks the whole keyboard** while it runs, so keys you press by accident
 while wiping your Mac's keyboard never reach the computer. **Your mouse and trackpad keep working.**
