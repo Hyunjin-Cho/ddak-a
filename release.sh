@@ -10,7 +10,9 @@ VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' Info.p
 # 🚨 2026-09-22 (v1.1): 볼륨 이름에 버전을 넣는다. 같은 이름의 볼륨이 이미 마운트돼 있으면
 # macOS 는 뒤에 번호를 붙여("닦아 ddaka 1") 따로 띄우는데, 그러면 사용자가 옛 창에서 드래그하고도
 # 새 버전을 설치했다고 믿게 된다. 이름이 다르면 두 창이 눈으로 구분된다.
-VOLUME_NAME="닦아 ddaka ${VERSION}"
+# 2026-11-20 오너: 볼륨·파일 이름에도 릴리스 제목(`ddaka vX.Y`)처럼 v 를 붙인다. v1.3 은 올린 뒤 첨부 이름만 바꿨다
+#   (`ddaka-v1.3.dmg` — 볼륨 이름은 다시 공증해야 바뀌어 `닦아 ddaka 1.3` 그대로). 그 전(v1.0~1.3 첫 판)은 v 없이 나갔다.
+VOLUME_NAME="닦아 ddaka v${VERSION}"
 DIST_DIR="dist"
 # 🚨 2026-09-22 (v1.1): 공증 로그와 dSYM 은 .build/ 밖에 둔다.
 # .build/ 는 `swift package clean` 한 번에 통째로 날아간다. 크래시 리포트에서 함수 이름을 보려면
@@ -18,9 +20,9 @@ DIST_DIR="dist"
 # 나중에 공증이 막힐 때 "그때는 뭐라고 했었나"를 대볼 유일한 근거다.
 RELEASE_RECORDS="release-records/${VERSION}"
 APP_NOTARY_ARCHIVE=".build/${APP_NAME}-${VERSION}-app-notarization.zip"
-FINAL_DMG="$DIST_DIR/${APP_NAME}-${VERSION}.dmg"
+FINAL_DMG="$DIST_DIR/${APP_NAME}-v${VERSION}.dmg"
 # 2026-09-22 (F-1): 검증을 다 통과하기 전까지 DMG 가 머무는 자리. dist/ 밖이라 오인 배포를 막는다.
-WORK_DMG=".build/${APP_NAME}-${VERSION}.dmg"
+WORK_DMG=".build/${APP_NAME}-v${VERSION}.dmg"
 # 2026-09-22: 설치 창(배경·아이콘 위치·창 크기)을 만드는 도구. 프로젝트 전용 가상환경에 둔다.
 # 시스템 파이썬을 건드리지 않으려는 것이고, .tools 는 저장소에 올리지 않는다.
 DMGBUILD=".tools/venv/bin/dmgbuild"
@@ -296,7 +298,7 @@ fi
 # 사전 검사를 다 통과한 뒤에 옮긴다 — 검사에서 멈출 실행이 기록을 흩트리지 않게.
 # 🔒 지우지 않는다 — 옮기기만 한다. 폴더 이름에 시각을 붙여 여러 번 돌려도 서로 덮지 않는다.
 #    dist 에서 옮기는 것은 그 안의 dist/ 에 따로 둔다. 기록 폴더에도 같은 이름의 체크섬 사본
-#    (ddaka-<버전>.dmg.sha256)이 있어서, 한 폴더에 섞으면 mv 가 그걸 말없이 덮어쓴다.
+#    (ddaka-v<버전>.dmg.sha256)이 있어서, 한 폴더에 섞으면 mv 가 그걸 말없이 덮어쓴다.
 PREV_RECORDS=""
 if [ -e "$RELEASE_RECORDS" ] || [ -e "$FINAL_DMG" ] || [ -e "${FINAL_DMG}.sha256" ]; then
     PREV_RECORDS="release-records/${VERSION}.prev-$(date +%Y%m%d-%H%M%S)"
