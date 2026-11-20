@@ -7,7 +7,7 @@
 [한국어](README.md#korean) · [English](README.md#english) · [日本語](README.ja.md) · **简体中文** · [繁體中文](README.zh-Hant.md)
 
 > **基准日期：** 2026-11-20
-> **状态：** **新版本准备中** — 英文名改为 ddaka 后，旧版文件（v1.3）已暂时下架。目前没有可下载的应用；新版本发布后可在 [Releases](https://github.com/Hyunjin-Cho/ddaka/releases) 下载（应用和 DMG 均经过 Apple 公证）
+> **状态：** **v1.3 已发布** — 可在 [Releases](https://github.com/Hyunjin-Cho/ddaka/releases) 下载（应用和 DMG 均已通过 Apple 公证）
 
 <!-- 2026-11-18 (#27): README.md(한국어·영어)의 중국어 간체판. README.md 를 고치면 이 파일도 같이 고친다.
      상태 줄 규칙은 README.md 맨 위 주석과 같다(새 버전 동작을 적는 문장과 상태 줄은 같이 움직인다).
@@ -53,6 +53,8 @@
 1. 从 [Releases](https://github.com/Hyunjin-Cho/ddaka/releases) 下载 `.dmg`
 2. 在打开的窗口中，**把 `닦아` 拖到 `Applications` 文件夹**
 3. 从"应用程序"文件夹启动
+
+**如果您一直在用旧的 `ddak-a`** — 从 v1.3 起英文名由 `ddak-a` 改为 `ddaka`，新应用不会覆盖旧应用。请**先把"应用程序"文件夹里旧的 `ddak-a` 移到废纸篓**，再把新应用拖进去。如果权限处于关闭状态，应用会告诉您在哪里打开。
 
 > ### ⚠️ 运行前请先移到"应用程序"文件夹
 >
