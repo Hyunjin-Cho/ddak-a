@@ -56,7 +56,8 @@ struct SkyExtension {
     var trim: CGFloat = 0        // 그림 맨 위 이 비율은 없는 셈 친다(빛 바랜 맨 윗줄 — 낮잠). 이음매와 번짐 띠가 그만큼 내려간다.
 
     /// 얹을 조각 — patch 는 Source.patch 와 같은 꼴, center 는 빈 하늘 대비(x 왼→오, y 위→아래), width 는 화면 폭 대비,
-    /// flip 은 좌우 뒤집기(같은 구름을 두 번 쓸 때). 좁은 화면(4:3)에선 빈 하늘 높이의 45% 를 넘지 않게 줄이고, 빈 하늘 안으로 당긴다.
+    /// flip 은 좌우 뒤집기(같은 구름을 두 번 쓸 때). 빈 하늘 높이의 45% 를 넘지 않게 줄이고, 빈 하늘 안으로 당긴다.
+    /// 빈 하늘이 화면의 35% 보다 좁으면(4:3) 얹지 않는다.
     struct Overlay {
         var patch: CGRect
         var center: CGPoint
@@ -378,6 +379,7 @@ func makeSkyExtension(_ art: CGImage, style: SkyExtension, screen: CGSize, band:
     guard sh > 1 else { return nil }
     let canvas = CGRect(x: 0, y: 0, width: ww, height: hh)
     let skyRect = CGRect(x: 0, y: ah, width: ww, height: sh)
+    let roomy = sh >= 0.35 * hh                     // 구름을 얹을 만큼 빈 하늘이 넓은가(세로 9:16 = 68% · 4:3 = 25%)
     let src = CIImage(cgImage: art)
     let artPlaced = src.transformed(by: CGAffineTransform(scaleX: sx, y: sx))
     func blur(_ img: CIImage, _ fraction: CGFloat) -> CIImage {
@@ -456,7 +458,8 @@ func makeSkyExtension(_ art: CGImage, style: SkyExtension, screen: CGSize, band:
             return nil   // 위에서 처리
         }
         // ①′ 얹을 조각: 가장자리를 타원으로 부드럽게(안쪽 55% 는 그대로) 따서 빈 하늘의 center 에 폭 width 로
-        for o in style.overlays where o.key == nil {
+        // 2026-11-20: 빈 하늘이 화면의 35% 보다 좁으면(4:3 = 25%) 얹는 구름은 생략한다 — 구름이 제목 바로 옆에 붙었다.
+        for o in style.overlays where o.key == nil && roomy {
             let pr = ciRect(o.patch)
             var cw = o.width * ww, ch = cw * pr.height / pr.width
             if ch > 0.45 * sh { ch = 0.45 * sh; cw = ch * pr.width / pr.height }       // 좁은 화면: 빈 하늘 높이에 맞춰 줄인다
@@ -511,7 +514,7 @@ func makeSkyExtension(_ art: CGImage, style: SkyExtension, screen: CGSize, band:
             kCIInputBackgroundImageKey: blur(ext, style.far), kCIInputMaskImageKey: mask])   // 이음매(흰색) near → 맨 위(검정) far
     }
     // 키잉한 구름: 흐린 하늘 위에 거의 선명하게(σ = 폭의 0.3%) — 그림 속 구름 테두리가 남는다.
-    for o in style.overlays {
+    for o in style.overlays where roomy {
         guard let key = o.key, let cloud = keyedPatch(art, patch: o.patch, key: key) else { continue }
         let pr = CGRect(x: 0, y: 0, width: CGFloat(cloud.width), height: CGFloat(cloud.height))
         var cw = o.width * ww, ch = cw * pr.height / pr.width
