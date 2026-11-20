@@ -10,7 +10,7 @@
 #    한쪽만 고치면 화살표가 엉뚱한 곳을 가리킨다.
 import os.path
 
-application = defines.get("app", "ddak-a.app")
+application = defines.get("app", "ddaka.app")
 appname = os.path.basename(application)
 
 format = "UDZO"

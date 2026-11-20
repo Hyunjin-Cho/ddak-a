@@ -1,32 +1,32 @@
 <p align="center">
-  <img src="assets/icon/AppIcon-256.png" width="128" alt="ddak-a 應用程式圖像">
+  <img src="assets/icon/AppIcon-256.png" width="128" alt="ddaka 應用程式圖像">
 </p>
 
-# ddak-a（닦아）
+# ddaka（닦아）
 
 [한국어](README.md#korean) · [English](README.md#english) · [日本語](README.ja.md) · [简体中文](README.zh-Hans.md) · **繁體中文**
 
 > **基準日期：** 2026-11-18
-> **狀態：** **v1.3 已發布** — 可在 [Releases](https://github.com/Hyunjin-Cho/ddak-a/releases) 下載（應用程式與 DMG 皆已通過 Apple 公證）
+> **狀態：** **v1.3 已發布** — 可在 [Releases](https://github.com/Hyunjin-Cho/ddaka/releases) 下載（應用程式與 DMG 皆已通過 Apple 公證）
 
 <!-- 2026-11-18 (#27): README.md(한국어·영어)의 중국어 번체판(대만 표기). README.md 를 고치면 이 파일도 같이 고친다.
      상태 줄 규칙은 README.md 맨 위 주석과 같다(새 버전 동작을 적는 문장과 상태 줄은 같이 움직인다).
      메뉴·설정 이름(捷徑 · 打開App · 捷徑詳細資訊 · 加入鍵盤快速鍵 · 輔助使用快速鍵 · 關於這台Mac ·
      輔助使用 · 輸入監控)은 macOS 27.0 · 단축어 10.0 의 시스템 문자열 표(zh_TW)에서 확인했다.
      홍콩(zh_HK)은 輸入監察 · 私隱與保安 — 처음 나오는 곳 · 요구 사항 · 표시 언어 절에 같이 적는다(#32).
-     앱 문구(要啟動 ddak-a 嗎？ · 開始 · 完成)는 Sources/ddaka/main.swift 의 번체 그대로. -->
+     앱 문구(要啟動 ddaka 嗎？ · 開始 · 完成)는 Sources/ddaka/main.swift 의 번체 그대로. -->
 
 這是一款 macOS 工具程式：執行期間會**完全阻擋整個鍵盤**，這樣在擦拭 Mac 鍵盤時就算不小心按到按鍵，
 輸入也不會傳到電腦。**滑鼠和觸控板照常可用。**
 
-名稱 닦아（*ddak-a*）在韓文裡是「擦一擦」的意思。
+名稱 닦아（*ddaka*）在韓文裡是「擦一擦」的意思。
 
 <p align="center">
   <b>macOS 12（Monterey）或以上版本</b> · <b>同時支援 Intel 與 Apple 晶片</b>
 </p>
 
 <p align="center">
-  <img src="assets/screenshot.jpg" width="680" alt="ddak-a 執行中的畫面">
+  <img src="assets/screenshot.jpg" width="680" alt="ddaka 執行中的畫面">
   <br>
   <sub>執行中的畫面（v1.3）— 每次啟動都會從 10 幅插畫中選一幅，覆蓋已連接的<b>所有顯示器</b></sub>
 </p>
@@ -50,7 +50,7 @@
 
 ## 安裝
 
-1. 從 [Releases](https://github.com/Hyunjin-Cho/ddak-a/releases) 下載 `.dmg`
+1. 從 [Releases](https://github.com/Hyunjin-Cho/ddaka/releases) 下載 `.dmg`
 2. 在開啟的視窗中，**把 `닦아` 拖到 `Applications` 檔案夾**
 3. 從「應用程式」檔案夾啟動
 
@@ -67,7 +67,7 @@
 
 ## 運作方式
 
-1. 啟動 → 出現「要啟動 ddak-a 嗎？」確認
+1. 啟動 → 出現「要啟動 ddaka 嗎？」確認
 2. 檢查權限 — **輔助使用** + **輸入監控**（缺少時應用程式會自己要求）
 3. 用全螢幕插畫覆蓋已連接的**所有顯示器**並開始倒數 — 每次啟動都會從 10 個場景中隨機挑一個（v1.3）
 4. 以下任一情況先發生就結束
@@ -77,7 +77,7 @@
 
 ## 用一個快速鍵啟動與結束（選用）
 
-替 macOS 內建的**捷徑** App 設定鍵盤快速鍵，就能不點圖像直接啟動 ddak-a。
+替 macOS 內建的**捷徑** App 設定鍵盤快速鍵，就能不點圖像直接啟動 ddaka。
 把這個鍵設成 **⌘⇧9**，啟動鍵和結束鍵就是同一個 — **只要記住 ⌘⇧9 就夠了。**
 
 1. 在**捷徑**中點按 **＋**，新增一個捷徑
@@ -86,7 +86,7 @@
 
 這樣一來：**⌘⇧9** → 確認視窗中點 **開始** → 開始清潔；清潔中按 **⌘⇧9** → 結束。
 
-- 清潔中按下的 ⌘⇧9 會先被 ddak-a 收到，所以捷徑不會再次啟動 ddak-a
+- 清潔中按下的 ⌘⇧9 會先被 ddaka 收到，所以捷徑不會再次啟動 ddaka
   （已在 macOS 27.0・捷徑 10.0 上以執行記錄確認。捷徑 App 從 macOS 12 起就有，但更早的版本未經確認）
 - 用其他按鍵也能啟動，但**結束鍵永遠是 ⌘⇧9**
 
@@ -118,8 +118,8 @@
 
 ## 遇到問題時（記錄）
 
-從 v1.2 起，ddak-a 會把**每次清潔是怎麼結束的**寫進 macOS 記錄。如果鍵盤解除得太晚，或看起來不太對勁，
-請在「終端機」執行下面的指令，並把輸出附在 [Issue](https://github.com/Hyunjin-Cho/ddak-a/issues) 裡。
+從 v1.2 起，ddaka 會把**每次清潔是怎麼結束的**寫進 macOS 記錄。如果鍵盤解除得太晚，或看起來不太對勁，
+請在「終端機」執行下面的指令，並把輸出附在 [Issue](https://github.com/Hyunjin-Cho/ddaka/issues) 裡。
 
 ```bash
 /usr/bin/log show --last 1h --predicate 'subsystem == "com.vismotive.ddaka"'

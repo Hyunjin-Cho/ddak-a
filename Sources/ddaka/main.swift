@@ -122,11 +122,11 @@ enum Strings {
 
     // 실행 확인
     static let confirmTitle = L(
-        "Start ddak-a?",
+        "Start ddaka?",
         "닦아 실행할까요?",
-        "ddak-a を開始しますか？",
-        "要启动 ddak-a 吗？",
-        "要啟動 ddak-a 嗎？"
+        "ddaka を開始しますか？",
+        "要启动 ddaka 吗？",
+        "要啟動 ddaka 嗎？"
     )
     // 🚨 2026-11-17 (#16) 오너 결정 B안: 하늘색 단색 → 매번 다른 그림. "하늘색"이라는 약속을 5개 언어 모두에서 뺐다.
     static let confirmBody = L(
@@ -145,11 +145,11 @@ enum Strings {
     // 🚨 2026-09-22 신설. 문구는 "무엇을 하면 되는지"만 말한다 — translocation 이 무엇인지
     // 설명해 봐야 읽히지 않는다. 원인 설명은 개발자 몫이고, 사용자에게 필요한 건 다음 동작 하나다.
     static let translocatedTitle = L(
-        "Move ddak-a to your Applications folder",
+        "Move ddaka to your Applications folder",
         "‘응용 프로그램’ 폴더로 옮겨 주세요",
         "「アプリケーション」フォルダに移動してください",
-        "请将 ddak-a 移到“应用程序”文件夹",
-        "請將 ddak-a 移到「應用程式」檔案夾"
+        "请将 ddaka 移到“应用程序”文件夹",
+        "請將 ddaka 移到「應用程式」檔案夾"
     )
     // 🚨 2026-09-22 (PR #1 리뷰 F-5): 마지막 문단에 "확인 -> 종료 -> 옮기기" 순서를 명시한다.
     // 종전 문구는 "옮긴 뒤 거기서 실행해 주세요"까지만 말했는데, 이 안내창은 모달이라
@@ -163,11 +163,11 @@ enum Strings {
     //    못한다(README 「설치」 절의 실측 주석 ③과 같은 내용).
     // 🔒 "확인"은 Strings.ok 의 각 언어 표기와 같아야 한다(en OK / ko 확인 / ja OK / zh 好).
     static let translocatedBody = L(
-        "macOS is running ddak-a from a temporary copy. In this state, Accessibility and Input Monitoring stay off no matter how many times you turn them on.\n\nClick OK to quit ddak-a. Then drag ddak-a into the Applications folder in Finder and open it from there.",
+        "macOS is running ddaka from a temporary copy. In this state, Accessibility and Input Monitoring stay off no matter how many times you turn them on.\n\nClick OK to quit ddaka. Then drag ddaka into the Applications folder in Finder and open it from there.",
         "지금 닦아가 임시 복사본에서 실행되고 있어요. 이 상태에서는 손쉬운 사용·입력 모니터링을 아무리 켜도 계속 꺼진 채로 남아요.\n\n‘확인’을 누르면 닦아가 종료돼요. 그다음 Finder 에서 닦아를 ‘응용 프로그램’ 폴더로 끌어다 놓고, 거기서 실행해 주세요.",
-        "macOS が ddak-a を一時的なコピーから実行しています。この状態では、アクセシビリティと入力監視を何度オンにしてもオフのままになります。\n\n「OK」を押すと ddak-a が終了します。その後、Finder で ddak-a を「アプリケーション」フォルダにドラッグして、そこから起動してください。",
-        "macOS 正在从临时副本运行 ddak-a。在这种状态下，无论开启多少次\(zhHansAccessibilityName)和输入监控，它们都会保持关闭。\n\n点击“好”后 ddak-a 会退出。然后请在访达中将 ddak-a 拖到“应用程序”文件夹，并从那里启动。",
-        "macOS 正從暫存副本執行 ddak-a。在這種狀態下，無論開啟多少次輔助使用和\(zhHantInputMonitoringName)，都會維持關閉。\n\n按「好」後 ddak-a 會結束。接著請在 Finder 中將 ddak-a 拖到「應用程式」檔案夾，並從那裡啟動。"
+        "macOS が ddaka を一時的なコピーから実行しています。この状態では、アクセシビリティと入力監視を何度オンにしてもオフのままになります。\n\n「OK」を押すと ddaka が終了します。その後、Finder で ddaka を「アプリケーション」フォルダにドラッグして、そこから起動してください。",
+        "macOS 正在从临时副本运行 ddaka。在这种状态下，无论开启多少次\(zhHansAccessibilityName)和输入监控，它们都会保持关闭。\n\n点击“好”后 ddaka 会退出。然后请在访达中将 ddaka 拖到“应用程序”文件夹，并从那里启动。",
+        "macOS 正從暫存副本執行 ddaka。在這種狀態下，無論開啟多少次輔助使用和\(zhHantInputMonitoringName)，都會維持關閉。\n\n按「好」後 ddaka 會結束。接著請在 Finder 中將 ddaka 拖到「應用程式」檔案夾，並從那裡啟動。"
     )
 
     // 권한 안내
@@ -182,11 +182,11 @@ enum Strings {
     // 한 메시지 안에서 반말과 해요체("돼요")가 섞여 있었다. 탭 실패 안내(tapFailedBody)도 같은 문제.
     static func permissionBody(_ list: String) -> String {
         return L(
-            "Open System Settings › Privacy & Security and turn on ddak-a for:\n\n\(list)\n\nThen launch ddak-a again.",
-            "시스템 설정 > 개인정보 보호 및 보안에서 아래 항목의 '닦아(ddak-a)'를 켜 주세요.\n\n\(list)\n\n켠 다음 닦아를 다시 실행하면 돼요.",
-            "「システム設定 › プライバシーとセキュリティ」で、以下の項目の ddak-a をオンにしてください。\n\n\(list)\n\nオンにしたら ddak-a をもう一度起動してください。",
-            "请在“系统设置 › \(zhHansPrivacyName)”中为以下项目启用 ddak-a：\n\n\(list)\n\n启用后请重新启动 ddak-a。",
-            "請在「系統設定 › \(zhHantPrivacyName)」中為以下項目啟用 ddak-a：\n\n\(list)\n\n啟用後請重新啟動 ddak-a。"
+            "Open System Settings › Privacy & Security and turn on ddaka for:\n\n\(list)\n\nThen launch ddaka again.",
+            "시스템 설정 > 개인정보 보호 및 보안에서 아래 항목의 '닦아(ddaka)'를 켜 주세요.\n\n\(list)\n\n켠 다음 닦아를 다시 실행하면 돼요.",
+            "「システム設定 › プライバシーとセキュリティ」で、以下の項目の ddaka をオンにしてください。\n\n\(list)\n\nオンにしたら ddaka をもう一度起動してください。",
+            "请在“系统设置 › \(zhHansPrivacyName)”中为以下项目启用 ddaka：\n\n\(list)\n\n启用后请重新启动 ddaka。",
+            "請在「系統設定 › \(zhHantPrivacyName)」中為以下項目啟用 ddaka：\n\n\(list)\n\n啟用後請重新啟動 ddaka。"
         )
     }
     static let permissionAccessibility = L(
@@ -229,7 +229,7 @@ enum Strings {
         "無法阻擋鍵盤輸入"
     )
     static let tapFailedBody = L(
-        "Turn on both Accessibility and Input Monitoring for ddak-a in System Settings › Privacy & Security, then launch it again.",
+        "Turn on both Accessibility and Input Monitoring for ddaka in System Settings › Privacy & Security, then launch it again.",
         "시스템 설정 > 개인정보 보호 및 보안에서 손쉬운 사용과 입력 모니터링 둘 다 '닦아'를 켠 다음 다시 실행해 주세요.",
         "「システム設定 › プライバシーとセキュリティ」でアクセシビリティと入力監視の両方をオンにしてから、もう一度起動してください。",
         "请在“系统设置 › \(zhHansPrivacyName)”中同时启用\(zhHansAccessibilityName)和输入监控，然后重新启动。",
@@ -529,8 +529,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // 2026-11-18 (#20): 오너 — 앱 안의 홍보가 약하다. 복사만 되던 글자를 누르면 열리는 링크로 바꾸고,
         // 가리키는 곳을 프로필에서 저장소(받기·업데이트·설명이 있는 곳)로 옮겼다. 색은 링크라는 표시로
         // labelColor 대신 시스템 링크색 + 밑줄(다크 모드에서도 시스템이 맞춘다). 크기 12pt 는 그대로.
-        let credit = LinkButton(title: "github.com/Hyunjin-Cho/ddak-a",
-                                url: URL(string: "https://github.com/Hyunjin-Cho/ddak-a")!,
+        let credit = LinkButton(title: "github.com/Hyunjin-Cho/ddaka",
+                                url: URL(string: "https://github.com/Hyunjin-Cho/ddaka")!,
                                 font: NSFont.systemFont(ofSize: 12, weight: .regular))
         // 확인창 폭에 맞춘 칸 가운데에 글자 크기만큼만 둔다 — 손가락 커서가 빈 곳에서 뜨지 않게.
         let creditRow = NSView(frame: NSRect(x: 0, y: 0, width: 320, height: 18))

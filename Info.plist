@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
     <key>CFBundleName</key>
-    <string>ddak-a</string>
+    <string>ddaka</string>
     <key>CFBundleDisplayName</key>
     <string>닦아</string>
     <key>CFBundleIdentifier</key>
@@ -21,7 +21,7 @@
     <key>CFBundleShortVersionString</key>
     <string>1.3</string>
     <key>CFBundleExecutable</key>
-    <string>ddak-a</string>
+    <string>ddaka</string>
     <key>CFBundleIconFile</key>
     <string>AppIcon</string>
     <!-- 2026-09-22: 앱이 "실제로 지원하는 언어"를 선언한다.
@@ -44,7 +44,7 @@
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>NSHumanReadableCopyright</key>
-    <string>© 2026 Hyunjin Cho · github.com/Hyunjin-Cho/ddak-a</string>
+    <string>© 2026 Hyunjin Cho · github.com/Hyunjin-Cho/ddaka</string>
     <!-- 2026-09-22: 중복 실행 금지. 두 인스턴스가 각각 키보드를 막으면 ⌘⇧9 로 하나만 꺼지고
          나머지가 계속 막아서, 사용자에게는 "탈출 단축키가 안 듣는다"로 보인다.
          🚨 문서와 실제 동작이 다르다: Apple 공식 설명은 "여러 사용자가 동시에 실행하는 것"을
