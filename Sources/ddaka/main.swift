@@ -749,8 +749,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 // 그림 윗변과 위쪽 하늘 사이의 경계를 부드럽게 번지게 한다(경계선이 보이면 "붙인 그림"이 된다) — 그림 높이의 14%.
                 let band = art.height * 0.14
                 if let sky = makeSkyExtension(themeArt.cgImage, style: theme.sky, screen: size, band: band) {
-                    let low = art.maxY - art.height * theme.sky.trim - band   // trim: 그림 맨 위 일부는 없는 셈 — 이음매가 그만큼 내려간다
-                    let skyFrame = NSRect(x: 0, y: low, width: W, height: H - low)
+                    let skyFrame = NSRect(x: 0, y: art.maxY - band, width: W, height: H - (art.maxY - band))
                     let skyView = NSImageView(frame: skyFrame)
                     skyView.image = NSImage(cgImage: sky, size: skyFrame.size)
                     skyView.imageScaling = .scaleAxesIndependently
