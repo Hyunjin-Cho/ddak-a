@@ -6,8 +6,8 @@
 
 [한국어](README.md#korean) · [English](README.md#english) · [日本語](README.ja.md) · [简体中文](README.zh-Hans.md) · **繁體中文**
 
-> **基準日期：** 2026-11-18
-> **狀態：** **v1.3 已發布** — 可在 [Releases](https://github.com/Hyunjin-Cho/ddaka/releases) 下載（應用程式與 DMG 皆已通過 Apple 公證）
+> **基準日期：** 2026-11-20
+> **狀態：** **新版本準備中** — 英文名稱改為 ddaka 後，舊版檔案（v1.3）已暫時下架。目前沒有可下載的應用程式；新版本發布後可在 [Releases](https://github.com/Hyunjin-Cho/ddaka/releases) 下載（應用程式與 DMG 皆經過 Apple 公證）
 
 <!-- 2026-11-18 (#27): README.md(한국어·영어)의 중국어 번체판(대만 표기). README.md 를 고치면 이 파일도 같이 고친다.
      상태 줄 규칙은 README.md 맨 위 주석과 같다(새 버전 동작을 적는 문장과 상태 줄은 같이 움직인다).
