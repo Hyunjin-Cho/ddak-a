@@ -48,7 +48,7 @@ struct SkyExtension {
     var seamMirror = false       // 이어 올림 재료: false = 그림 위 15% 를 뒤집어 늘인 것(세로 줄기·빛기둥이 된다 — 비·별똥별)
                                  //                 true  = 그림을 늘이지 않고 1:1 로 뒤집은 것(꽃·머리가 제 모양으로 이어진다 — 낮잠·올려다보기)
     var overlays: [Overlay] = [] // 재료 위에 그림의 다른 조각(구름)을 가장자리를 부드럽게 따서 얹는다
-    var skyColor: CIColor? = nil // 재료의 넓은 색을 이 색(그림 속 하늘에서 잰 값, sRGB)으로 맞춘다 — 잔결은 그대로
+    var liftNoCollar = false     // 이어 올림 거울에서 진한 회청색(목줄)을 지우고 둘레 털 색으로 메운다(올려다보기)
     var stars = false            // 별을 흩뿌린다(`makeStarLayer` — 화면 해상도로 따로 얹는다)
 
     /// 얹을 조각 — patch 는 Source.patch 와 같은 꼴, center 는 빈 하늘 대비(x 왼→오, y 위→아래), width 는 화면 폭 대비,
@@ -127,11 +127,12 @@ let allThemes: [Theme] = [
     //   오너 5차: 구름 모양이 그림 속 구름과 달라 구름 같지 않다 · 구름 둘레의 진한 파랑이 보기 싫다 → 키잉으로 따 봤지만
     //   그림 속 구름은 다 튤립에 가려 있어 모양이 계속 망가졌다. 오너 6차: 그림 속 구름과 비슷하게 그려 얹었고,
     //   오너 7차: "구름 빼자 — 파란 하늘이 그라데이션처럼 보이면 충분, 이어 올린 건 유지" → 구름 없는 하늘 조각 + 이어 올림만.
-    //   오너 8차: 7차 그대로 가되 연장되는 하늘색을 그림 색과 최대한 비슷하게 → 그림 위 10% 의 파란 하늘 픽셀 중앙값(163, 205, 237)으로 맞춘다.
+    //   오너 8차: 하늘색을 그림 하늘(163, 205, 237)로 고르게 맞춘 안도 봤지만 오너가 7차 그대로를 골랐다.
+    //   대신 그림 윗변이 강아지 목줄을 비스듬히 자르고 있어 거울로 이어 올리면 목줄이 V 자로 한 번 더 비쳤다("목줄이 위쪽에 보인다")
+    //   → 이어 올린 거울에서만 목줄을 지운다(`liftNoCollar`).
     Theme(id: "lookup",  caption: uv(960, 560),  sign: uv(960, 1180),  ink: ink(0x1E3A5C), lightText: false,
           sky: SkyExtension(source: .patch(CGRect(x: 0.42, y: 0.33, width: 0.20, height: 0.29)), near: 0.015, far: 0.02,
-                            seam: 0.0875, seamMirror: true,
-                            skyColor: CIColor(red: 163 / 255, green: 205 / 255, blue: 237 / 255))),
+                            seam: 0.0875, seamMirror: true, liftNoCollar: true)),
     Theme(id: "snow",    caption: uv(520, 230),  sign: uv(1650, 1165), ink: ink(0x33405A), lightText: false),
 ]
 
@@ -383,6 +384,31 @@ func makeSkyExtension(_ art: CGImage, style: SkyExtension, screen: CGSize, band:
         return band.transformed(by: t).cropped(to: skyRect)
     }
 
+    /// 거울 속 목줄 지우기 — 2026-11-20 오너 8차(올려다보기).
+    /// 목줄은 진한 회청색(그림에서 잰 중앙값 90·117·144, 위 20% 안 · 목줄 밖에서 걸리는 픽셀 22 개)이고 하늘은 초록값이 197 이상이라
+    ///   "파랑 − 빨강 > 25 · 초록 < 150"(sRGB)로 가른다. 가장자리 섞인 픽셀까지 2px 넓히고 1px 부드럽게 한다.
+    /// 메우기: 목줄 자리를 투명하게 뚫은 그림을 흐리면(미리 곱한 알파) 둘레 털 색의 평균이 되고, 알파로 나누면 그 색이 된다.
+    func eraseCollar(_ img: CIImage) -> CIImage? {
+        func gate(_ v: CIVector, _ bias: CGFloat) -> CIImage {
+            img.applyingFilter("CIColorMatrix", parameters: [
+                "inputRVector": v, "inputGVector": v, "inputBVector": v, "inputAVector": CIVector(x: 0, y: 0, z: 0, w: 0),
+                "inputBiasVector": CIVector(x: bias, y: bias, z: bias, w: 1)])
+                .applyingFilter("CIColorClamp", parameters: [
+                    "inputMinComponents": CIVector(x: 0, y: 0, z: 0, w: 0), "inputMaxComponents": CIVector(x: 1, y: 1, z: 1, w: 1)])
+        }
+        let k: CGFloat = 12
+        let blueish = gate(CIVector(x: -k, y: 0, z: k, w: 0), -k * 25 / 255)     // 파랑 − 빨강 > 25
+        let dark = gate(CIVector(x: 0, y: -k, z: 0, w: 0), k * 150 / 255)        // 초록 < 150
+        let mask = blueish.applyingFilter("CIMultiplyCompositing", parameters: [kCIInputBackgroundImageKey: dark])
+            .applyingFilter("CIMorphologyMaximum", parameters: [kCIInputRadiusKey: 2])
+            .applyingGaussianBlur(sigma: 1).cropped(to: img.extent)
+        let holed = img.applyingFilter("CIBlendWithMask", parameters: [
+            kCIInputBackgroundImageKey: CIImage.empty(), kCIInputMaskImageKey: mask.applyingFilter("CIColorInvert")])
+        let fill = holed.applyingGaussianBlur(sigma: 4).unpremultiplyingAlpha().settingAlphaOne(in: img.extent).cropped(to: img.extent)
+        return fill.applyingFilter("CIBlendWithMask", parameters: [kCIInputBackgroundImageKey: img, kCIInputMaskImageKey: mask])
+            .cropped(to: img.extent)
+    }
+
     var sky: CIImage
     if case .wholeScreen = style.source {
         // 그림을 화면 전체에 꽉 차게(가운데 기준) 키워 흐린다.
@@ -406,23 +432,6 @@ func makeSkyExtension(_ art: CGImage, style: SkyExtension, screen: CGSize, band:
                 .cropped(to: skyRect)
         case .wholeScreen:
             return nil   // 위에서 처리
-        }
-        // ①″ 하늘색 맞추기: 넓은 색(폭 10% 로 흐린 재료)으로 나누고 목표 색을 곱한다 → 고른 하늘 + 잔결.
-        // 2026-11-20 오너 8차(올려다보기): "연장되는 하늘색을 이미지 색과 최대한 비슷하게" — 가운데 하늘 조각은 위쪽이 해 가까이라
-        //   옅어서(맨 위 192·216·240) 그림 속 하늘(163·205·237 근처로 고르다)과 달랐다. 평균색만 옮기는 안도 봤는데 위가 여전히 옅었다.
-        //   조각을 키워 붙이면 맨 윗줄이 반투명해지고, 나눗셈 필터는 반투명한 곳에서 나누지 않은 색을 내 4 배가 하얗게 떴다
-        //   → 재료를 먼저 목표 색 위에 깔아 불투명하게 만든다. Core Image 나눗셈은 1 에서 잘려(실측) 1/4 로 줄여 나누고 뒤에서 4 배 한다.
-        if let c = style.skyColor {
-            let solid = mat.composited(over: CIImage(color: c)).cropped(to: skyRect)
-            let broad = solid.clampedToExtent().applyingGaussianBlur(sigma: Double(0.10 * ww)).cropped(to: skyRect)
-            let quarter = solid.applyingFilter("CIColorMatrix", parameters: [
-                "inputRVector": CIVector(x: 0.25, y: 0, z: 0, w: 0), "inputGVector": CIVector(x: 0, y: 0.25, z: 0, w: 0),
-                "inputBVector": CIVector(x: 0, y: 0, z: 0.25, w: 0), "inputAVector": CIVector(x: 0, y: 0, z: 0, w: 1)])
-            mat = broad.applyingFilter("CIDivideBlendMode", parameters: [kCIInputBackgroundImageKey: quarter])   // 배경 ÷ 입력
-                .applyingFilter("CIColorMatrix", parameters: [
-                    "inputRVector": CIVector(x: 4 * c.red, y: 0, z: 0, w: 0), "inputGVector": CIVector(x: 0, y: 4 * c.green, z: 0, w: 0),
-                    "inputBVector": CIVector(x: 0, y: 0, z: 4 * c.blue, w: 0), "inputAVector": CIVector(x: 0, y: 0, z: 0, w: 1)])
-                .cropped(to: skyRect)
         }
         // ①′ 얹을 조각: 가장자리를 타원으로 부드럽게(안쪽 55% 는 그대로) 따서 빈 하늘의 center 에 폭 width 로
         // 2026-11-20: 빈 하늘이 화면의 35% 보다 좁으면(4:3 = 25%) 얹는 구름은 생략한다 — 구름이 제목 바로 옆에 붙었다.
@@ -468,8 +477,9 @@ func makeSkyExtension(_ art: CGImage, style: SkyExtension, screen: CGSize, band:
         if style.seam > 0, let m = ramp(black: CGPoint(x: 0, y: ah + sh * style.seam), white: CGPoint(x: 0, y: ah)) {
             var lift = topBand(0.15, flip: true)
             if style.seamMirror {   // 늘이지 않은 거울: (x, y) → (sx·x, ah + (imgH − y)·sx) — 그림 높이를 넘는 위쪽은 늘인 15% 로 채운다
-                lift = src.transformed(by: CGAffineTransform(a: sx, b: 0, c: 0, d: -sx, tx: 0, ty: ah + imgH * sx))
-                    .composited(over: lift).cropped(to: skyRect)
+                var mirror = src.transformed(by: CGAffineTransform(a: sx, b: 0, c: 0, d: -sx, tx: 0, ty: ah + imgH * sx)).cropped(to: skyRect)
+                if style.liftNoCollar, let clean = eraseCollar(mirror) { mirror = clean }
+                lift = mirror.composited(over: lift).cropped(to: skyRect)
             }
             mat = lift.applyingFilter("CIBlendWithMask", parameters: [
                 kCIInputBackgroundImageKey: mat, kCIInputMaskImageKey: m]).cropped(to: skyRect)
